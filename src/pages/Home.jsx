@@ -1,0 +1,47 @@
+import { GoPencil } from "react-icons/go";
+
+const Home = () => {
+    const data = [
+        { venta: 1, nombre: 'Juan Pérez', importe: 1500, estado: 'PE' },
+        { venta: 2, nombre: 'María López', importe: 2000, estado: 'PE' },
+        { venta: 3, nombre: 'Carlos García', importe: 1800, estado: 'PE' },
+        { venta: 4, nombre: 'Daniel Macias', importe: 1200, estado: 'PE' },
+    ];
+
+    return (
+        <div className="mt-5 mx-2 sm:mx-0">
+            <button className="border border-rose-500 text-pink-800 px-2.5 py-0.5 mb-1.5 hover:cursor-pointer hover:bg-pink-50 transition-colors">
+                + Nuevo
+            </button>
+            <div className="overflow-x-auto">
+                <table className="min-w-full table-auto border-collapse border border-gray-50">
+                    <thead>
+                        <tr className="bg-white">
+                            <th className="border border-gray-300 px-4 py-2 text-left">Venta</th>
+                            <th className="border border-gray-300 px-4 py-2 text-left">Nombre</th>
+                            <th className="border border-gray-300 px-4 py-2 text-left">Importe</th>
+                            <th className="border border-gray-300 px-4 py-2 text-left">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.map((item) => (
+                            <tr key={item.venta} className="even:bg-white odd:bg-gray-100 hover:bg-gray-50">
+                                <td className="border border-gray-300 px-4 py-2">{item.venta}</td>
+                                <td className="border border-gray-300 px-4 py-2">
+                                    <div className="flex justify-between gap-2">
+                                        {item.nombre}
+                                        <GoPencil className="text-rose-600 hover:text-rose-800 cursor-pointer" />
+                                    </div>
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2">{item.importe}</td>
+                                <td className="border border-gray-300 px-4 py-2">{item.estado}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+export default Home;
