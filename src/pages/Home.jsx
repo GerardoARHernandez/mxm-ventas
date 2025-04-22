@@ -1,4 +1,5 @@
 import { GoPencil } from "react-icons/go";
+import { Link } from "react-router-dom";
 
 const Home = () => {
     const data = [
@@ -30,7 +31,9 @@ const Home = () => {
                                 <td className="border border-gray-300 px-4 py-2">
                                     <div className="flex justify-between gap-2">
                                         {item.nombre}
+                                        <Link to={'/producto'} className="text-gray-500 hover:text-rose-600 transition-colors duration-200">
                                         <GoPencil className="text-rose-600 hover:text-rose-800 cursor-pointer" />
+                                        </Link>
                                     </div>
                                 </td>
                                 <td className="border border-gray-300 px-4 py-2">{item.importe}</td>
