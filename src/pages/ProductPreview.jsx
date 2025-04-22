@@ -117,7 +117,7 @@ const ProductPreview = () => {
                 <button
                   key={size.code}
                   onClick={() => handleSizeChange(size.code)}
-                  className={`relative px-4 py-2 border rounded-md transition-all flex flex-col items-center ${
+                  className={`relative px-4 py-2 border rounded-md transition-all flex flex-col items-center hover:cursor-pointer ${
                     selectedSize === size.code
                       ? 'border-black bg-gray-100 font-medium'
                       : 'border-gray-300 hover:border-gray-400'
