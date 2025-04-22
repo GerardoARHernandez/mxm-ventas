@@ -26,6 +26,14 @@ const Header = () => {
               Inicio
             </Link>
           </li>
+          <li>
+            <Link 
+              to="/login" 
+              className="hover:text-pink-300 transition-colors duration-200 font-medium px-3 py-1 rounded-md hover:bg-gray-700"
+            >
+              Login
+            </Link>
+          </li>
         </ul>
       </div>
 
