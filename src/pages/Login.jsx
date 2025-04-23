@@ -1,46 +1,34 @@
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { FiUser, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useState } from 'react';
-
-// Esquema de validación con Yup actualizado
-const loginSchema = yup.object().shape({
-  username: yup.string()
-    .max(20, 'El usuario no puede exceder 20 caracteres')
-    .required('El usuario es requerido'),
-  password: yup.string()
-    .min(3, 'La contraseña debe tener al menos 3 caracteres')
-    .required('La contraseña es requerida'),
-});
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { FiUser, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const { 
-    register, 
-    handleSubmit, 
-    formState: { errors }, 
-    reset 
-  } = useForm({
-    resolver: yupResolver(loginSchema)
-  });
-
-  const onSubmit = async (data) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setIsSubmitting(true);
-    console.log('Datos del login:', data);
+    setError('');
     
-    // Simulación de llamada a API
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    reset();
-    alert('Inicio de sesión exitoso!');
+    try {
+      const success = await login(username, password);
+      if (!success) {
+        setError('Credenciales incorrectas');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
         <div className="text-center">
           <h2 className="mt-0 text-3xl font-extrabold text-gray-900">
@@ -51,7 +39,7 @@ const Login = () => {
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
             {/* Campo Usuario */}
             <div>
@@ -67,14 +55,13 @@ const Login = () => {
                   name="username"
                   type="text"
                   autoComplete="username"
-                  {...register('username')}
-                  className={`pl-10 block w-full py-3 px-3 border ${errors.username ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-rose-400 focus:border-rose-400`}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className={`pl-10 block w-full py-3 px-3 border ${error ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-rose-400 focus:border-rose-400`}
                   placeholder="Usuario"
+                  required
                 />
               </div>
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
-              )}
             </div>
 
             {/* Campo Contraseña */}
@@ -91,13 +78,15 @@ const Login = () => {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
-                  {...register('password')}
-                  className={`pl-10 block w-full py-3 px-3 border ${errors.password ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-rose-400 focus:border-rose-400`}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={`pl-10 block w-full py-3 px-3 border ${error ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-rose-400 focus:border-rose-400`}
                   placeholder="••••••••"
+                  required
                 />
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:cursor-pointer "
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:cursor-pointer"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -107,11 +96,14 @@ const Login = () => {
                   )}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-              )}
             </div>
           </div>
+
+          {error && (
+            <div className="text-red-500 text-sm text-center">
+              {error}
+            </div>
+          )}
 
           <div>
             <button
