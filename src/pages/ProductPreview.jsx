@@ -1,44 +1,104 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { FiMinus, FiPlus, FiSearch, FiCheck } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { products } from '../data';
+
+const VariantButton = memo(({ variant, index, isSelected, onClick }) => (
+  <button
+    onClick={() => onClick(index)}
+    className={`px-6 py-2 rounded-full border-2 transition-colors hover:cursor-pointer ${
+      isSelected 
+        ? 'border-rose-900 bg-rose-900 text-white font-semibold' 
+        : 'border-gray-300 text-gray-700 hover:border-gray-400'
+    }`}
+  >
+    {variant.color}
+  </button>
+));
+
+const SizeButton = memo(({ size, isSelected, onSelect, stock }) => (
+  <button
+    onClick={() => onSelect(size.code)}
+    className={`relative px-4 py-2 border rounded-md transition-all flex flex-col items-center hover:cursor-pointer ${
+      isSelected
+        ? 'border-black bg-gray-100 font-medium'
+        : 'border-gray-300 hover:border-gray-400'
+    } ${stock === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+    disabled={stock === 0}
+  >
+    <span className="font-medium">{size.code}</span>
+    <span className={`text-xs mt-1 ${
+      stock > 5 ? 'text-green-600' : 
+      stock > 0 ? 'text-yellow-600' : 'text-red-600'
+    }`}>
+      {stock} disponible{stock !== 1 ? 's' : ''}
+    </span>
+    {isSelected && (
+      <FiCheck className="absolute -top-1 -right-1 bg-black text-white rounded-full p-0.5" />
+    )}
+  </button>
+));
 
 const ProductPreview = () => {
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVariant, setSelectedVariant] = useState(0);
-  const [selectedSize, setSelectedSize] = useState('GD');
-  
-  // Datos mockeados
-  const productVariants = [
-    {
-      id: 1,
-      imageUrl: 'https://permachef.com/cdn/shop/files/707c7627-167c-41f5-bf35-8fcc5e7a0e64_1512x.jpg?v=1683241257',
-      name: 'Camiseta Premium de Algodón',
-      color: 'Negro',
-      sku: 'CP2023-NG',
-      basePrice: 429.99,
-      sizes: [
-        { code: 'CH', price: 429.99, stock: 15 },
-        { code: 'MD', price: 429.99, stock: 8 },
-        { code: 'GD', price: 449.99, stock: 5 }
-      ]
-    },
-    {
-      id: 2,
-      imageUrl: 'https://img.ltwebstatic.com/v4/j/spmp/2025/04/02/0e/17435841115d3ceeffda4d256245572c7f22b5c93c_thumbnail_405x.jpg',
-      name: 'Camiseta Premium de Algodón',
-      color: 'Blanco',
-      sku: 'CP2023-BL',
-      basePrice: 399.99,
-      sizes: [
-        { code: 'CH', price: 399.99, stock: 10 },
-        { code: 'MD', price: 399.99, stock: 12 },
-        { code: 'GD', price: 419.99, stock: 0 }
-      ]
-    }
-  ];
+  const [selectedProductIndex, setSelectedProductIndex] = useState(0);
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
 
-  const product = productVariants[selectedVariant];
-  const currentSize = product.sizes.find(size => size.code === selectedSize) || product.sizes[0];
+  const product = products[selectedProductIndex];
+  const variant = product.variants[selectedVariantIndex];
+  const currentSize = useMemo(() => 
+    variant.sizes.find(size => size.code === selectedSize) || variant.sizes[0],
+    [variant.sizes, selectedSize]
+  );
+
+  // Pre-cargar imágenes
+  useEffect(() => {
+    product.variants.forEach(v => {
+      const img = new Image();
+      img.src = v.imageUrl;
+    });
+  }, [product.variants]);
+
+  // Inicializar tamaño seleccionado
+  useEffect(() => {
+    if (variant.sizes.length > 0 && !variant.sizes.some(s => s.code === selectedSize)) {
+      setSelectedSize(variant.sizes[0].code);
+    }
+    setQuantity(0);
+  }, [variant.sizes, selectedSize]);
+
+  // Buscar productos
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setSearchResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    const results = products.filter(p => 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.variants.some(v => 
+        v.color.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        v.sku.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+
+    setSearchResults(results);
+    setShowResults(true);
+  }, [searchQuery]);
+
+  const handleSearchItemClick = (productIndex) => {
+    setSelectedProductIndex(productIndex);
+    setSelectedVariantIndex(0);
+    setSearchQuery('');
+    setShowResults(false);
+    navigate('/producto');
+  };
 
   const handleSizeChange = (size) => {
     setSelectedSize(size);
@@ -58,10 +118,34 @@ const ProductPreview = () => {
     setQuantity(prev => Math.max(0, prev - 1));
   };
 
+  const variantButtons = useMemo(() => (
+    product.variants.map((v, idx) => (
+      <VariantButton
+        key={v.sku}
+        variant={v}
+        index={idx}
+        isSelected={selectedVariantIndex === idx}
+        onClick={setSelectedVariantIndex}
+      />
+    ))
+  ), [product.variants, selectedVariantIndex]);
+
+  const sizeButtons = useMemo(() => (
+    variant.sizes.map(size => (
+      <SizeButton
+        key={size.code}
+        size={size}
+        isSelected={selectedSize === size.code}
+        onSelect={handleSizeChange}
+        stock={size.stock}
+      />
+    ))
+  ), [variant.sizes, selectedSize]);
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Barra de búsqueda */}
-      <div className="mb-8">
+      <div className="mb-8 relative">
         <div className="relative max-w-xl mx-auto">
           <input
             type="text"
@@ -69,29 +153,33 @@ const ProductPreview = () => {
             className="w-full py-3 pl-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => searchQuery && setShowResults(true)}
           />
           <FiSearch className="absolute right-4 top-3.5 text-gray-400 text-xl" />
         </div>
+        
+        {/* Resultados de búsqueda */}
+        {showResults && searchResults.length > 0 && (
+          <div className="absolute z-10 w-full max-w-xl mx-auto mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+            {searchResults.map((product, index) => (
+              <div 
+                key={product.id}
+                className="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0"
+                onClick={() => handleSearchItemClick(index)}
+              >
+                <div className="font-semibold">{product.name}</div>
+                <div className="text-sm text-gray-600">
+                  Colores: {product.variants.map(v => v.color).join(', ')}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
+      
       {/* Selector de variantes */}
       <div className="flex justify-center mb-8 space-x-4">
-        {productVariants.map((variant, index) => (
-          <button
-            key={variant.id}
-            onClick={() => {
-              setSelectedVariant(index);
-              setSelectedSize(variant.sizes[0].code);
-            }}
-            className={`px-6 py-2 rounded-full border-2 transition-colors hover:cursor-pointer ${
-              selectedVariant === index 
-                ? 'border-rose-900 bg-rose-900 text-white' 
-                : 'border-gray-300 text-gray-700 hover:border-gray-400'
-            }`}
-          >
-            {variant.color}
-          </button>
-        ))}
+        {variantButtons}
       </div>
       
       {/* Contenedor del producto */}
@@ -99,9 +187,10 @@ const ProductPreview = () => {
         {/* Imagen del producto */}
         <div className="h-96 bg-white flex items-center justify-center px-8 py-4">
           <img 
-            src={product.imageUrl} 
+            src={variant.imageUrl} 
             alt={product.name}
             className="max-h-full max-w-full object-contain"
+            loading="lazy"
           />
         </div>
         
@@ -113,7 +202,7 @@ const ProductPreview = () => {
           <div className="mb-6">
             <h4 className="text-lg font-semibold mb-3">Seleccionar talla:</h4>
             <div className="flex space-x-3">
-              {product.sizes.map(size => (
+              {variant.sizes.map(size => (
                 <button
                   key={size.code}
                   onClick={() => handleSizeChange(size.code)}
@@ -142,10 +231,10 @@ const ProductPreview = () => {
           {/* Detalles del producto */}
           <div className="grid grid-cols-2 gap-8 px-5 text-lg text-gray-800 mb-6">
             <div>
-              <span className="font-semibold">Color:</span> {product.color}
+              <span className="font-semibold">Color:</span> {variant.color}
             </div>
             <div>
-              <span className="font-semibold">SKU:</span> {product.sku}
+              <span className="font-semibold">SKU:</span> {variant.sku}
             </div>
             <div>
               <span className="font-semibold">Precio:</span> ${currentSize.price.toFixed(2)}

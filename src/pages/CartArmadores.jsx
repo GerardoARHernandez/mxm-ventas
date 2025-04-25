@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiCheck } from "react-icons/fi";
+import { FiCheck, FiRotateCcw, FiX } from "react-icons/fi";
 
 const CartArmadores = () => {
   // Estado inicial de las prendas
@@ -9,9 +9,9 @@ const CartArmadores = () => {
       name: "GABARDINA DONNIKA TWED INSPO CHANEL BLANCO 1114 T CH",
       ubicacion: 'Pasillo 2',
       quantity: 2,
-      status: "Pendiente", // Nuevo campo para el estado
+      status: "Pendiente",
       maxQuantity: 3,
-      selected: false
+      image: 'https://permachef.com/cdn/shop/files/707c7627-167c-41f5-bf35-8fcc5e7a0e64_1512x.jpg?v=1683241257'
     },
     {
       id: 2,
@@ -20,7 +20,7 @@ const CartArmadores = () => {
       quantity: 3,
       status: "Pendiente",
       maxQuantity: 5,
-      selected: false
+      image: ''
     },
     {
       id: 3,
@@ -29,150 +29,206 @@ const CartArmadores = () => {
       quantity: 1,
       status: "Pendiente",
       maxQuantity: 1,
-      selected: false
+      image: ''
     }
   ]);
 
-  // Filtrar prendas pendientes
+  // Estado para controlar el modal
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentImage, setCurrentImage] = useState('');
+
+  // Filtrar prendas
   const prendasPendientes = prendas.filter(p => p.status === "Pendiente");
   const prendasSurtidas = prendas.filter(p => p.status === "Surtida");
 
-  // Alternar selección de prenda
-  const toggleSeleccion = (id) => {
+  // Cambiar estado de la prenda
+  const cambiarEstadoPrenda = (id) => {
     setPrendas(prendas.map(prenda => 
-      prenda.id === id ? { ...prenda, selected: !prenda.selected } : prenda
+      prenda.id === id 
+        ? { ...prenda, status: prenda.status === "Pendiente" ? "Surtida" : "Pendiente" } 
+        : prenda
     ));
   };
 
-  // Confirmar prendas seleccionadas
-  const confirmarPrendas = () => {
+  // Revertir prenda a pendiente
+  const revertirPrenda = (id) => {
     setPrendas(prendas.map(prenda => 
-      prenda.selected ? { ...prenda, status: "Surtida", selected: false } : prenda
+      prenda.id === id ? { ...prenda, status: "Pendiente" } : prenda
     ));
+  };
+
+  // Abrir modal con la imagen
+  const openImageModal = (imageUrl) => {
+    setCurrentImage(imageUrl);
+    setModalOpen(true);
+  };
+
+  // Cerrar modal
+  const closeModal = () => {
+    setModalOpen(false);
+    setCurrentImage('');
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-950 mb-8 text-center upp">Prendas para Armado</h1>
-        
-        {/* Prendas Pendientes */}
-        <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
-          <div className="px-7 py-4 border-b border-gray-300">
-            <h2 className="text-xl font-medium text-gray-900">Prendas Pendientes</h2>
+    <div className="min-h-screen bg-gray-50">
+      {/* Modal para imagen */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+          <div className="relative max-w-4xl w-full max-h-[90vh]">
+            <button 
+              onClick={closeModal}
+              className="absolute -top-10 right-0 text-white hover:text-rose-500"
+            >
+              <FiX className="h-6 w-6 hover:cursor-pointer" />
+            </button>
+            <img 
+              src={currentImage} 
+              alt="Prenda ampliada" 
+              className="w-full h-full object-contain max-h-[80vh]"
+            />
           </div>
-          
-          <div className="divide-y divide-gray-300">
+        </div>
+      )}
+
+      <div className="container mx-auto p-4 md:p-6">
+        {/* Header */}
+        <header className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-center">
+            Prendas para Armado
+          </h1>
+        </header>
+
+        {/* Prendas Pendientes */}
+        <section className="mb-8">
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
+              <h2 className="text-lg md:text-xl font-semibold text-gray-800">
+                Prendas Pendientes
+              </h2>
+            </div>
+            
             {prendasPendientes.length > 0 ? (
-              <>
-                <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-sm font-medium text-gray-700 uppercase tracking-wider text-center">
-                  <div className="col-span-2">Seleccionar</div>
-                  <div className="col-span-5">Artículo</div>
-                  <div className="col-span-3">Ubicación</div>
-                  <div className="col-span-2 text-center">Cantidad</div>
-                </div>
-                
+              <ul className="divide-y divide-gray-200">
                 {prendasPendientes.map((prenda) => (
-                  <div key={prenda.id} className="grid grid-cols-1 sm:grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 text-center">
-                    {/* Checkbox de selección */}
-                    <div className="sm:col-span-2 flex justify-center !text-rose-600 rounded focus:!ring-rose-500 ">
-                      <input
-                        type="checkbox"
-                        checked={prenda.selected}
-                        onChange={() => toggleSeleccion(prenda.id)}
-                        className="h-5 w-5 !text-rose-600 rounded focus:!ring-rose-500 hover:cursor-pointer"
-                      />
-                    </div>
-                    
-                    {/* Información de la prenda */}
-                    <div className="sm:col-span-5">
-                      <p className="font-medium text-gray-900">{prenda.name}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Disponible: {prenda.maxQuantity} unidad{prenda.maxQuantity !== 1 ? 'es' : ''}
-                      </p>
-                    </div>
-                    
-                    {/* Ubicación */}
-                    <div className="sm:col-span-3">
-                      <p className="text-gray-900">{prenda.ubicacion}</p>
-                    </div>
-                    
-                    {/* Cantidad */}
-                    <div className="sm:col-span-2 flex items-center justify-center">
-                      <div className="border rounded-md px-4 py-2 text-center">
-                        {prenda.quantity}
+                  <li key={prenda.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      {/* Checkbox - Tablet/Desktop */}
+                      <div className="hidden md:block">
+                        <label className="inline-flex items-center">
+                          <input
+                            type="checkbox"
+                            onChange={() => cambiarEstadoPrenda(prenda.id)}
+                            className="h-6 w-6 text-rose-600 rounded focus:ring-rose-500 hover:cursor-pointer"
+                          />
+                        </label>
+                      </div>
+                      
+                      {/* Información principal */}
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{prenda.name}</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">Ubicación:</span> {prenda.ubicacion}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">Cantidad:</span> {prenda.quantity}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">Disponible:</span> {prenda.maxQuantity}
+                          </div>
+                          {prenda.image && (
+                            <div className="text-sm text-gray-600 col-span-1 md:col-span-1">
+                              <span className="font-medium">Imagen:</span>
+                              <img 
+                                src={prenda.image} 
+                                alt={prenda.name} 
+                                className="w-16 h-16 object-cover mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => openImageModal(prenda.image)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Checkbox - Mobile */}
+                      <div className="md:hidden flex justify-between items-center">
+                        <button
+                          onClick={() => cambiarEstadoPrenda(prenda.id)}
+                          className="bg-rose-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:cursor-pointer"
+                        >
+                          Confirmar
+                        </button>
                       </div>
                     </div>
-                    
-                  </div>
+                  </li>
                 ))}
-              </>
+              </ul>
             ) : (
-              <div className="px-6 py-4 text-center text-gray-500">
+              <div className="p-6 text-center text-gray-500">
                 No hay prendas pendientes de armado
               </div>
             )}
           </div>
-          
-          {/* Botón de confirmación */}
-          {prendasPendientes.length > 0 && (
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
-              <button 
-                onClick={confirmarPrendas}
-                disabled={!prendasPendientes.some(p => p.selected)}
-                className={`flex items-center gap-2 py-2 px-6 rounded-md font-medium transition-colors ${
-                  prendasPendientes.some(p => p.selected) 
-                    ? 'bg-rose-600 hover:bg-rose-700 text-white hover:cursor-pointer' 
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                <FiCheck className="h-5 w-5" />
-                Confirmar Prendas Seleccionadas ({prendasPendientes.filter(p => p.selected).length})
-              </button>
-            </div>
-          )}
-        </div>
+        </section>
 
-        {/* Prendas Surtidas (Histórico) */}
+        {/* Prendas Surtidas */}
         {prendasSurtidas.length > 0 && (
-          <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
-            <div className="px-6 py-4 border-b border-gray-200 bg-white">
-              <h2 className="text-xl font-medium text-gray-950">Prendas Surtidas</h2>
-            </div>
-            
-            <div className="divide-y divide-gray-200">
-              <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 bg-green-50 text-sm font-medium text-gray-800 uppercase tracking-wider text-center">
-                <div className="col-span-5">Artículo</div>
-                <div className="col-span-4">Ubicación</div>
-                <div className="col-span-2 text-center">Cantidad</div>
-                <div className="col-span-1">Estado</div>
+          <section className="mb-8">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="bg-green-50 px-4 py-3 border-b border-gray-200">
+                <h2 className="text-lg md:text-xl font-semibold text-gray-800">
+                  Prendas Surtidas
+                </h2>
               </div>
               
-              {prendasSurtidas.map((prenda) => (
-                <div key={prenda.id} className="grid grid-cols-1 sm:grid-cols-12 gap-4 px-6 py-4 items-center text-center">
-                  <div className="sm:col-span-5">
-                    <p className="font-medium text-gray-900">{prenda.name}</p>
-                  </div>
-                  
-                  <div className="sm:col-span-4">
-                    <p className="text-gray-900">{prenda.ubicacion}</p>
-                  </div>
-                  
-                  <div className="sm:col-span-2 flex items-center justify-center">
-                    <div className="border rounded-md px-4 py-2 text-center">
-                      {prenda.quantity}
+              <ul className="divide-y divide-gray-200">
+                {prendasSurtidas.map((prenda) => (
+                  <li key={prenda.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                      {/* Información principal */}
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{prenda.name}</h3>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">Cantidad:</span> {prenda.quantity}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">Estado:</span> 
+                            <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                              {prenda.status}
+                            </span>
+                          </div>
+                          {prenda.image && (
+                            <div className="text-sm text-gray-600 col-span-2">
+                              <span className="font-medium">Imagen:</span>
+                              <img 
+                                src={prenda.image} 
+                                alt={prenda.name} 
+                                className="w-16 h-16 object-cover mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => openImageModal(prenda.image)}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Botón de revertir */}
+                      <div className="flex justify-end">
+                        <button
+                          onClick={() => revertirPrenda(prenda.id)}
+                          className="flex items-center gap-1 text-sm text-green-600 hover:text-green-800 hover:cursor-pointer"
+                          title="Revertir a pendiente"
+                        >
+                          <FiRotateCcw className="h-4 w-4" />
+                          <span className="font-semibold">Revertir</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="sm:col-span-1">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                      {prenda.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          </section>
         )}
       </div>
     </div>

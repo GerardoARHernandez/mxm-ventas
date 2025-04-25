@@ -1,10 +1,4 @@
-// data.js
-export const products = [
-    { id: 1, name: 'Producto 1', price: 100, description: 'Descripción del producto 1' },
-    { id: 2, name: 'Producto 2', price: 200, description: 'Descripción del producto 2' },
-    { id: 3, name: 'Producto 3', price: 300, description: 'Descripción del producto 3' },
-  ];
-  
+// data.js  
   export const salesData = [
     { venta: 1, nombre: 'Juan Pérez', importe: 1500, estado: 'PE' },
     { venta: 2, nombre: 'María López', importe: 2000, estado: 'PE' },
@@ -48,5 +42,76 @@ export const products = [
       quantity: 1,
       status: "preventa",
       maxQuantity: 2
+    }
+  ];
+
+  export const products = [
+    {
+      id: 1,
+      name: 'SET KARLAM #25 MAXIPANTALON & BLUSA JARETA TERRY DELUXE',
+      variants: [
+        {
+          id: 1,
+          imageUrl: 'images/1-rojo.jpeg',
+          color: 'Rojo',
+          sku: 'CP2023-RJ',
+          basePrice: 429.99,
+          sizes: [
+            { code: 'UT', price: 409.99, stock: 15 }
+          ]
+        },
+        {
+          id: 2,
+          imageUrl: 'images/1-blanco.jpeg',
+          color: 'Blanco',
+          sku: 'CP2023-BL',
+          basePrice: 399.99,
+          sizes: [
+            { code: 'UT', price: 399.99, stock: 5 }
+          ]
+        },
+        {
+          id: 3,
+          imageUrl: 'images/1-cafe.jpeg',
+          color: 'Café',
+          sku: 'CP2023-CF',
+          basePrice: 399.99,
+          sizes: [
+            { code: 'UT', price: 419.99, stock: 0 },
+          ]
+        }
+      ]
+    },
+    {
+      id: 2,
+      name: 'MAXIVESTIDO CHLOE TEJIDO CON DETALLES MESH',
+      variants: [
+        {
+          id: 4,
+          imageUrl: 'images/2-azul.jpeg',
+          color: 'Azul',
+          sku: 'CP2025-AZ',
+          basePrice: 399.99,
+          sizes: [
+            { code: 'S', price: 399.99, stock: 10 },
+            { code: 'M', price: 399.99, stock: 3 },
+            { code: 'L', price: 419.99, stock: 16 },
+            { code: 'XL', price: 419.99, stock: 7 },
+          ]
+        },
+        {
+          id: 5,
+          imageUrl: 'images/2-blanco.jpeg',
+          color: 'Blanco',
+          sku: 'CP2025-BL',
+          basePrice: 399.99,
+          sizes: [
+            { code: 'S', price: 399.99, stock: 10 },
+            { code: 'M', price: 399.99, stock: 3 },
+            { code: 'L', price: 419.99, stock: 16 },
+            { code: 'XL', price: 419.99, stock: 7 },
+          ]
+        }
+      ]
     }
   ];
