@@ -70,7 +70,7 @@ const CartArmadores = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Modal para imagen */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
@@ -101,7 +101,7 @@ const CartArmadores = () => {
         {/* Prendas Pendientes */}
         <section className="mb-8">
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
+            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
               <h2 className="text-lg md:text-xl font-semibold text-gray-800">
                 Prendas Pendientes
               </h2>
