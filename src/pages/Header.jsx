@@ -40,6 +40,12 @@ const Header = () => {
                   <FiUser className="h-7 w-7 mx-2 text-pink-500" />
                   <span className="font-medium">{user.name}</span>
                 </div>
+                <Link 
+                  to="/armador" 
+                  className="hover:text-pink-300 transition-colors duration-200 font-medium px-3 py-1 rounded-md hover:bg-gray-700"
+                >
+                  Armador
+                </Link>
                 <button 
                   onClick={logout}
                   className="hover:text-pink-300 transition-colors duration-200 font-medium px-3 py-1 rounded-md hover:bg-gray-700 hover:cursor-pointer"
