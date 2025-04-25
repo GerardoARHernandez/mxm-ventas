@@ -130,18 +130,6 @@ const ProductPreview = () => {
     ))
   ), [product.variants, selectedVariantIndex]);
 
-  const sizeButtons = useMemo(() => (
-    variant.sizes.map(size => (
-      <SizeButton
-        key={size.code}
-        size={size}
-        isSelected={selectedSize === size.code}
-        onSelect={handleSizeChange}
-        stock={size.stock}
-      />
-    ))
-  ), [variant.sizes, selectedSize]);
-
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Barra de búsqueda */}
@@ -185,7 +173,7 @@ const ProductPreview = () => {
       {/* Contenedor del producto */}
       <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
         {/* Imagen del producto */}
-        <div className="h-96 bg-white flex items-center justify-center px-8 py-4">
+        <div className="h-[430px] bg-white flex items-center justify-center px-8 py-2 mt-3">
           <img 
             src={variant.imageUrl} 
             alt={product.name}
