@@ -33,8 +33,8 @@ const Cart = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen">
+      <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-8">Mi Carrito</h1>
         
         {/* Productos en Stock */}
