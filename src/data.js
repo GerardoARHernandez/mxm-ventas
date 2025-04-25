@@ -23,3 +23,30 @@ export const products = [
     { id: 3, name: "Carlos García", email: "carlos@example.com", phone: "555-9012" },
     { id: 4, name: "Ana Martínez", email: "ana@example.com", phone: "555-3456" },
   ];
+
+  export const cartProducts = [
+    {
+      id: 1,
+      name: "GABARDINA DONNIKA TWED INSPO CHANEL BLANCO 1114 T CH",
+      price: 545.00,
+      quantity: 1, // Esta cantidad viene determinada por el stock disponible
+      status: "stock",
+      maxQuantity: 3 // Stock máximo disponible
+    },
+    {
+      id: 2,
+      name: "VESTIDO ELEGANTE NEGRO T MD",
+      price: 650.00,
+      quantity: 1,
+      status: "stock",
+      maxQuantity: 5
+    },
+    {
+      id: 3,
+      name: "CHAQUETA DE CUERO PREMIUM T GD",
+      price: 1200.00,
+      quantity: 1,
+      status: "preventa",
+      maxQuantity: 2
+    }
+  ];

@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import ClientSearch from "./pages/ClientSearch";
 import Cart from "./pages/Cart";
 import { AuthProvider, useAuth } from './context/AuthContext';
+import CartArmadores from './pages/CartArmadores';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -59,6 +60,15 @@ function AppContent() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/armador" 
+            element={
+              <ProtectedRoute>
+                <CartArmadores />
+              </ProtectedRoute>
+            } 
+          />
+
         </Routes>
       </div>
     </>

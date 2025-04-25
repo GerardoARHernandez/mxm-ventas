@@ -37,7 +37,7 @@ const Header = () => {
             {user ? (
               <div className="flex items-center gap-4">
                 <div className=" inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiUser className="h-7 w-7 mx-2 text-rose-500" />
+                  <FiUser className="h-7 w-7 mx-2 text-pink-500" />
                   <span className="font-medium">{user.name}</span>
                 </div>
                 <button 

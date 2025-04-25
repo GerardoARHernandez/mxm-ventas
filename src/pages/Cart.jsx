@@ -1,35 +1,11 @@
 import { Link } from "react-router-dom";
 import { FiTrash2 } from "react-icons/fi";
 import { useState } from "react";
+import { cartProducts } from "../data";
 
 const Cart = () => {
   // Estado del carrito con datos de ejemplo
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "GABARDINA DONNIKA TWED INSPO CHANEL BLANCO 1114 T CH",
-      price: 545.00,
-      quantity: 1, // Esta cantidad viene determinada por el stock disponible
-      status: "stock",
-      maxQuantity: 3 // Stock máximo disponible
-    },
-    {
-      id: 2,
-      name: "VESTIDO ELEGANTE NEGRO T MD",
-      price: 650.00,
-      quantity: 1,
-      status: "stock",
-      maxQuantity: 5
-    },
-    {
-      id: 3,
-      name: "CHAQUETA DE CUERO PREMIUM T GD",
-      price: 1200.00,
-      quantity: 1,
-      status: "preventa",
-      maxQuantity: 2
-    }
-  ]);
+  const [cartItems, setCartItems] = useState([ cartProducts[0], cartProducts[1], cartProducts[2] ]);
 
   // Filtrar items
   const stockItems = cartItems.filter(item => item.status === "stock");
