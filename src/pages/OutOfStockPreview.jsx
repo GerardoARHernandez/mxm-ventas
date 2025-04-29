@@ -80,7 +80,7 @@ const OutOfStockPreview = () => {
       </div>
 
       {/* Información del producto (50% derecho) */}
-      <div className="w-3/5 px-3 py-6 flex flex-col mr-5">
+      <div className="w-3/5 px-6 py-6 flex flex-col mr-5">
         {/* Estado del producto (AGOTADO/ÚLTIMAS UNIDADES) */}
         <div className={`mb-4 p-4 rounded-2xl ${
           currentAlert.status === 'AGOTADO' ? 'bg-red-600' : 'bg-yellow-600'
@@ -94,7 +94,7 @@ const OutOfStockPreview = () => {
         {/* Detalles del producto */}
         <div className="mb-4">
           <h1 className="text-[2.5rem]/12 text-center font-bold mb-4">{currentAlert.productName}</h1>
-          <div className="space-y-3 grid grid-cols-2">
+          <div className="space-y-3 grid grid-cols-2 px-8">
             <p className="text-2xl">
               <span className="font-semibold">Color:</span> {currentAlert.variant.color}
             </p>

@@ -79,11 +79,7 @@ function AppContent() {
       <Routes>
         <Route 
           path="/agotados" 
-          element={
-            <ProtectedRoute>
-              <OutOfStockPreview />
-            </ProtectedRoute>
-          } 
+          element={<OutOfStockPreview />} 
         />
       </Routes>
     </>
