@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import Header from "./pages/Header";
 import Home from "./pages/Home";
 import ProductPreview from "./pages/ProductPreview";
@@ -23,65 +23,68 @@ function App() {
 }
 
 function AppContent() {
-  const location = useLocation();
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/agotados" element={<OutOfStockPreview />} />
 
-  //Mostrar el Header en todas las rutas excepto en "/agotados"
+      {/* Rutas que comparten el Header y el contenedor */}
+      <Route path="/" element={<MainLayout />}>
+        <Route
+          index // path="/" dentro de MainLayout
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="producto"
+          element={
+            <ProtectedRoute>
+              <ProductPreview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="nuevo"
+          element={
+            <ProtectedRoute>
+              <ClientSearch />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="carrito"
+          element={
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="armador"
+          element={
+            <ProtectedRoute>
+              <CartArmadores />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+    </Routes>
+  );
+}
+
+function MainLayout() {
+  const location = useLocation();
   const showHeader = !['/agotados'].includes(location.pathname);
 
   return (
     <>
       {showHeader && <Header />}
       <div className="container mx-auto">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/producto" 
-            element={
-              <ProtectedRoute>
-                <ProductPreview />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/nuevo" 
-            element={
-              <ProtectedRoute>
-                <ClientSearch />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/carrito" 
-            element={
-              <ProtectedRoute>
-                <Cart />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/armador" 
-            element={
-              <ProtectedRoute>
-                <CartArmadores />
-              </ProtectedRoute>
-            } 
-          />
-        </Routes>
+        <Outlet /> {/* Aquí se renderizarán los componentes de las rutas anidadas */}
       </div>
-      <Routes>
-        <Route 
-          path="/agotados" 
-          element={<OutOfStockPreview />} 
-        />
-      </Routes>
     </>
   );
 }
