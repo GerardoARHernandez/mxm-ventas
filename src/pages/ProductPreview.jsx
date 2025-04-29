@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, memo } from 'react';
-import { FiMinus, FiPlus, FiSearch, FiCheck } from 'react-icons/fi';
+import { FiMinus, FiPlus, FiSearch, FiCheck, FiCalendar } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { products } from '../data';
 
@@ -16,13 +16,22 @@ const VariantButton = memo(({ variant, index, isSelected, onClick }) => (
   </button>
 ));
 
-const SizeButton = memo(({ size, isSelected, onSelect, stock }) => (
+const SizeButton = memo(({ 
+  size, 
+  isSelected, 
+  onSelect, 
+  stock, 
+  isPreorder = false,
+  isPreorderSelected = false
+}) => (
   <button
-    onClick={() => onSelect(size.code)}
+    onClick={() => onSelect(size.code, isPreorder)}
     className={`relative px-4 py-2 border rounded-md transition-all flex flex-col items-center hover:cursor-pointer ${
       isSelected
         ? 'border-black bg-gray-100 font-medium'
-        : 'border-gray-300 hover:border-gray-400'
+        : isPreorderSelected
+          ? 'border-blue-500 bg-blue-50 font-medium'
+          : 'border-gray-300 hover:border-gray-400'
     } ${stock === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
     disabled={stock === 0}
   >
@@ -36,6 +45,9 @@ const SizeButton = memo(({ size, isSelected, onSelect, stock }) => (
     {isSelected && (
       <FiCheck className="absolute -top-1 -right-1 bg-black text-white rounded-full p-0.5" />
     )}
+    {isPreorderSelected && !isSelected && (
+      <FiCalendar className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-0.5" />
+    )}
   </button>
 ));
 
@@ -46,15 +58,28 @@ const ProductPreview = () => {
   const [selectedProductIndex, setSelectedProductIndex] = useState(0);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
+  const [selectedPreorderSize, setSelectedPreorderSize] = useState('');
+  const [isPreorder, setIsPreorder] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [showResults, setShowResults] = useState(false);
 
   const product = products[selectedProductIndex];
   const variant = product.variants[selectedVariantIndex];
-  const currentSize = useMemo(() => 
-    variant.sizes.find(size => size.code === selectedSize) || variant.sizes[0],
-    [variant.sizes, selectedSize]
-  );
+  
+  // Determinar si la variante tiene opciones de preventa
+  const hasPreorder = variant.prev && variant.prev.length > 0;
+  
+  // Obtener el tamaño actual seleccionado (normal o preventa)
+  const currentSizeData = useMemo(() => {
+    if (isPreorder && hasPreorder) {
+      return variant.prev.find(size => size.code === selectedPreorderSize) || 
+             variant.prev[0] || 
+             { code: '', price: 0, stock: 0 };
+    }
+    return variant.sizes.find(size => size.code === selectedSize) || 
+           variant.sizes[0] || 
+           { code: '', price: 0, stock: 0 };
+  }, [variant, selectedSize, selectedPreorderSize, isPreorder, hasPreorder]);
 
   // Pre-cargar imágenes
   useEffect(() => {
@@ -64,13 +89,16 @@ const ProductPreview = () => {
     });
   }, [product.variants]);
 
-  // Inicializar tamaño seleccionado
+  // Inicializar tamaños seleccionados
   useEffect(() => {
     if (variant.sizes.length > 0 && !variant.sizes.some(s => s.code === selectedSize)) {
       setSelectedSize(variant.sizes[0].code);
     }
+    if (hasPreorder && variant.prev.length > 0 && !variant.prev.some(s => s.code === selectedPreorderSize)) {
+      setSelectedPreorderSize(variant.prev[0].code);
+    }
     setQuantity(0);
-  }, [variant.sizes, selectedSize]);
+  }, [variant.sizes, variant.prev, selectedSize, selectedPreorderSize, hasPreorder]);
 
   // Buscar productos
   useEffect(() => {
@@ -100,18 +128,24 @@ const ProductPreview = () => {
     navigate('/producto');
   };
 
-  const handleSizeChange = (size) => {
-    setSelectedSize(size);
+  const handleSizeChange = (size, isPreorderSelection = false) => {
+    if (isPreorderSelection) {
+      setSelectedPreorderSize(size);
+      setIsPreorder(true);
+    } else {
+      setSelectedSize(size);
+      setIsPreorder(false);
+    }
     setQuantity(0);
   };
 
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value) || 0;
-    setQuantity(Math.max(0, Math.min(value, currentSize.stock)));
+    setQuantity(Math.max(0, Math.min(value, currentSizeData.stock)));
   };
 
   const incrementQuantity = () => {
-    setQuantity(prev => Math.min(prev + 1, currentSize.stock));
+    setQuantity(prev => Math.min(prev + 1, currentSizeData.stock));
   };
 
   const decrementQuantity = () => {
@@ -186,36 +220,6 @@ const ProductPreview = () => {
         <div className="p-8">
           <h3 className="text-2xl font-bold text-center -mt-7 pb-12">{product.name}</h3>
           
-          {/* Selector de tallas con existencias */}
-          <div className="mb-6">
-            <h4 className="text-lg font-semibold mb-3">Seleccionar talla:</h4>
-            <div className="flex space-x-3">
-              {variant.sizes.map(size => (
-                <button
-                  key={size.code}
-                  onClick={() => handleSizeChange(size.code)}
-                  className={`relative px-4 py-2 border rounded-md transition-all flex flex-col items-center hover:cursor-pointer ${
-                    selectedSize === size.code
-                      ? 'border-black bg-gray-100 font-medium'
-                      : 'border-gray-300 hover:border-gray-400'
-                  } ${size.stock === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={size.stock === 0}
-                >
-                  <span className="font-medium">{size.code}</span>
-                  <span className={`text-xs mt-1 ${
-                    size.stock > 5 ? 'text-green-600' : 
-                    size.stock > 0 ? 'text-yellow-600' : 'text-red-600'
-                  }`}>
-                    {size.stock} disponible{size.stock !== 1 ? 's' : ''}
-                  </span>
-                  {selectedSize === size.code && (
-                    <FiCheck className="absolute -top-1 -right-1 bg-black text-white rounded-full p-0.5" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Detalles del producto */}
           <div className="grid grid-cols-2 gap-8 px-5 text-lg text-gray-800 mb-6">
             <div>
@@ -225,12 +229,55 @@ const ProductPreview = () => {
               <span className="font-semibold">SKU:</span> {variant.sku}
             </div>
             <div>
-              <span className="font-semibold">Precio:</span> ${currentSize.price.toFixed(2)}
+              <span className="font-semibold">Precio:</span> ${currentSizeData.price.toFixed(2)}
             </div>
             <div>
-              <span className="font-semibold">Talla seleccionada:</span> {selectedSize}
+              <span className="font-semibold">Talla seleccionada:</span> {currentSizeData.code}
             </div>
           </div>
+
+          {/* Selector de tallas normales */}
+          <div className="mb-4">
+            <h4 className="text-lg font-semibold mb-3">Tallas disponibles:</h4>
+            <div className="flex flex-wrap gap-3">
+              {variant.sizes.map(size => (
+                <SizeButton
+                  key={`normal-${size.code}`}
+                  size={size}
+                  isSelected={!isPreorder && selectedSize === size.code}
+                  isPreorderSelected={false}
+                  onSelect={handleSizeChange}
+                  stock={size.stock}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Selector de tallas en preventa */}
+          {hasPreorder && (
+            <div className="mb-6">
+              <h4 className="text-lg font-semibold mb-3 flex items-center">
+                <FiCalendar className="mr-2 text-blue-500" />
+                Tallas en preventa:
+              </h4>
+              <div className="flex flex-wrap gap-3">
+                {variant.prev.map(size => (
+                  <SizeButton
+                    key={`preorder-${size.code}`}
+                    size={size}
+                    isSelected={isPreorder && selectedPreorderSize === size.code}
+                    isPreorderSelected={isPreorder && selectedPreorderSize === size.code}
+                    onSelect={handleSizeChange}
+                    stock={size.stock}
+                    isPreorder={true}
+                  />
+                ))}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                * Los productos en preventa tienen un tiempo de espera estimado de 15-20 días hábiles.
+              </p>
+            </div>
+          )}
           
           {/* Selector de cantidad */}
           <div className="flex items-center justify-center mb-6">
@@ -245,7 +292,7 @@ const ProductPreview = () => {
             <input
               type="number"
               min="0"
-              max={currentSize.stock}
+              max={currentSizeData.stock}
               value={quantity}
               onChange={handleQuantityChange}
               className="w-16 h-10 text-center border-t border-b border-gray-300 py-3 px-2 text-lg"
@@ -254,7 +301,7 @@ const ProductPreview = () => {
             <button 
               onClick={incrementQuantity}
               className="p-3 bg-black text-white rounded-r-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
-              disabled={quantity >= currentSize.stock}
+              disabled={quantity >= currentSizeData.stock}
             >
               <FiPlus size={18} />
             </button>
@@ -262,14 +309,20 @@ const ProductPreview = () => {
           
           {/* Botón de agregar al carrito */}
           <button
-            disabled={quantity === 0 || currentSize.stock === 0}
+            disabled={quantity === 0 || currentSizeData.stock === 0}
             className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${
-              quantity > 0 && currentSize.stock > 0
-                ? 'bg-rose-600 hover:bg-rose-700 text-white hover:cursor-pointer' 
+              quantity > 0 && currentSizeData.stock > 0
+                ? isPreorder
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white hover:cursor-pointer'
+                  : 'bg-rose-600 hover:bg-rose-700 text-white hover:cursor-pointer'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            {currentSize.stock === 0 ? 'SIN EXISTENCIAS' : 'Agregar al carrito'}
+            {currentSizeData.stock === 0 
+              ? 'SIN EXISTENCIAS' 
+              : isPreorder 
+                ? 'Reservar en preventa' 
+                : 'Agregar al carrito'}
           </button>
         </div>
       </div>

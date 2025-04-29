@@ -58,6 +58,9 @@
           basePrice: 429.99,
           sizes: [
             { code: 'UT', price: 409.99, stock: 15 }
+          ],
+          prev: [
+            { code: 'UT', price: 399.99, stock: 0 }
           ]
         },
         {
@@ -68,6 +71,9 @@
           basePrice: 399.99,
           sizes: [
             { code: 'UT', price: 399.99, stock: 5 }
+          ],
+          prev: [
+            { code: 'UT', price: 399.99, stock: 20 },
           ]
         },
         {
@@ -78,6 +84,9 @@
           basePrice: 399.99,
           sizes: [
             { code: 'UT', price: 419.99, stock: 0 },
+          ],
+          prev: [
+            { code: 'UT', price: 399.99, stock: 20 },
           ]
         }
       ]
@@ -97,6 +106,12 @@
             { code: 'M', price: 399.99, stock: 3 },
             { code: 'L', price: 419.99, stock: 16 },
             { code: 'XL', price: 419.99, stock: 2 },
+          ],
+          prev: [
+            { code: 'S', price: 399.99, stock: 0 },
+            { code: 'M', price: 399.99, stock: 20 },
+            { code: 'L', price: 419.99, stock: 16 },
+            { code: 'XL', price: 419.99, stock: 20 },
           ]
         },
         {
@@ -110,6 +125,12 @@
             { code: 'M', price: 399.99, stock: 0 },
             { code: 'L', price: 419.99, stock: 16 },
             { code: 'XL', price: 419.99, stock: 7 },
+          ],
+          prev: [
+            { code: 'S', price: 399.99, stock: 20 },
+            { code: 'M', price: 399.99, stock: 20 },
+            { code: 'L', price: 419.99, stock: 4 },
+            { code: 'XL', price: 419.99, stock: 20 },
           ]
         }
       ]

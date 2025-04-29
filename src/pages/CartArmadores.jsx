@@ -6,30 +6,30 @@ const CartArmadores = () => {
   const [prendas, setPrendas] = useState([
     {
       id: 1,
-      name: "GABARDINA DONNIKA TWED INSPO CHANEL BLANCO 1114 T CH",
+      name: "SET KARLAM #25 MAXIPANTALON & BLUSA JARETA TERRY DELUXE - Rojo",
       ubicacion: 'Pasillo 2',
       quantity: 2,
       status: "Pendiente",
       maxQuantity: 3,
-      image: 'https://permachef.com/cdn/shop/files/707c7627-167c-41f5-bf35-8fcc5e7a0e64_1512x.jpg?v=1683241257'
+      image: 'images/1-rojo.webp'
     },
     {
       id: 2,
-      name: "VESTIDO ELEGANTE NEGRO T MD",
+      name: "MAXIVESTIDO CHLOE TEJIDO CON DETALLES MESH - Azul",
       ubicacion: 'Pasillo 4',
       quantity: 3,
       status: "Pendiente",
       maxQuantity: 5,
-      image: ''
+      image: 'images/2-azul.webp'
     },
     {
       id: 3,
-      name: "CHAQUETA DE CUERO PREMIUM T GD",
+      name: "MAXIVESTIDO CHLOE TEJIDO CON DETALLES MESH - Azul",
       ubicacion: "Pasillo 10",
       quantity: 1,
       status: "Pendiente",
       maxQuantity: 1,
-      image: ''
+      image: 'images/2-blanco.webp'
     }
   ]);
 
