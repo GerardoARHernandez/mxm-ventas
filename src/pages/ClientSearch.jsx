@@ -16,7 +16,7 @@ const ClientSearch = () => {
     <div className="mt-5 mx-2 sm:mx-0">
       {/* Barra de búsqueda */}
       <div className="mb-6">
-        <div className="relative max-w-xl">
+        <div className="relative max-w-3xl">
           <input
             type="text"
             placeholder="Buscar clientes por nombre, email o teléfono..."

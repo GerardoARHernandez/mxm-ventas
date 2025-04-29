@@ -25,7 +25,7 @@ function App() {
 function AppContent() {
   const location = useLocation();
 
-  // Determinar si debemos mostrar el header basado en la ruta actual
+  //Mostrar el Header en todas las rutas excepto en "/agotados"
   const showHeader = !['/agotados'].includes(location.pathname);
 
   return (

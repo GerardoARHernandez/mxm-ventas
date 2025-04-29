@@ -52,7 +52,7 @@
       variants: [
         {
           id: 1,
-          imageUrl: 'images/1-rojo.jpeg',
+          imageUrl: 'images/1-rojo.webp',
           color: 'Rojo',
           sku: 'CP2023-RJ',
           basePrice: 429.99,
@@ -62,7 +62,7 @@
         },
         {
           id: 2,
-          imageUrl: 'images/1-blanco.jpeg',
+          imageUrl: 'images/1-blanco.webp',
           color: 'Blanco',
           sku: 'CP2023-BL',
           basePrice: 399.99,
@@ -72,7 +72,7 @@
         },
         {
           id: 3,
-          imageUrl: 'images/1-cafe.jpeg',
+          imageUrl: 'images/1-cafe.webp',
           color: 'Café',
           sku: 'CP2023-CF',
           basePrice: 399.99,
@@ -88,7 +88,7 @@
       variants: [
         {
           id: 4,
-          imageUrl: 'images/2-azul.jpeg',
+          imageUrl: 'images/2-azul.webp',
           color: 'Azul',
           sku: 'CP2025-AZ',
           basePrice: 399.99,
@@ -101,7 +101,7 @@
         },
         {
           id: 5,
-          imageUrl: 'images/2-blanco.jpeg',
+          imageUrl: 'images/2-blanco.webp',
           color: 'Blanco',
           sku: 'CP2025-BL',
           basePrice: 399.99,
