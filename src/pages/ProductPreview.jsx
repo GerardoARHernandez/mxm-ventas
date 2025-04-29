@@ -308,22 +308,24 @@ const ProductPreview = () => {
           </div>
           
           {/* Botón de agregar al carrito */}
-          <button
-            disabled={quantity === 0 || currentSizeData.stock === 0}
-            className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${
-              quantity > 0 && currentSizeData.stock > 0
-                ? isPreorder
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white hover:cursor-pointer'
-                  : 'bg-rose-600 hover:bg-rose-700 text-white hover:cursor-pointer'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {currentSizeData.stock === 0 
-              ? 'SIN EXISTENCIAS' 
-              : isPreorder 
-                ? 'Reservar en preventa' 
-                : 'Agregar al carrito'}
-          </button>
+          <div className='mx-auto flex justify-center'>
+            <button
+              disabled={quantity === 0 || currentSizeData.stock === 0}
+              className={`w-[15rem] py-3 rounded-lg font-semibold text-lg transition-colors ${
+                quantity > 0 && currentSizeData.stock > 0
+                  ? isPreorder
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white hover:cursor-pointer'
+                    : 'bg-rose-600 hover:bg-rose-700 text-white hover:cursor-pointer'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {currentSizeData.stock === 0 
+                ? 'SIN EXISTENCIAS' 
+                : isPreorder 
+                  ? 'Reservar en preventa' 
+                  : 'Agregar al carrito'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

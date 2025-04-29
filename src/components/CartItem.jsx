@@ -21,7 +21,7 @@ const CartItem = ({ item, removeItem }) => {
           <p className="text-gray-900">$ {(item.price * item.quantity).toFixed(2)}</p>
           <button 
             onClick={() => removeItem(item.id)}
-            className="text-rose-600 hover:text-rose-800"
+            className="text-rose-600 hover:text-rose-800 hover:cursor-pointer"
           >
             <FiTrash2 />
           </button>

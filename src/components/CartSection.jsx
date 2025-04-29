@@ -37,7 +37,7 @@ const CartSection = ({ title, items, subtotal, onProcess, processButtonColor = '
               </div>
               <button 
                 onClick={onProcess}
-                className={`bg-${processButtonColor}-600 hover:bg-${processButtonColor}-700 text-white py-2 px-6 rounded-md font-medium transition-colors`}
+                className={`bg-${processButtonColor}-600 hover:bg-${processButtonColor}-700 text-white py-2 px-6 rounded-md font-medium transition-colors hover:cursor-pointer`}
               >
                 Completado
               </button>
