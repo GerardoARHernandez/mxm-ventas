@@ -96,7 +96,7 @@
             { code: 'S', price: 399.99, stock: 10 },
             { code: 'M', price: 399.99, stock: 3 },
             { code: 'L', price: 419.99, stock: 16 },
-            { code: 'XL', price: 419.99, stock: 7 },
+            { code: 'XL', price: 419.99, stock: 2 },
           ]
         },
         {
@@ -107,7 +107,7 @@
           basePrice: 399.99,
           sizes: [
             { code: 'S', price: 399.99, stock: 10 },
-            { code: 'M', price: 399.99, stock: 3 },
+            { code: 'M', price: 399.99, stock: 0 },
             { code: 'L', price: 419.99, stock: 16 },
             { code: 'XL', price: 419.99, stock: 7 },
           ]

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from "./pages/Header";
 import Home from "./pages/Home";
 import ProductPreview from "./pages/ProductPreview";
@@ -7,6 +7,7 @@ import ClientSearch from "./pages/ClientSearch";
 import Cart from "./pages/Cart";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import CartArmadores from './pages/CartArmadores';
+import OutOfStockPreview from './pages/OutOfStockPreview';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -22,9 +23,14 @@ function App() {
 }
 
 function AppContent() {
+  const location = useLocation();
+
+  // Determinar si debemos mostrar el header basado en la ruta actual
+  const showHeader = !['/agotados'].includes(location.pathname);
+
   return (
     <>
-      <Header />
+      {showHeader && <Header />}
       <div className="container mx-auto">
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -68,9 +74,18 @@ function AppContent() {
               </ProtectedRoute>
             } 
           />
-
         </Routes>
       </div>
+      <Routes>
+        <Route 
+          path="/agotados" 
+          element={
+            <ProtectedRoute>
+              <OutOfStockPreview />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
     </>
   );
 }
