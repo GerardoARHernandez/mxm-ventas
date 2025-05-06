@@ -1,37 +1,31 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { users } from '../data';
 
 const AuthContext = createContext();
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutos
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    // Cargar usuario inicial desde localStorage
     const storedUser = localStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
   
   const [lastActivity, setLastActivity] = useState(() => {
-    // Cargar última actividad inicial desde localStorage
     const storedLastActivity = localStorage.getItem('lastActivity');
     return storedLastActivity ? parseInt(storedLastActivity) : Date.now();
   });
   
-  const [isLoading, setIsLoading] = useState(true); // Estado de carga inicial
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Efecto para verificar la sesión al cargar
   useEffect(() => {
     const verifySession = () => {
       if (user) {
         const timeSinceLastActivity = Date.now() - lastActivity;
         
         if (timeSinceLastActivity >= INACTIVITY_TIMEOUT) {
-          // Sesión expirada
           logout();
         } else {
-          // Actualizar última actividad al cargar
           updateLastActivity();
         }
       }
@@ -41,7 +35,6 @@ export const AuthProvider = ({ children }) => {
     verifySession();
   }, []);
 
-  // Configurar temporizador de inactividad
   useEffect(() => {
     if (!user) return;
 
@@ -52,7 +45,6 @@ export const AuthProvider = ({ children }) => {
     return () => clearTimeout(inactivityTimer);
   }, [user, lastActivity]);
 
-  // Escuchar eventos de interacción del usuario
   useEffect(() => {
     if (!user) return;
 
@@ -76,21 +68,41 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('lastActivity', now.toString());
   };
 
-  const login = (username, password) => {
-    const foundUser = users.find(
-      u => u.username === username && u.password === password
-    );
-    
-    if (foundUser) {
-      setUser(foundUser);
-      const now = Date.now();
-      setLastActivity(now);
-      localStorage.setItem('user', JSON.stringify(foundUser));
-      localStorage.setItem('lastActivity', now.toString());
-      navigate('/');
-      return true;
+  const login = async (username, password) => {
+    try {
+      const response = await fetch('/api/Login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          Usuario: username,
+          Password: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.Acceso) {
+        const userData = {
+          username: username,
+          name: data.nombre
+        };
+        
+        setUser(userData);
+        const now = Date.now();
+        setLastActivity(now);
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('lastActivity', now.toString());
+        navigate('/');
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
@@ -100,7 +112,6 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
   };
 
-  // Esperar a terminar la verificación inicial antes de renderizar
   if (isLoading) {
     return null; 
   }

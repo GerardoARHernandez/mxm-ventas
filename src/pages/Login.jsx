@@ -22,16 +22,18 @@ const Login = () => {
       if (!success) {
         setError('Credenciales incorrectas');
       }
+    } catch (err) {
+      setError('Error al conectar con el servidor');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-blue-100">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-xl">
         <div className="text-center">
-          <h2 className="mt-0 text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-0 text-3xl font-extrabold text-gray-950">
             Iniciar Sesión
           </h2>
           <p className="mt-2 text-sm text-gray-600">
@@ -41,9 +43,8 @@ const Login = () => {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm space-y-4">
-            {/* Campo Usuario */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-900 mb-1">
                 Usuario
               </label>
               <div className="relative">
@@ -57,16 +58,15 @@ const Login = () => {
                   autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className={`pl-10 block w-full py-3 px-3 border ${error ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-rose-400 focus:border-rose-400`}
+                  className={`pl-10 block w-full py-3 px-3 border ${error ? 'border-red-400' : 'border-gray-400'} rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500`}
                   placeholder="Usuario"
                   required
                 />
               </div>
             </div>
 
-            {/* Campo Contraseña */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-1">
                 Contraseña
               </label>
               <div className="relative">
@@ -80,7 +80,7 @@ const Login = () => {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`pl-10 block w-full py-3 px-3 border ${error ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-rose-400 focus:border-rose-400`}
+                  className={`pl-10 block w-full py-3 px-3 border ${error ? 'border-red-400' : 'border-gray-400'} rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500`}
                   placeholder="••••••••"
                   required
                 />
