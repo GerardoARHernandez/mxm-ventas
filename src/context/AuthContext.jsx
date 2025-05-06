@@ -1,3 +1,4 @@
+// AuthContext.js
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -80,9 +81,13 @@ export const AuthProvider = ({ children }) => {
           Password: password
         })
       });
-
+  
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
+  
       const data = await response.json();
-
+  
       if (data.Acceso) {
         const userData = {
           username: username,
@@ -96,9 +101,8 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('lastActivity', now.toString());
         navigate('/');
         return true;
-      } else {
-        return false;
       }
+      return false;
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
       return false;

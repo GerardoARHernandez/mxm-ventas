@@ -8,6 +8,7 @@ import Cart from "./pages/Cart";
 import { AuthProvider, useAuth } from './context/AuthContext';
 import CartArmadores from './pages/CartArmadores';
 import OutOfStockPreview from './pages/OutOfStockPreview';
+import ProductGrid from './components/ProductGrid';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -35,6 +36,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="productos"
+          element={
+            <ProtectedRoute>
+              <ProductGrid />
             </ProtectedRoute>
           }
         />

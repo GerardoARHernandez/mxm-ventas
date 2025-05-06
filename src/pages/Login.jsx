@@ -18,12 +18,18 @@ const Login = () => {
     setError('');
     
     try {
+      if (!username || !password) {
+        setError('Usuario y contraseña son requeridos');
+        return;
+      }
+
       const success = await login(username, password);
       if (!success) {
         setError('Credenciales incorrectas');
       }
     } catch (err) {
       setError('Error al conectar con el servidor');
+      console.error('Login error:', err);
     } finally {
       setIsSubmitting(false);
     }

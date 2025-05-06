@@ -1,16 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
-import { clients } from "../data";
 
 const ClientSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Fetch clients from API
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const response = await fetch('/api/ListClientes');
+        if (!response.ok) {
+          throw new Error("Error al obtener los clientes");
+        }
+        const data = await response.json();
+        setClients(data.ListClientes || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchClients();
+  }, []);
+
+  // Resto del componente permanece igual...
   // Filtrar clientes según la búsqueda
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.phone.includes(searchQuery)
+  const filteredClients = clients.filter(
+    (client) =>
+      client.NOMBRE.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (client.CORREO && client.CORREO.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      client.TELEFONO.includes(searchQuery)
   );
+
+  if (loading) {
+    return (
+      <div className="mt-5 mx-2 sm:mx-0 text-center py-8">
+        <p>Cargando clientes...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-5 mx-2 sm:mx-0 text-center py-8 text-red-500">
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-5 mx-2 sm:mx-0">
@@ -42,10 +82,10 @@ const ClientSearch = () => {
           <tbody>
             {filteredClients.length > 0 ? (
               filteredClients.map((client) => (
-                <tr key={client.id} className="even:bg-white odd:bg-gray-100 hover:bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-2">{client.name}</td>
-                  <td className="border border-gray-300 px-4 py-2">{client.email}</td>
-                  <td className="border border-gray-300 px-4 py-2">{client.phone}</td>
+                <tr key={client.CLIENTE} className="even:bg-white odd:bg-gray-100 hover:bg-gray-50">
+                  <td className="border border-gray-300 px-4 py-2">{client.NOMBRE}</td>
+                  <td className="border border-gray-300 px-4 py-2">{client.CORREO || "-"}</td>
+                  <td className="border border-gray-300 px-4 py-2">{client.TELEFONO}</td>
                   <td className="border border-gray-300 px-4 py-2">
                     <button className="text-rose-600 hover:text-rose-800 transition-colors duration-200">
                       Seleccionar
@@ -56,7 +96,7 @@ const ClientSearch = () => {
             ) : (
               <tr>
                 <td colSpan="4" className="border border-gray-300 px-4 py-4 text-center text-gray-500">
-                  {searchQuery ? "No se encontraron clientes" : "Ingrese un término de búsqueda"}
+                  {searchQuery ? "No se encontraron clientes" : clients.length === 0 ? "No hay clientes disponibles" : "Ingrese un término de búsqueda"}
                 </td>
               </tr>
             )}
