@@ -14,22 +14,24 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validación antes de enviar
+    if (!username || !password) {
+      setError('Usuario y contraseña son requeridos');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
     
     try {
-      if (!username || !password) {
-        setError('Usuario y contraseña son requeridos');
-        return;
-      }
-
       const success = await login(username, password);
       if (!success) {
-        setError('Credenciales incorrectas');
+        setError('Usuario o contraseña incorrectos');
       }
     } catch (err) {
-      setError('Error al conectar con el servidor');
       console.error('Login error:', err);
+      setError(err.message || 'Error al conectar con el servidor');
     } finally {
       setIsSubmitting(false);
     }
@@ -63,7 +65,10 @@ const Login = () => {
                   type="text"
                   autoComplete="username"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    setError(''); // Limpiar error al editar
+                  }}
                   className={`pl-10 block w-full py-3 px-3 border ${error ? 'border-red-400' : 'border-gray-400'} rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500`}
                   placeholder="Usuario"
                   required
@@ -85,7 +90,10 @@ const Login = () => {
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError(''); // Limpiar error al editar
+                  }}
                   className={`pl-10 block w-full py-3 px-3 border ${error ? 'border-red-400' : 'border-gray-400'} rounded-md shadow-sm focus:outline-none focus:ring-rose-500 focus:border-rose-500`}
                   placeholder="••••••••"
                   required

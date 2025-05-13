@@ -7,14 +7,4 @@ export default defineConfig({
   plugins: [react(),
     tailwindcss()
   ],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://25.62.74.73',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/Carrito.NETFrameworkEnvironment/APICarrito'),
-        secure: false
-      }
-    }
-  }
 })

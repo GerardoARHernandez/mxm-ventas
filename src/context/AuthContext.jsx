@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await fetch('/api/Login', {
+      const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/Login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
       if (data.Acceso) {
         const userData = {
           username: username,
-          name: data.nombre
+          name: data.nombre || username // Usa data.nombre si viene en la respuesta, sino usa el username
         };
         
         setUser(userData);

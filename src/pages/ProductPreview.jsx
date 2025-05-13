@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, memo } from 'react';
-import { FiMinus, FiPlus, FiSearch, FiCheck, FiCalendar } from 'react-icons/fi';
+import { FiMinus, FiPlus, FiSearch, FiCheck, FiCalendar, FiPackage } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { products } from '../data';
 
@@ -163,6 +163,20 @@ const ProductPreview = () => {
       />
     ))
   ), [product.variants, selectedVariantIndex]);
+  
+  const canAddPackage = useMemo(() => {
+    if (!selectedSize && !selectedPreorderSize) return false;
+    
+    const currentSize = isPreorder ? selectedPreorderSize : selectedSize;
+    const currentVariant = product.variants[selectedVariantIndex];
+    
+    // Verificar que todos los colores tengan al menos 1 unidad en la talla seleccionada
+    return product.variants.every(variant => {
+      const sizes = isPreorder && variant.prev ? variant.prev : variant.sizes;
+      const sizeData = sizes.find(size => size.code === currentSize);
+      return sizeData && sizeData.stock > 0;
+    });
+  }, [product, selectedVariantIndex, selectedSize, selectedPreorderSize, isPreorder]);
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -279,31 +293,46 @@ const ProductPreview = () => {
             </div>
           )}
           
-          {/* Selector de cantidad */}
-          <div className="flex items-center justify-center mb-6">
-            <button 
-              onClick={decrementQuantity}
-              className="p-3 bg-black text-white rounded-l-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
-              disabled={quantity === 0}
-            >
-              <FiMinus size={18} />
-            </button>
+          {/* Selector de cantidad y botones */}
+          <div className="flex flex-col items-center gap-4 mb-6">
+            <div className="flex items-center">
+              <button 
+                onClick={decrementQuantity}
+                className="p-3 bg-black text-white rounded-l-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
+                disabled={quantity === 0}
+              >
+                <FiMinus size={18} />
+              </button>
+              
+              <input
+                type="number"
+                min="0"
+                max={currentSizeData.stock}
+                value={quantity}
+                onChange={handleQuantityChange}
+                className="w-16 h-10 text-center border-t border-b border-gray-300 py-3 px-2 text-lg"
+              />
+              
+              <button 
+                onClick={incrementQuantity}
+                className="p-3 bg-black text-white rounded-r-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
+                disabled={quantity >= currentSizeData.stock}
+              >
+                <FiPlus size={18} />
+              </button>
+            </div>
             
-            <input
-              type="number"
-              min="0"
-              max={currentSizeData.stock}
-              value={quantity}
-              onChange={handleQuantityChange}
-              className="w-16 h-10 text-center border-t border-b border-gray-300 py-3 px-2 text-lg"
-            />
-            
-            <button 
-              onClick={incrementQuantity}
-              className="p-3 bg-black text-white rounded-r-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
-              disabled={quantity >= currentSizeData.stock}
+            {/* Botón de agregar paquete */}
+            <button
+              disabled={!canAddPackage}
+              className={`w-[15rem] py-3 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
+                canAddPackage
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white hover:cursor-pointer'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
             >
-              <FiPlus size={18} />
+              <FiPackage size={18} />
+              Agregar paquete
             </button>
           </div>
           
