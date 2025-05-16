@@ -11,7 +11,7 @@ const ClientSearch = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('/api/ListClientes');
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListClientes');
         if (!response.ok) {
           throw new Error("Error al obtener los clientes");
         }

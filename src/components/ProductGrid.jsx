@@ -13,7 +13,7 @@ const ProductGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/ListProds');
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListProds');
         if (!response.ok) {
           throw new Error("Error al obtener los productos");
         }

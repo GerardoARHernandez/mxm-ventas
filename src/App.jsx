@@ -50,9 +50,9 @@ function AppContent() {
         <Route
           path="producto"
           element={
-            // <ProtectedRoute>
+            <ProtectedRoute>
               <ProductPreview />
-            // </ProtectedRoute>
+            </ProtectedRoute>
           }
         />
         <Route
