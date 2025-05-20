@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { FiSearch, FiChevronDown, FiChevronUp } from "react-icons/fi";
-import { useDebounce } from "use-debounce"; // Instalar con: npm install use-debounce
+import { useDebounce } from "use-debounce";
 
 const ProductGrid = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery] = useDebounce(searchQuery, 300); // 300ms de delay
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,12 +13,12 @@ const ProductGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListProds');
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos');
         if (!response.ok) {
           throw new Error("Error al obtener los productos");
         }
         const data = await response.json();
-        setProducts(data.ListProds || []);
+        setProducts(data.ListModelos || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -34,8 +34,8 @@ const ProductGrid = () => {
     const groups = {};
     
     products.forEach(product => {
-      const modelCode = product.ARTICULO.toString().substring(0, 8);
-      const baseDescription = product.DESCRIP.split(' T-')[0];
+      const modelCode = product.modelo;
+      const baseDescription = product.Descrip;
       
       if (!groups[modelCode]) {
         groups[modelCode] = {
@@ -46,9 +46,14 @@ const ProductGrid = () => {
       }
       
       groups[modelCode].products.push(product);
+      
+      // Extraer color y talla si están en la descripción
+      const colorMatch = product.Descrip.match(/(AZUL|ROJO|VERDE|NEGRO|BLANCO|AMARILLO|ROSA|FUCSIA|MARINO|MULTICOLOR)/i);
+      const sizeMatch = product.Descrip.match(/T-?(\d+)/i);
+      
       groups[modelCode].allVariants.push({
-        color: product.DESCRIP.split(' ').slice(-2)[0],
-        size: product.DESCRIP.split(' T-')[1] || 'UT'
+        color: colorMatch ? colorMatch[0] : 'No especificado',
+        size: sizeMatch ? sizeMatch[1] : 'UT'
       });
     });
     
@@ -61,14 +66,12 @@ const ProductGrid = () => {
       ([_, group]) =>
         group.baseDescription.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
         group.products.some(p => 
-          p.ARTICULO.includes(debouncedSearchQuery) ||
-          p.Linea.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-          p.Marca.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+          p.modelo.includes(debouncedSearchQuery) ||
+          p.Descrip.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
         )
     );
   }, [productGroups, debouncedSearchQuery]);
 
-  // Memoizar la función toggle
   const toggleGroup = useCallback((modelCode) => {
     setExpandedGroups(prev => ({
       ...prev,
@@ -99,7 +102,7 @@ const ProductGrid = () => {
         <div className="relative max-w-3xl mx-auto">
           <input
             type="text"
-            placeholder="Buscar productos por descripción, código, línea o marca..."
+            placeholder="Buscar productos por descripción o código..."
             className="w-full py-2 pl-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -123,12 +126,12 @@ const ProductGrid = () => {
               >
                 {/* Contenedor de imagen */}
                 <div className="bg-gray-100 h-48 flex items-center justify-center relative">
-                  {firstProduct.IMAGEN ? (
+                  {firstProduct.Foto ? (
                     <img 
-                      src={firstProduct.IMAGEN} 
+                      src={firstProduct.Foto} 
                       alt={group.baseDescription} 
                       className="h-full w-full object-contain"
-                      loading="lazy" // Optimización para carga de imágenes
+                      loading="lazy"
                     />
                   ) : (
                     <span className="text-gray-400 text-sm">Sin imagen</span>
@@ -148,22 +151,14 @@ const ProductGrid = () => {
                   </h3>
                   
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-blue-600 font-bold">${firstProduct.PRECIO1}</span>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      parseInt(firstProduct.EXISTENCIA) > 0
-                      ? parseInt(firstProduct.EXISTENCIA) < 6
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                    }`}>
-                      {parseInt(firstProduct.EXISTENCIA) > 0 ? parseInt(firstProduct.EXISTENCIA) < 6 ? "Pocas Existencias" : "Disponible" : "Agotado"}
+                    <span className="text-blue-600 font-bold">${firstProduct.Precio1}</span>
+                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                      Disponible
                     </span>
                   </div>
                   
                   <div className="text-xs text-gray-500 mb-2">
-                    <div>Código: {modelCode}...</div>
-                    <div>Línea: {firstProduct.Linea}</div>
-                    <div>Marca: {firstProduct.Marca}</div>
+                    <div>Código: {modelCode}</div>
                   </div>
                   
                   {variantCount > 1 && (
@@ -213,7 +208,7 @@ const ProductGrid = () => {
   );
 };
 
-// Función auxiliar para obtener código de color (simplificado)
+// Función auxiliar para obtener código de color
 const getColorCode = (colorName) => {
   const colors = {
     'BLANCO': '#FFFFFF',
@@ -222,7 +217,10 @@ const getColorCode = (colorName) => {
     'FUCSIA': '#FF00FF',
     'VERDE': '#00FF00',
     'MARINO': '#000080',
-    'MULTICOLOR': 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)'
+    'MULTICOLOR': 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)',
+    'AZUL': '#0000FF',
+    'ROJO': '#FF0000',
+    'NEGRO': '#000000'
   };
   
   return colors[colorName.toUpperCase()] || '#CCCCCC';

@@ -3,7 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
-const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutos
+const INACTIVITY_TIMEOUT = 20 * 60 * 1000; // 20 minutos
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
