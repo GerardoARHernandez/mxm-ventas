@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { FiSearch, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiSearch, FiChevronDown, FiChevronUp, FiEye } from "react-icons/fi";
 import { useDebounce } from "use-debounce";
+import { useNavigate } from "react-router-dom";
 
 const ProductGrid = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [products, setProducts] = useState([]);
@@ -28,6 +30,11 @@ const ProductGrid = () => {
 
     fetchProducts();
   }, []);
+
+  // Función para ver el producto individualmente
+  const viewProduct = (modelCode) => {
+    navigate(`/producto/${modelCode}`);
+  };
 
   // Memoizar la agrupación de productos
   const productGroups = useMemo(() => {
@@ -161,37 +168,44 @@ const ProductGrid = () => {
                     <div>Código: {modelCode}</div>
                   </div>
                   
-                  {variantCount > 1 && (
-                    <div className="mt-2 border-t pt-2">
+                  <div className="flex justify-between items-center mt-2">
+                    <button 
+                      onClick={() => viewProduct(modelCode)}
+                      className="flex items-center text-xs text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded"
+                    >
+                      <FiEye className="mr-1" /> Ver producto
+                    </button>
+                    
+                    {variantCount > 1 && (
                       <button 
                         onClick={() => toggleGroup(modelCode)}
                         className="flex items-center text-xs text-blue-500 hover:text-blue-700"
                       >
                         {isExpanded ? (
                           <>
-                            <FiChevronUp className="mr-1" /> Ocultar variantes
+                            <FiChevronUp className="mr-1" /> Ocultar
                           </>
                         ) : (
                           <>
-                            <FiChevronDown className="mr-1" /> Mostrar {variantCount} variantes
+                            <FiChevronDown className="mr-1" /> Variantes
                           </>
                         )}
                       </button>
-                      
-                      {isExpanded && (
-                        <div className="mt-2 text-xs">
-                          <div className="font-medium mb-1">Variantes disponibles:</div>
-                          <div className="grid grid-cols-2 gap-1">
-                            {group.allVariants.map((variant, idx) => (
-                              <div key={idx} className="flex items-center">
-                                <span className="inline-block w-3 h-3 rounded-full mr-1" 
-                                  style={{backgroundColor: getColorCode(variant.color)}} />
-                                {variant.color} - T{variant.size}
-                              </div>
-                            ))}
+                    )}
+                  </div>
+                  
+                  {isExpanded && variantCount > 1 && (
+                    <div className="mt-2 text-xs">
+                      <div className="font-medium mb-1">Variantes disponibles:</div>
+                      <div className="grid grid-cols-2 gap-1">
+                        {group.allVariants.map((variant, idx) => (
+                          <div key={idx} className="flex items-center">
+                            <span className="inline-block w-3 h-3 rounded-full mr-1" 
+                              style={{backgroundColor: getColorCode(variant.color)}} />
+                            {variant.color} - T{variant.size}
                           </div>
-                        </div>
-                      )}
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -207,6 +221,7 @@ const ProductGrid = () => {
     </div>
   );
 };
+
 
 // Función auxiliar para obtener código de color
 const getColorCode = (colorName) => {

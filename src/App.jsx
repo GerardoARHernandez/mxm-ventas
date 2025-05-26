@@ -48,7 +48,7 @@ function AppContent() {
           }
         />
         <Route
-          path="producto"
+          path="producto/:modelCode"
           element={
             <ProtectedRoute>
               <ProductPreview />
