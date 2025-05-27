@@ -20,7 +20,10 @@ const ProductGrid = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos');
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos', {
+          headers: {
+            'Ambiente': 'DESA',
+        }});
         if (!response.ok) {
           throw new Error("Error al obtener los productos");
         }

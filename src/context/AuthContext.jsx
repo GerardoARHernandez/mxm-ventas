@@ -75,6 +75,7 @@ export const AuthProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Origin': import.meta.env.VITE_API_ORIGIN
         },
         body: JSON.stringify({
           Usuario: username,
