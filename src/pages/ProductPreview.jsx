@@ -39,7 +39,11 @@ const ProductPreview = () => {
     const fetchProductData = async () => {
       try {
         // Primero obtenemos la lista de productos para encontrar el seleccionado
-        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos');
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos', {
+          headers: {
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          },
+        });
         if (!response.ok) throw new Error("Error al obtener los productos");
         const data = await response.json();
         
@@ -49,7 +53,11 @@ const ProductPreview = () => {
         setProduct(foundProduct);
         
         // Luego obtenemos las tallas disponibles
-        const sizesResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaTallas?Modelo=${modelCode}`);
+        const sizesResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaTallas?Modelo=${modelCode}`, {
+          headers: {
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          },
+        });
         if (!sizesResponse.ok) throw new Error("Error al obtener las tallas");
         const sizesData = await sizesResponse.json();
         

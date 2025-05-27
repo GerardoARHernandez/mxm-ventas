@@ -22,8 +22,9 @@ const ProductGrid = () => {
         setLoading(true);
         const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos', {
           headers: {
-            'Ambiente': 'DESA',
-        }});
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          },
+        });
         if (!response.ok) {
           throw new Error("Error al obtener los productos");
         }

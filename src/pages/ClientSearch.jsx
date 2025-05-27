@@ -11,7 +11,11 @@ const ClientSearch = () => {
   useEffect(() => {
     const fetchClients = async () => {
       try {
-        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListClientes');
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListClientes', {
+          headers: {
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          },
+        });
         if (!response.ok) {
           throw new Error("Error al obtener los clientes");
         }
