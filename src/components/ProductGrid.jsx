@@ -156,7 +156,7 @@ const ProductGrid = () => {
                   <div className="bg-gray-100 h-48 flex items-center justify-center relative">
                     {firstProduct.Foto ? (
                       <img 
-                        src={firstProduct.Foto} 
+                        src={`https://systemweb.ddns.net/CarritoWeb/imgMXM/${firstProduct.Foto}`}
                         alt={group.baseDescription} 
                         className="h-full w-full object-contain"
                         loading="lazy"
@@ -242,7 +242,7 @@ const ProductGrid = () => {
                 <button
                   onClick={() => paginate(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className="px-3 py-1 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:cursor-pointer hover:bg-gray-50 disabled:opacity-50 disabled:cursor-default"
                 >
                   Anterior
                 </button>
@@ -263,7 +263,7 @@ const ProductGrid = () => {
                     <button
                       key={pageNumber}
                       onClick={() => paginate(pageNumber)}
-                      className={`px-3 py-1 border-t border-b border-gray-300 bg-white text-sm font-medium ${
+                      className={`px-3 py-1 border-t border-b border-gray-300 bg-white text-sm font-medium hover:cursor-pointer ${
                         currentPage === pageNumber
                           ? 'text-blue-600 bg-blue-50'
                           : 'text-gray-700 hover:bg-gray-50'
@@ -277,7 +277,7 @@ const ProductGrid = () => {
                 <button
                   onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                  className="px-3 py-1 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:cursor-pointer hover:bg-gray-50 disabled:opacity-50"
                 >
                   Siguiente
                 </button>
