@@ -35,7 +35,7 @@ const ColorButton = ({ color, isSelected, onSelect }) => (
       isSelected ? 'border-black' : 'border-gray-300 hover:border-gray-400'
     }`}
   >
-    <div className="w-19 h-16 rounded-full overflow-hidden">
+    <div className="w-19 h-19 rounded-full overflow-hidden">
       <img 
         src={`https://systemweb.ddns.net/CarritoWeb/${color.Imagen}`}
         alt={color.cvariacion}
@@ -223,7 +223,7 @@ const ProductPreview = () => {
           {variations.length > 0 && (
             <div className="mb-4">
               <h4 className="text-lg font-semibold mb-3">Colores disponibles:</h4>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-5 md:gap-3">
                 {variations.map(variation => (
                   <ColorButton
                     key={variation.Codigo}
@@ -258,7 +258,7 @@ const ProductPreview = () => {
               <div className="flex items-center">
                 <button 
                   onClick={decrementQuantity}
-                  className="p-3 bg-black text-white rounded-l-lg hover:bg-gray-800 transition-colors"
+                  className="p-3 bg-black text-white rounded-l-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
                   disabled={quantity === 1 || availableStock === 0}
                 >
                   <FiMinus size={18} />
@@ -278,7 +278,7 @@ const ProductPreview = () => {
                 
                 <button 
                   onClick={incrementQuantity}
-                  className="p-3 bg-black text-white rounded-r-lg hover:bg-gray-800 transition-colors"
+                  className="p-3 bg-black text-white rounded-r-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
                   disabled={quantity >= availableStock || availableStock === 0}
                 >
                   <FiPlus size={18} />
@@ -288,13 +288,13 @@ const ProductPreview = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={availableStock === 0}
-                className={`w-full max-w-xs py-3 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
+                className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
                   availableStock > 0
-                    ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                    ? 'bg-rose-600 hover:bg-rose-700 hover:cursor-pointer text-white'
                     : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <FiShoppingCart />
+                <FiShoppingCart className='text-3xl'/>
                 {availableStock > 0 
                   ? `Agregar al carrito (${availableStock} disponibles)`
                   : 'Sin existencias'}
