@@ -29,23 +29,26 @@ const SizeButton = ({ size, isSelected, onSelect }) => (
 
 
 const ColorButton = ({ color, isSelected, onSelect }) => (
-  <button
-    onClick={() => onSelect(color.Codigo)}
-    className={`relative p-1 border-2 rounded-full transition-all hover:cursor-pointer ${
-      isSelected ? 'border-black' : 'border-gray-300 hover:border-gray-400'
-    }`}
-  >
-    <div className="w-19 h-19 rounded-full overflow-hidden">
-      <img 
-        src={`https://systemweb.ddns.net/CarritoWeb/${color.Imagen}`}
-        alt={color.cvariacion}
-        className="w-full h-full object-cover"
-      />
-    </div>
-    {isSelected && (
-      <FiCheck className="absolute -top-1 -right-1 bg-black text-white rounded-full p-0.5" />
-    )}
-  </button>
+  <div>
+    <button
+      onClick={() => onSelect(color.Codigo)}
+      className={`relative p-1 border-2 rounded-full transition-all hover:cursor-pointer ${
+        isSelected ? 'border-black' : 'border-gray-300 hover:border-gray-400'
+      }`}
+    >
+      <div className="w-20 h-20 rounded-full overflow-hidden">
+        <img 
+          src={`https://systemweb.ddns.net/CarritoWeb/${color.Imagen}`}
+          alt={color.cvariacion}
+          className="w-full h-full object-cover"
+        />
+      </div>
+      {isSelected && (
+        <FiCheck className="absolute -top-1 -right-1 bg-black text-white rounded-full p-0.5" />
+      )}
+    </button>
+    <p className="text-xs text-center mt-1">{color.cvariacion}</p>
+  </div>
 );
 
 const ProductPreview = () => {
