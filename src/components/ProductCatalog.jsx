@@ -1,3 +1,4 @@
+import React from 'react';
 
 const ProductCatalog = () => {
   const products = [
@@ -52,60 +53,64 @@ const ProductCatalog = () => {
 };
 
 const ProductCard = ({ product }) => {
-  const rectangles = product.rectangles;
+  // Filtramos los rectángulos vacíos
+  const validRectangles = product.rectangles.filter(rect => 
+    rect.code.trim() !== '' || rect.description.trim() !== ''
+  );
 
-  // Verificamos si uno está vacío
-  const validRects = rectangles.map(r => r.code.trim() !== '' || r.description.trim() !== '');
-  const hasOneEmpty = validRects.filter(Boolean).length === 1;
+  // Calculamos las clases de ancho según la cantidad de rectángulos válidos
+  const getWidthClass = () => {
+    if (validRectangles.length === 0) return 'hidden';
+    if (validRectangles.length === 1) return 'w-full';
+    return 'w-full md:w-1/2';
+  };
 
   return (
-    <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200">
+    <div className="rounded-xl overflow-hidden shadow-lg border border-gray-200 bg-white">
       {/* Imagen del producto */}
-      <div className="w-full">
+      <div className="w-full aspect-square">
         <img 
           src={product.image} 
           alt="Producto" 
-          className="w-full object-cover"
+          className="w-full h-full object-cover"
         />
       </div>
 
-      {/* Rectángulos como banners horizontales */}
-      <div className="flex flex-row w-full">
-        {rectangles.map((rectangle, index) => {
-          const isRight = index % 2 === 1;
-          const isEmpty = rectangle.code.trim() === '' && rectangle.description.trim() === '';
-
-          // Tamaño dinámico según contenido
-          const baseWidth = hasOneEmpty
-            ? isEmpty ? 'md:w-1/3' : 'md:w-2/3'
-            : 'md:w-1/2';
+      {/* Contenedor de rectángulos */}
+      <div className="flex flex-col md:flex-row w-full">
+        {product.rectangles.map((rectangle, index) => {
+          // Ocultamos completamente si está vacío
+          if (rectangle.code.trim() === '' && rectangle.description.trim() === '') {
+            return null;
+          }
 
           return (
             <div 
               key={index}
-              className={`flex items-center justify-between w-full ${baseWidth} px-4 py-4`}
+              className={`${getWidthClass()} px-4 py-4 flex items-center`}
               style={{
                 backgroundColor: rectangle.bgColor,
                 color: rectangle.textColor,
                 minHeight: '100px',
               }}
             >
-              {isEmpty ? null : isRight ? (
-                <>
-                  <div className="text-sm leading-snug text-left whitespace-pre-wrap">
-                    {rectangle.description}
-                  </div>
-                  <div className="font-extrabold text-2xl ml-4 whitespace-nowrap">
-                    {rectangle.code}
-                  </div>
-                </>
-              ) : (
+              {/* Posicionamiento del código según su ubicación */}
+              {index % 2 === 0 ? (
                 <>
                   <div className="font-extrabold text-2xl mr-4 whitespace-nowrap">
                     {rectangle.code}
                   </div>
-                  <div className="text-sm leading-snug text-left whitespace-pre-wrap">
+                  <div className="text-sm leading-snug text-left whitespace-pre-wrap flex-1">
                     {rectangle.description}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-sm leading-snug text-left whitespace-pre-wrap flex-1">
+                    {rectangle.description}
+                  </div>
+                  <div className="font-extrabold text-2xl ml-4 whitespace-nowrap">
+                    {rectangle.code}
                   </div>
                 </>
               )}
@@ -116,7 +121,5 @@ const ProductCard = ({ product }) => {
     </div>
   );
 };
-
-
 
 export default ProductCatalog;
