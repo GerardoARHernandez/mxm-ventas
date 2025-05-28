@@ -70,7 +70,7 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Rectángulos como banners horizontales */}
-      <div className="flex flex-row flex-wrap w-full">
+      <div className="flex flex-row w-full">
         {rectangles.map((rectangle, index) => {
           const isRight = index % 2 === 1;
           const isEmpty = rectangle.code.trim() === '' && rectangle.description.trim() === '';
