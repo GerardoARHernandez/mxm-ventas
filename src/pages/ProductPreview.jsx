@@ -164,23 +164,31 @@ const ProductPreview = () => {
 
   // Manejar agregar al carrito normal
   const handleAddToCart = () => {
+    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+    const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+    
     console.log('Agregar al carrito normal:', {
       productId: product.modelo,
       variation: selectedColor,
       size: selectedSize,
-      quantity: quantity
+      quantity: quantity,
+      articleCode: selectedSizeData?.Articulo // Nuevo campo con el código de artículo específico
     });
     // Aquí iría la lógica para agregar al carrito normal
   };
 
   // Manejar preventa
   const handlePreorder = () => {
+    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+    const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+    
     console.log('Agregar preventa al carrito:', {
       productId: product.modelo,
       variation: selectedColor,
       size: selectedSize,
       quantity: preorderQuantity,
-      isPreorder: true
+      isPreorder: true,
+      articleCode: selectedSizeData?.Articulo // Nuevo campo con el código de artículo específico
     });
     // Aquí iría la lógica para agregar la preventa
   };
@@ -221,6 +229,11 @@ const ProductPreview = () => {
             <div>
               <span className="font-semibold">Precio:</span> ${product.Precio1}
             </div>
+            {selectedSize && (
+              <div className="col-span-2">
+                <span className="font-semibold">Código de artículo:</span> {selectedSizeData?.Articulo}
+              </div>
+            )}
           </div>
 
           {variations.length > 0 && (

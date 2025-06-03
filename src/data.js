@@ -6,10 +6,6 @@
     { venta: 4, nombre: 'Daniel Macias', importe: 1200, estado: 'PE' },
   ];
   
-  export const users = [
-    { id: 1, username: 'admin', password: 'admin123', name: 'Administrador' },
-    { id: 2, username: 'user1', password: 'user123', name: 'Usuario de Prueba' },
-  ];
 
   export const clients = [
     { id: 1, name: "Juan Pérez", email: "juan@example.com", phone: "555-1234" },

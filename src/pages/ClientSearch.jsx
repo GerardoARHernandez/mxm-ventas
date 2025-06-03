@@ -1,16 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { debounce } from "lodash";
+import ClientsTable from "../components/ClientsTable";
 import { FiSearch } from "react-icons/fi";
 
 const ClientSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [clients, setClients] = useState([]);
+  const [filteredClients, setFilteredClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch clients from API
   useEffect(() => {
     const fetchClients = async () => {
       try {
+        setLoading(true);
         const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListClientes', {
           headers: {
             'Origin': import.meta.env.VITE_API_ORIGIN
@@ -21,6 +30,7 @@ const ClientSearch = () => {
         }
         const data = await response.json();
         setClients(data.ListClientes || []);
+        setFilteredClients(data.ListClientes || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -31,14 +41,61 @@ const ClientSearch = () => {
     fetchClients();
   }, []);
 
-  // Resto del componente permanece igual...
-  // Filtrar clientes según la búsqueda
-  const filteredClients = clients.filter(
-    (client) =>
-      client.NOMBRE.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (client.CORREO && client.CORREO.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      client.TELEFONO.includes(searchQuery)
+  // Debounce para el buscador
+  const debouncedFilter = useCallback(
+    debounce((query, clientList) => {
+      if (!query) {
+        setFilteredClients(clientList);
+        return;
+      }
+
+      const filtered = clientList.filter(
+        (client) =>
+          client.NOMBRE.toLowerCase().includes(query.toLowerCase()) ||
+          (client.CORREO && client.CORREO.toLowerCase().includes(query.toLowerCase())) ||
+          client.TELEFONO.includes(query)
+      );
+
+      setFilteredClients(filtered);
+    }, 300),
+    []
   );
+
+  useEffect(() => {
+    debouncedFilter(searchQuery, clients);
+    return () => debouncedFilter.cancel();
+  }, [searchQuery, clients, debouncedFilter]);
+
+  const handleSelectClient = async (clientId) => {
+    if (!user || creatingOrder) return;
+    
+    setCreatingOrder(true);
+    try {
+      const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/CrearPedido', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': import.meta.env.VITE_API_ORIGIN
+        },
+        body: JSON.stringify({
+          Usuario: user.username,
+          cliente: clientId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al crear el pedido");
+      }
+
+      const data = await response.json();
+      navigate(`/productos?pedido=${data.Folio}`);
+    } catch (err) {
+      console.error("Error al crear pedido:", err);
+      alert("Ocurrió un error al crear el pedido. Por favor intenta nuevamente.");
+    } finally {
+      setCreatingOrder(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -72,41 +129,11 @@ const ClientSearch = () => {
         </div>
       </div>
 
-      {/* Resultados */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full table-auto border-collapse border border-gray-50">
-          <thead>
-            <tr className="bg-white">
-              <th className="border border-gray-300 px-4 py-2 text-left">Nombre</th>
-              <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
-              <th className="border border-gray-300 px-4 py-2 text-left">Teléfono</th>
-              <th className="border border-gray-300 px-4 py-2 text-left">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredClients.length > 0 ? (
-              filteredClients.map((client) => (
-                <tr key={client.CLIENTE} className="even:bg-white odd:bg-gray-100 hover:bg-gray-50">
-                  <td className="border border-gray-300 px-4 py-2">{client.NOMBRE}</td>
-                  <td className="border border-gray-300 px-4 py-2">{client.CORREO || "-"}</td>
-                  <td className="border border-gray-300 px-4 py-2">{client.TELEFONO}</td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    <button className="text-rose-600 hover:text-rose-800 transition-colors duration-200">
-                      Seleccionar
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" className="border border-gray-300 px-4 py-4 text-center text-gray-500">
-                  {searchQuery ? "No se encontraron clientes" : clients.length === 0 ? "No hay clientes disponibles" : "Ingrese un término de búsqueda"}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ClientsTable
+        clients={filteredClients} 
+        onSelectClient={handleSelectClient} 
+        creatingOrder={creatingOrder}
+      />
     </div>
   );
 };

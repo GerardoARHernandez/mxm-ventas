@@ -1,8 +1,66 @@
 import { GoPencil } from "react-icons/go";
 import { Link } from "react-router-dom";
-import { salesData } from '../data';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const Home = () => {
+    const { user } = useAuth();
+    const [salesData, setSalesData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchSalesData = async () => {
+            try {
+                if (!user) return;
+                
+                // Extraer el ID de usuario del username (asumiendo que el username es el ID)
+                const userId = user.username;
+                
+                const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaPedidos?Usuario=${userId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Error al obtener los pedidos');
+                }
+                
+                const data = await response.json();
+                
+                // Transformar los datos de la API al formato esperado por el componente
+                const transformedData = data.ListPedidos.map(item => ({
+                    venta: item.VENTA,
+                    nombre: item.NombreCLIENTE,
+                    importe: 0, // La API no parece devolver importe, puedes ajustar esto según necesidades
+                    estado: item.ESTADO
+                })).filter(item => item.estado === 'PE'); // Filtrar solo pendientes (PE)
+                
+                setSalesData(transformedData);
+                setLoading(false);
+            } catch (err) {
+                console.error('Error fetching sales data:', err);
+                setError(err.message);
+                setLoading(false);
+            }
+        };
+
+        fetchSalesData();
+    }, [user]);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <p className="text-gray-500">Cargando ventas pendientes...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <p className="text-red-500">Error: {error}</p>
+            </div>
+        );
+    }
+
     return (
         <div className="mt-5 mx-2 sm:mx-0">
             <Link to={'/nuevo'}>

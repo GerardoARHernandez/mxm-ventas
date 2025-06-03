@@ -50,7 +50,7 @@ const ProductCatalog = () => {
               Catálogo Exclusivo
             </span>
           </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-800 max-w-3xl mx-auto">
             Descubre nuestra colección premium de moda con los mejores precios y diseños únicos. 
           </p>
         </header>
