@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiMinus, FiPlus, FiCheck, FiShoppingCart, FiCalendar } from 'react-icons/fi';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const SizeButton = ({ size, isSelected, onSelect }) => (
   <button
@@ -53,6 +54,14 @@ const ColorButton = ({ color, isSelected, onSelect }) => (
 
 const ProductPreview = () => {
   const { modelCode } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Obtener el número de pedido de la URL si existe
+  const queryParams = new URLSearchParams(location.search);
+  const pedidoId = queryParams.get('pedido');
+  
   const [product, setProduct] = useState(null);
   const [variations, setVariations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +70,7 @@ const ProductPreview = () => {
   const [preorderQuantity, setPreorderQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -163,34 +173,102 @@ const ProductPreview = () => {
   };
 
   // Manejar agregar al carrito normal
-  const handleAddToCart = () => {
-    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
-    const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+  const handleAddToCart = async () => {
+    if (!selectedColor || !selectedSize) return;
     
-    console.log('Agregar al carrito normal:', {
-      productId: product.modelo,
-      variation: selectedColor,
-      size: selectedSize,
-      quantity: quantity,
-      articleCode: selectedSizeData?.Articulo // Nuevo campo con el código de artículo específico
-    });
-    // Aquí iría la lógica para agregar al carrito normal
+    setAddingToCart(true);
+    try {
+      // Obtener el artículo específico de la talla seleccionada
+      const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+      const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+      
+      if (!selectedSizeData || !selectedSizeData.Articulo) {
+        throw new Error("No se pudo determinar el código de artículo");
+      }
+
+      const ventaId = pedidoId || 'NUEVO';
+      
+      const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': import.meta.env.VITE_API_ORIGIN
+        },
+        body: JSON.stringify({
+          Usuario: user.username,
+          articulo: selectedSizeData.Articulo, // Usamos el código de artículo específico
+          cantidad: quantity,
+          precio: product.Precio1,
+          venta: ventaId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al agregar el artículo al pedido");
+      }
+
+      const result = await response.json();
+      
+      if (pedidoId) {
+        navigate(`/carrito?pedido=${pedidoId}`);
+      } else {
+        navigate(`/carrito?pedido=${result.Folio}`);
+      }
+    } catch (err) {
+      console.error("Error al agregar al carrito:", err);
+      alert(err.message || "Ocurrió un error al agregar el artículo. Por favor intenta nuevamente.");
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   // Manejar preventa
-  const handlePreorder = () => {
-    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
-    const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+  const handlePreorder = async () => {
+    if (!selectedColor || !selectedSize) return;
     
-    console.log('Agregar preventa al carrito:', {
-      productId: product.modelo,
-      variation: selectedColor,
-      size: selectedSize,
-      quantity: preorderQuantity,
-      isPreorder: true,
-      articleCode: selectedSizeData?.Articulo // Nuevo campo con el código de artículo específico
-    });
-    // Aquí iría la lógica para agregar la preventa
+    setAddingToCart(true);
+    try {
+      const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+      const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+      
+      if (!selectedSizeData || !selectedSizeData.Articulo) {
+        throw new Error("No se pudo determinar el código de artículo");
+      }
+
+      const ventaId = pedidoId || 'NUEVO';
+      
+      const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': import.meta.env.VITE_API_ORIGIN
+        },
+        body: JSON.stringify({
+          Usuario: user.username,
+          articulo: selectedSizeData.Articulo, // Usamos el código de artículo específico
+          cantidad: preorderQuantity,
+          precio: product.Precio1,
+          venta: ventaId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al agregar la preventa al pedido");
+      }
+
+      const result = await response.json();
+      
+      if (pedidoId) {
+        navigate(`/carrito?pedido=${pedidoId}`);
+      } else {
+        navigate(`/carrito?pedido=${result.Folio}`);
+      }
+    } catch (err) {
+      console.error("Error al agregar preventa:", err);
+      alert(err.message || "Ocurrió un error al agregar la preventa. Por favor intenta nuevamente.");
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   if (loading) return <div className="mt-5 mx-2 sm:mx-0 text-center py-8"><p>Cargando producto...</p></div>;
@@ -303,17 +381,19 @@ const ProductPreview = () => {
               
               <button
                 onClick={handleAddToCart}
-                disabled={availableStock === 0}
+                disabled={availableStock === 0 || addingToCart}
                 className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
-                  availableStock > 0
+                  availableStock > 0 && !addingToCart
                     ? 'bg-rose-600 hover:bg-rose-700 hover:cursor-pointer text-white'
                     : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 }`}
               >
                 <FiShoppingCart className='text-3xl'/>
-                {availableStock > 0 
-                  ? `Agregar al carrito (${availableStock} disponibles)`
-                  : 'Sin existencias'}
+                {addingToCart 
+                  ? 'Agregando...'
+                  : availableStock > 0 
+                    ? `Agregar al carrito (${availableStock} disponibles)`
+                    : 'Sin existencias'}
               </button>
             </div>
 
@@ -359,17 +439,19 @@ const ProductPreview = () => {
               
               <button
                 onClick={handlePreorder}
-                disabled={preorderStock === 0}
+                disabled={preorderStock === 0 || addingToCart}
                 className={`w-full max-w-xs py-3 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
-                  preorderStock > 0
+                  preorderStock > 0 && !addingToCart
                     ? 'bg-blue-600 hover:bg-blue-700 text-white'
                     : 'bg-blue-100 text-blue-400 cursor-not-allowed'
                 }`}
               >
                 <FiCalendar />
-                {preorderStock > 0
-                  ? `Reservar preventa (${preorderStock} por recibir)`
-                  : 'No hay próximos ingresos'}
+                {addingToCart
+                  ? 'Agregando...'
+                  : preorderStock > 0
+                    ? `Reservar preventa (${preorderStock} por recibir)`
+                    : 'No hay próximos ingresos'}
               </button>
             </div>
           </div>

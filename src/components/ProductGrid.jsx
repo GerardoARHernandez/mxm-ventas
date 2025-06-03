@@ -1,16 +1,21 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { FiSearch, FiChevronDown, FiChevronUp, FiEye } from "react-icons/fi";
 import { useDebounce } from "use-debounce";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const ProductGrid = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // Obtener la ubicación actual
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({});
+
+  // Obtener el parámetro pedido de la URL si existe
+  const queryParams = new URLSearchParams(location.search);
+  const pedidoId = queryParams.get('pedido');
   
   // Estado para la paginación
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,7 +47,11 @@ const ProductGrid = () => {
 
   // Función para ver el producto individualmente
   const viewProduct = (modelCode) => {
-    navigate(`/producto/${modelCode}`);
+    if (pedidoId) {
+      navigate(`/producto/${modelCode}?pedido=${pedidoId}`);
+    } else {
+      navigate(`/producto/${modelCode}`);
+    }
   };
 
   // Memoizar la agrupación de productos
@@ -120,8 +129,13 @@ const ProductGrid = () => {
   }
 
   return (
-    <div className="mt-5 mx-2 sm:mx-0">
-      {/* Barra de búsqueda */}
+     <div className="mt-5 mx-2 sm:mx-0">
+      {/* Barra de búsqueda - puedes añadir un indicador si estamos editando un pedido */}
+      {pedidoId && (
+        <div className="mb-2 bg-blue-50 text-blue-800 p-2 rounded-md">
+          Editando pedido #{pedidoId}
+        </div>
+      )}
       <div className="mb-6">
         <div className="relative max-w-3xl mx-auto">
           <input
