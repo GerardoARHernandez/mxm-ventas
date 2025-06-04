@@ -2,6 +2,7 @@ import { GoPencil } from "react-icons/go";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { MdOutlineShoppingCart } from "react-icons/md";
 
 const Home = () => {
     const { user } = useAuth();
@@ -90,12 +91,22 @@ const Home = () => {
                                     <td className="border border-gray-300 px-4 py-2">
                                         <div className="flex justify-between gap-2">
                                             {item.nombre}
+                                            <div className="flex gap-2">
+                                            <Link 
+                                                to={`/carrito?pedido=${item.venta}`}
+                                                className="text-gray-500 hover:text-blue-600 transition-colors duration-200"
+                                                title="Ver carrito"
+                                            >
+                                                <MdOutlineShoppingCart className="text-blue-600 hover:text-blue-800 cursor-pointer" />
+                                            </Link>
                                             <Link 
                                                 to={`/productos?pedido=${item.venta}`} 
                                                 className="text-gray-500 hover:text-rose-600 transition-colors duration-200"
-                                                >
+                                                title="Agregar productos"
+                                            >
                                                 <GoPencil className="text-rose-600 hover:text-rose-800 cursor-pointer" />
                                             </Link>
+                                            </div>
                                         </div>
                                     </td>
                                     <td className="border border-gray-300 px-4 py-2">{item.importe}</td>
