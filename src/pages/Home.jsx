@@ -15,9 +15,7 @@ const Home = () => {
             try {
                 if (!user) return;
                 
-                // Extraer el ID de usuario del username (asumiendo que el username es el ID)
                 const userId = user.username;
-                
                 const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaPedidos?Usuario=${userId}`);
                 
                 if (!response.ok) {
@@ -26,13 +24,30 @@ const Home = () => {
                 
                 const data = await response.json();
                 
-                // Transformar los datos de la API al formato esperado por el componente
-                const transformedData = data.ListPedidos.map(item => ({
-                    venta: item.VENTA,
-                    nombre: item.NombreCLIENTE,
-                    importe: 0, // La API no parece devolver importe, puedes ajustar esto según necesidades
-                    estado: item.ESTADO
-                })).filter(item => item.estado === 'PE'); // Filtrar solo pendientes (PE)
+                // Transformar los datos incluyendo TotVenta como importe
+                const transformedData = await Promise.all(
+                  data.ListPedidos.map(async item => {
+                    // Obtener detalles del pedido para el importe
+                    const detalleResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/Pedido/${item.VENTA}`);
+                    if (detalleResponse.ok) {
+                      const detalleData = await detalleResponse.json();
+                      return {
+                        venta: item.VENTA,
+                        nombre: item.NombreCLIENTE,
+                        importe: parseFloat(detalleData.TotVenta) || 0,
+                        estado: item.ESTADO,
+                        pzas: parseInt(detalleData.TotPzas) || 0
+                      };
+                    }
+                    return {
+                      venta: item.VENTA,
+                      nombre: item.NombreCLIENTE,
+                      importe: 0,
+                      estado: item.ESTADO,
+                      pzas: 0
+                    };
+                  })
+                ).then(results => results.filter(item => item.estado === 'PE'));
                 
                 setSalesData(transformedData);
                 setLoading(false);
@@ -75,46 +90,47 @@ const Home = () => {
                         <p className="text-gray-500">No hay ventas pendientes.</p>
                     </div>
                 :
-                    <table className="min-w-full table-auto border-collapse border border-gray-50">
+                    <table className="min-w-full table-auto border-collapse border border-blue-100">
                         <thead>
                             <tr className="bg-white">
-                                <th className="border border-gray-300 px-4 py-2 text-left">Venta</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left">Nombre</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left">Importe</th>
-                                <th className="border border-gray-300 px-4 py-2 text-left">Estado</th>
+                                <th className="border border-blue-400 px-4 py-2 text-left">Venta</th>
+                                <th className="border border-blue-400 px-4 py-2 text-left">Nombre</th>
+                                <th className="border border-blue-400 px-4 py-2 text-left">Importe</th>
+                                <th className="border border-blue-400 px-4 py-2 text-left">Estado</th>
                             </tr>
                         </thead>
                         <tbody>
                             {salesData.map((item) => (
-                                <tr key={item.venta} className="even:bg-white odd:bg-gray-100 hover:bg-gray-50">
-                                    <td className="border border-gray-300 px-4 py-2">{item.venta}</td>
-                                    <td className="border border-gray-300 px-4 py-2">
+                                <tr key={item.venta} className="even:bg-white odd:bg-blue-100 hover:bg-blue-50">
+                                    <td className="border border-blue-400 px-4 py-2">{item.venta}</td>
+                                    <td className="border border-blue-400 px-4 py-2">
                                         <div className="flex justify-between gap-2">
                                             {item.nombre}
                                             <div className="flex gap-2">
-                                            <Link 
+                                              <Link 
                                                 to={`/carrito?pedido=${item.venta}`}
                                                 className="text-gray-500 hover:text-blue-600 transition-colors duration-200"
                                                 title="Ver carrito"
-                                            >
+                                              >
                                                 <MdOutlineShoppingCart className="text-blue-600 hover:text-blue-800 cursor-pointer" />
-                                            </Link>
-                                            <Link 
+                                              </Link>
+                                              <Link 
                                                 to={`/productos?pedido=${item.venta}`} 
                                                 className="text-gray-500 hover:text-rose-600 transition-colors duration-200"
                                                 title="Agregar productos"
-                                            >
+                                              >
                                                 <GoPencil className="text-rose-600 hover:text-rose-800 cursor-pointer" />
-                                            </Link>
+                                              </Link>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="border border-gray-300 px-4 py-2">{item.importe}</td>
-                                    <td className="border border-gray-300 px-4 py-2">{item.estado}</td>
+                                    <td className="border border-blue-400 px-4 py-2">${item.importe.toFixed(2)}</td>
+                                    <td className="border border-blue-400 px-4 py-2">{item.estado}</td>
                                 </tr>
                             ))}
                         </tbody>
-                    </table> }
+                    </table> 
+                }
             </div>
         </div>
     );

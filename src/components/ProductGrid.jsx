@@ -132,23 +132,23 @@ const ProductGrid = () => {
      <div className="mt-5 mx-2 sm:mx-0">
       {/* Barra de búsqueda - puedes añadir un indicador si estamos editando un pedido */}
       {pedidoId && (
-        <div className="mb-2 bg-blue-50 text-blue-800 p-2 rounded-md">
-          Editando pedido #{pedidoId}
+        <div className="mb-2 bg-blue-100 text-center text-lg text-blue-800 p-2 border border-gray-600 rounded-md">
+          Editando Pedido #{pedidoId}
         </div>
       )}
       <div className="mb-6">
-        <div className="relative max-w-3xl mx-auto">
+        <div className="relative max-w-4xl mx-auto py-2">
           <input
             type="text"
             placeholder="Buscar productos por descripción o código..."
-            className="w-full py-2 pl-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            className="w-full py-2 pl-4 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg focus:border-transparent"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setCurrentPage(1); // Resetear a la primera página al buscar
             }}
           />
-          <FiSearch className="absolute right-4 top-2.5 text-gray-400 text-xl" />
+          <FiSearch className="absolute right-4 top-4.5 text-gray-400 text-xl" />
         </div>
       </div>
 

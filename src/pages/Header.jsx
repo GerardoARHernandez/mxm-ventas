@@ -4,15 +4,25 @@ import { useAuth } from '../context/AuthContext';
 import { FiUser } from "react-icons/fi";
 import { IoMenuOutline, IoCloseOutline } from "react-icons/io5";
 import { useState } from "react";
+import { useCart } from '../context/CartContext';
 
 const Header = () => {
   const { user, logout } = useAuth();
+  const { cartCount } = useCart();
   const location = useLocation();
-  const cartItemCount = 3; // Esto vendría del estado global o contexto
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Obtener el pedidoId de la URL actual si existe
+  const queryParams = new URLSearchParams(location.search);
+  const pedidoId = queryParams.get('pedido');
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  // Construir la URL del carrito manteniendo el pedidoId si existe
+  const getCartLink = () => {
+    return pedidoId ? `/carrito?pedido=${pedidoId}` : '/carrito';
   };
 
   return (
@@ -145,14 +155,14 @@ const Header = () => {
       {user && (
         <div className="relative z-10">
           <Link 
-            to="/carrito"
+            to={getCartLink()}
             className="p-2 hover:bg-gray-700 rounded-full transition-colors duration-200 relative hover:cursor-pointer block"
             onClick={() => setIsMenuOpen(false)}
           >
             <MdOutlineShoppingCart className="text-2xl" />
-            {cartItemCount > 0 && (
+            {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                {cartItemCount}
+                {cartCount}
               </span>
             )}
           </Link>

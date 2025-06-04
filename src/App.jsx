@@ -10,6 +10,7 @@ import CartArmadores from './pages/CartArmadores';
 import OutOfStockPreview from './pages/OutOfStockPreview';
 import ProductGrid from './components/ProductGrid';
 import ProductCatalog from './components/ProductCatalog';
+import { CartProvider } from './context/CartContext.jsx'
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -19,7 +20,9 @@ function ProtectedRoute({ children }) {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <CartProvider>
+        <AppContent />
+      </CartProvider>
     </AuthProvider>
   );
 }
