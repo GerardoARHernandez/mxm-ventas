@@ -28,7 +28,7 @@ const Home = () => {
                 const transformedData = await Promise.all(
                   data.ListPedidos.map(async item => {
                     // Obtener detalles del pedido para el importe
-                    const detalleResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/Pedido/${item.VENTA}`);
+                    const detalleResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/Pedido/${item.VENTA}?t=${Date.now()}`);
                     if (detalleResponse.ok) {
                       const detalleData = await detalleResponse.json();
                       return {
