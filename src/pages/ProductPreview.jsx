@@ -89,9 +89,13 @@ const ProductPreview = () => {
         
         setProduct(foundProduct);
         
-        const variationsResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelCode}`, {
-          headers: { 'Origin': import.meta.env.VITE_API_ORIGIN },
-        });
+        const variationsResponse = await fetch(
+          `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelCode}&t=${Date.now()}`,
+          {
+            headers: { 'Origin': import.meta.env.VITE_API_ORIGIN },
+          }
+        );
+
         if (!variationsResponse.ok) throw new Error("Error al obtener las variaciones");
         const variationsData = await variationsResponse.json();
         

@@ -20,7 +20,12 @@ const Cart = () => {
         setLoading(true);
         
         if (pedidoId) {
-          const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/Pedido/${pedidoId}`);
+          const response = await fetch(
+            `https://systemweb.ddns.net/CarritoWeb/APICarrito/Pedido/${pedidoId}?t=${Date.now()}`,
+            {
+              cache: "no-store" // también puedes intentar esto
+            }
+          );
           
           if (!response.ok) {
             throw new Error("Error al obtener los datos del pedido");
