@@ -31,15 +31,6 @@ export const CartProvider = ({ children }) => {
         }
       }
 
-      // Si no hay pedido específico, obtener el contador general
-      const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ContadorCarrito?Usuario=${userId}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        setCartCount(data.totalItems || 0);
-      } else {
-        setCartCount(0);
-      }
     } catch (error) {
       console.error("Error fetching cart count:", error);
       setCartCount(0);

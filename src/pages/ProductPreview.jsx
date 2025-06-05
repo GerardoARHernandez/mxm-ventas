@@ -76,7 +76,10 @@ const ProductPreview = () => {
     const fetchProductData = async () => {
       try {
         const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos', {
-          headers: { 'Origin': import.meta.env.VITE_API_ORIGIN },
+          headers: { 
+            'Origin': import.meta.env.VITE_API_ORIGIN,
+          },
+          cache: 'no-store'
         });
         if (!response.ok) throw new Error("Error al obtener los productos");
         const data = await response.json();
@@ -178,7 +181,6 @@ const ProductPreview = () => {
     
     setAddingToCart(true);
     try {
-      // Obtener el artículo específico de la talla seleccionada
       const selectedVariation = variations.find(v => v.Codigo === selectedColor);
       const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
       
@@ -186,8 +188,27 @@ const ProductPreview = () => {
         throw new Error("No se pudo determinar el código de artículo");
       }
 
-      const ventaId = pedidoId || 'NUEVO';
-      
+      // Actualizar estado local primero
+      const updatedVariations = variations.map(variation => {
+        if (variation.Codigo === selectedColor) {
+          return {
+            ...variation,
+            Tallas: variation.Tallas.map(size => {
+              if (size.id === selectedSize) {
+                return {
+                  ...size,
+                  Exis: (parseInt(size.Exis) - quantity).toString()
+                };
+              }
+              return size;
+            })
+          };
+        }
+        return variation;
+      });
+      setVariations(updatedVariations);
+
+      // Luego hacer la petición
       const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
         method: 'POST',
         headers: {
@@ -196,14 +217,16 @@ const ProductPreview = () => {
         },
         body: JSON.stringify({
           Usuario: user.username,
-          articulo: selectedSizeData.Articulo, // Usamos el código de artículo específico
+          articulo: selectedSizeData.Articulo,
           cantidad: quantity,
           precio: product.Precio1,
-          venta: ventaId
+          venta: pedidoId || 'NUEVO'
         })
       });
 
       if (!response.ok) {
+        // Revertir cambios si falla
+        setVariations(variations);
         throw new Error("Error al agregar el artículo al pedido");
       }
 
@@ -266,6 +289,65 @@ const ProductPreview = () => {
     } catch (err) {
       console.error("Error al agregar preventa:", err);
       alert(err.message || "Ocurrió un error al agregar la preventa. Por favor intenta nuevamente.");
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  // Verificar si todas las tallas tienen stock
+  const allSizesHaveStock = () => {
+    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+    if (!selectedVariation || !selectedVariation.Tallas) return false;
+    
+    return selectedVariation.Tallas.every(size => 
+      parseInt(size.Exis) > 0 || parseInt(size.PorRecibir) > 0
+    );
+  };
+
+  const handleAddPackage = async () => {
+    if (!selectedColor || !allSizesHaveStock()) return;
+    
+    setAddingToCart(true);
+    try {
+      const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+      const ventaId = pedidoId || 'NUEVO';
+      let lastResponse = null;
+      
+      // Agregar un artículo de cada talla
+      for (const size of selectedVariation.Tallas) {
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          },
+          body: JSON.stringify({
+            Usuario: user.username,
+            articulo: size.Articulo,
+            cantidad: 1, // Siempre 1 por talla
+            precio: product.Precio1,
+            venta: ventaId
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error al agregar el artículo ${size.Articulo} al pedido`);
+        }
+        
+        lastResponse = response; // Guardamos la última respuesta
+      }
+
+      // Usamos la última respuesta para obtener el folio
+      const result = await lastResponse.json();
+      
+      if (pedidoId) {
+        navigate(`/carrito?pedido=${pedidoId}`);
+      } else {
+        navigate(`/carrito?pedido=${result.Folio}`);
+      }
+    } catch (err) {
+      console.error("Error al agregar paquete:", err);
+      alert(err.message || "Ocurrió un error al agregar el paquete. Por favor intenta nuevamente.");
     } finally {
       setAddingToCart(false);
     }
@@ -394,6 +476,26 @@ const ProductPreview = () => {
                   : availableStock > 0 
                     ? `Agregar al carrito (${availableStock} disponibles)`
                     : 'Sin existencias'}
+              </button>
+            </div>
+
+            {/* Botón para agregar por paquete */}
+            <div className="flex flex-col items-center gap-4 mt-6">
+              <button
+                onClick={handleAddPackage}
+                disabled={!allSizesHaveStock() || addingToCart}
+                className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
+                  allSizesHaveStock() && !addingToCart
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <FiShoppingCart className='text-3xl'/>
+                {addingToCart 
+                  ? 'Agregando paquete...'
+                  : allSizesHaveStock()
+                    ? 'Agregar por paquete (1 de cada talla)'
+                    : 'No hay stock completo para agregar paquete'}
               </button>
             </div>
 
