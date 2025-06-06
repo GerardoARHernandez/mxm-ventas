@@ -16,7 +16,7 @@ const Home = () => {
                 if (!user) return;
                 
                 const userId = user.username;
-                const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaPedidos?Usuario=${userId}`);
+                const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaPedidos?Usuario=${userId}&t=${Date.now()}`);
                 
                 if (!response.ok) {
                     throw new Error('Error al obtener los pedidos');
