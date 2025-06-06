@@ -26,6 +26,8 @@ const ProductPreview = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [addingToCart, setAddingToCart] = useState(false);
 
+  const [successMessage, setSuccessMessage] = useState('');
+
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -133,6 +135,7 @@ const ProductPreview = () => {
     if (!selectedColor || !selectedSize) return;
     
     setAddingToCart(true);
+    setSuccessMessage(''); // Limpiar mensaje anterior
     try {
       const selectedVariation = variations.find(v => v.Codigo === selectedColor);
       const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
@@ -182,11 +185,12 @@ const ProductPreview = () => {
 
       const result = await response.json();
       
-      if (pedidoId) {
-        navigate(`/carrito?pedido=${pedidoId}`);
-      } else {
-        navigate(`/carrito?pedido=${result.Folio}`);
-      }
+      // Mostrar mensaje de éxito
+      setSuccessMessage('Pedido agregado correctamente');
+      
+      // Opcional: Ocultar el mensaje después de 3 segundos
+      setTimeout(() => setSuccessMessage(''), 3000);
+      
     } catch (err) {
       console.error("Error al agregar al carrito:", err);
       alert(err.message || "Ocurrió un error al agregar el artículo. Por favor intenta nuevamente.");
@@ -350,6 +354,14 @@ const ProductPreview = () => {
                   onSelect={handleSizeChange}
                 />
               ))}
+            </div>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="px-8">
+            <div className="bg-green-600 uppercase font-semibold text-white text-center py-2 rounded-md mb-4">
+              {successMessage}
             </div>
           </div>
         )}
