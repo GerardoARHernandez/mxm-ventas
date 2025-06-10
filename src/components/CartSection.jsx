@@ -5,14 +5,16 @@ const CartSection = ({
   items, 
   subtotal, 
   onProcess, 
+  onClean,
   processButtonText = "Completar", 
   processButtonColor = 'blue', 
-  removeItem 
+  removeItem,
+  loading = false
 }) => {
   return (
-    <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-medium text-gray-900">{title}</h2>
+    <div className="bg-white shadow border border-gray-400 rounded-lg overflow-hidden mb-8">
+      <div className="px-6 py-4 border-b border-gray-300">
+        <h2 className="text-lg font-bold text-gray-900">{title}</h2>
       </div>
       
       <div className="divide-y divide-gray-200">
@@ -22,15 +24,15 @@ const CartSection = ({
               <div className="col-span-5">Artículo</div>
               <div className="col-span-2 text-right">Precio Unit.</div>
               <div className="col-span-2 text-center">Cantidad</div>
-              <div className="col-span-3 text-right">Importe</div>
+              <div className="col-span-3 text-left">Importe</div>
             </div>
             
             {items.map((item) => (
               <CartItem 
-                key={item.id} 
+                key={item.code} // Mejor usar item.code que item.id
                 item={item} 
                 removeItem={removeItem} 
-                showActions={false} // Ocultamos acciones hasta que la API esté disponible
+                loading={loading} // Pasamos el estado de carga
               />
             ))}
           </>
@@ -48,12 +50,22 @@ const CartSection = ({
               <span className="font-medium">Total: </span>
               <span className="font-bold">$ {subtotal.toFixed(2)}</span>
             </div>
-            <button 
-              onClick={onProcess}
-              className={`bg-${processButtonColor}-600 hover:bg-${processButtonColor}-700 text-white py-2 px-6 rounded-md font-medium transition-colors hover:cursor-pointer`}
-            >
-              {processButtonText}
-            </button>
+            <div className="flex gap-2 font-semibold">
+              <button 
+                onClick={onClean}
+                disabled={loading}
+                className="bg-red-800 hover:bg-red-900 hover:cursor-pointer text-white py-2 px-4 rounded-md transition-colors disabled:opacity-50"
+              >
+                Vaciar Carrito
+              </button>
+              <button 
+                onClick={onProcess}
+                disabled={loading}
+                className={`bg-${processButtonColor}-600 hover:bg-${processButtonColor}-700 text-white py-2 px-6 rounded-md hover:cursor-pointer transition-colors disabled:opacity-50`}
+              >
+                {loading ? 'Procesando...' : processButtonText}
+              </button>
+            </div>
           </div>
         </div>
       )}
