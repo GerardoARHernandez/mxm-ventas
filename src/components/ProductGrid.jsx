@@ -25,7 +25,7 @@ const ProductGrid = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos', {
+        const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos?t=${Date.now()}`, {
           headers: {
             'Origin': import.meta.env.VITE_API_ORIGIN
           },
