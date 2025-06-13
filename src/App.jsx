@@ -6,7 +6,7 @@ import Login from "./pages/Login";
 import ClientSearch from "./pages/ClientSearch";
 import Cart from "./pages/Cart";
 import { AuthProvider, useAuth } from './context/AuthContext';
-import CartArmadores from './pages/CartArmadores';
+import Armadores from './pages/Armadores';
 import OutOfStockPreview from './pages/OutOfStockPreview';
 import ProductGrid from './components/ProductGrid';
 import ProductCatalog from './components/ProductCatalog';
@@ -77,10 +77,10 @@ function AppContent() {
           }
         />
         <Route
-          path="armador"
+          path="armador/*"
           element={
             <ProtectedRoute>
-              <CartArmadores />
+              <Armadores />
             </ProtectedRoute>
           }
         />
