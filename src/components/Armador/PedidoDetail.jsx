@@ -261,7 +261,7 @@ const PedidoDetail = () => {
                 {detalle.Part.filter(p => p.Status.trim() === "1").length} de {detalle.Part.length} piezas surtidas
               </p>
               {todosSurtidos() && (
-                <p className="text-sm text-green-600 font-medium mt-1">
+                <p className="text-base bg-green-600 text-white mx-1 px-2 font-bold uppercase mt-1">
                   ¡Todos los artículos han sido surtidos!
                 </p>
               )}
