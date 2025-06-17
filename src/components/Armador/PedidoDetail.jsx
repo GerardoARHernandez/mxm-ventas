@@ -19,7 +19,6 @@ const PedidoDetail = () => {
       try {
         setLoading(true);
         
-        // Obtener información básica del pedido
         const pedidosResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaPedidosConfirmados?t=${Date.now()}`);
         if (!pedidosResponse.ok) throw new Error('Error al obtener los pedidos');
         
@@ -29,7 +28,6 @@ const PedidoDetail = () => {
         
         setPedido(pedidoEncontrado);
         
-        // Obtener detalles del pedido
         const detalleResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/PedidoConfirmado/${id}?t=${Date.now()}`);
         if (!detalleResponse.ok) throw new Error('Error al obtener el detalle del pedido');
         
@@ -57,16 +55,50 @@ const PedidoDetail = () => {
     }));
   };
 
+  // Función para verificar si todos los artículos están surtidos
+  const todosSurtidos = () => {
+    if (!detalle || !detalle.Part) return false;
+    return detalle.Part.every(part => part.Status.trim() === "1");
+  };
+
   const guardarCambios = async () => {
     try {
       setSaving(true);
-      // Aquí iría la llamada a la API para guardar los cambios
-      // Por ahora solo simulamos el guardado
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      alert("Cambios guardados correctamente");
-      navigate(".."); // Volver a la lista después de guardar
+      
+      // Preparar los datos para la API
+      const requestData = {
+        SDTPedidoAR: {
+          VENTA: parseInt(id),
+          Part: detalle.Part.map(part => ({
+            PartId: part.PartId,
+            Status: part.Status.trim()
+          }))
+        }
+      };
+
+      // Llamar a la API para guardar los cambios
+      const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/FinArmadoPedido', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) throw new Error('Error en la respuesta del servidor');
+
+      const result = await response.json();
+      
+      // Cambiamos la verificación de result.success a !result.error
+      if (!result.error) {
+        alert(result.Mensaje || "Cambios guardados correctamente");
+        navigate(".."); // Volver a la lista después de guardar
+      } else {
+        throw new Error(result.Mensaje || 'Error al guardar los cambios');
+      }
     } catch (err) {
-      alert("Error al guardar los cambios");
+      console.error("Error al guardar:", err);
+      alert(err.message || "Error al guardar los cambios");
     } finally {
       setSaving(false);
     }
@@ -88,7 +120,6 @@ const PedidoDetail = () => {
 
   return (
     <div className="min-h-screen bg-blue-50">
-      {/* Modal para imagen */}
       <ImageModal 
         isOpen={modalOpen} 
         imageUrl={currentImage} 
@@ -96,7 +127,6 @@ const PedidoDetail = () => {
       />
 
       <div className="mx-auto p-4 md:p-6">
-        {/* Botón de volver */}
         <div className="mb-4">
           <Link 
             to=".." 
@@ -106,7 +136,6 @@ const PedidoDetail = () => {
           </Link>
         </div>
         
-        {/* Encabezado */}
         <header className="mb-6 bg-white p-4 rounded-lg shadow-sm">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
             Pedido #{pedido.VENTA}
@@ -135,7 +164,6 @@ const PedidoDetail = () => {
           </div>
         </header>
 
-        {/* Detalles del pedido */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
             <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -196,21 +224,25 @@ const PedidoDetail = () => {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => cambiarEstadoPrenda(part.PartId)}
-                          className={`p-1 rounded-md ${
+                          className={`px-3 py-2 rounded-md flex items-center space-x-2 transition- hover:cursor-pointer ${
                             part.Status.trim() === "1" 
                               ? "bg-green-100 text-green-800 hover:bg-green-200" 
                               : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                           }`}
                         >
-                          {part.Status.trim() === "1" ? <FiCheck /> : <FiRotateCcw />}
+                          {part.Status.trim() === "1" ? (
+                            <FiCheck className="flex-shrink-0" />
+                          ) : (
+                            <FiRotateCcw className="flex-shrink-0" />
+                          )}
+                          <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${
+                            part.Status.trim() === "1" 
+                              ? "bg-green-200 text-green-800" 
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}>
+                            {part.Status.trim() === "1" ? "Surtido" : "Pendiente"}
+                          </span>
                         </button>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          part.Status.trim() === "1" 
-                            ? "bg-green-100 text-green-800" 
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}>
-                          {part.Status.trim() === "1" ? "Surtido" : "Pendiente"}
-                        </span>
                       </div>
                     </td>
                   </tr>
@@ -228,18 +260,27 @@ const PedidoDetail = () => {
               <p className="text-sm text-gray-500">
                 {detalle.Part.filter(p => p.Status.trim() === "1").length} de {detalle.Part.length} piezas surtidas
               </p>
+              {todosSurtidos() && (
+                <p className="text-sm text-green-600 font-medium mt-1">
+                  ¡Todos los artículos han sido surtidos!
+                </p>
+              )}
             </div>
             <div className="flex space-x-3">
               <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("..")}
                 className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 hover:cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={guardarCambios}
-                disabled={saving}
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 disabled:opacity-50 disabled:cursor-not-allowed hover:cursor-pointer"
+                disabled={!todosSurtidos() || saving}
+                className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 hover:cursor-pointer ${
+                  todosSurtidos() 
+                    ? "bg-rose-600 hover:bg-rose-700" 
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
               >
                 {saving ? 'Guardando...' : 'Guardar cambios'}
               </button>
@@ -251,7 +292,6 @@ const PedidoDetail = () => {
   );
 };
 
-// Componentes auxiliares
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="text-xl font-semibold text-gray-700">Cargando detalles del pedido...</div>
