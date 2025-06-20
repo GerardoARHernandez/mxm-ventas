@@ -224,7 +224,7 @@ const PedidoDetail = () => {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => cambiarEstadoPrenda(part.PartId)}
-                          className={`px-3 py-2 rounded-md flex items-center space-x-2 transition- hover:cursor-pointer ${
+                          className={`px-3 py-2 rounded-md flex items-center space-x-2 transition-colors hover:cursor-pointer ${
                             part.Status.trim() === "1" 
                               ? "bg-green-100 text-green-800 hover:bg-green-200" 
                               : "bg-gray-100 text-gray-800 hover:bg-gray-200"
@@ -238,7 +238,7 @@ const PedidoDetail = () => {
                           <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${
                             part.Status.trim() === "1" 
                               ? "bg-green-200 text-green-800" 
-                              : "bg-yellow-100 text-yellow-800"
+                              : "bg-yellow-200 text-yellow-800"
                           }`}>
                             {part.Status.trim() === "1" ? "Surtido" : "Pendiente"}
                           </span>
@@ -269,7 +269,7 @@ const PedidoDetail = () => {
             <div className="flex space-x-3">
               <button
                 onClick={() => navigate("..")}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 hover:cursor-pointer"
+                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 hover:ring-rose-500 hover:cursor-pointer"
               >
                 Cancelar
               </button>

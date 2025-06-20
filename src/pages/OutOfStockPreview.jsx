@@ -1,42 +1,115 @@
 import { useState, useEffect } from 'react';
-import { products } from '../data';
 
 const OutOfStockPreview = () => {
   const [stockAlerts, setStockAlerts] = useState([]);
   const [currentAlertIndex, setCurrentAlertIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [loadedModels, setLoadedModels] = useState(0);
+  const [totalModels, setTotalModels] = useState(0);
 
-  // Clasificar productos según su stock por talla
+  // Obtener datos de productos y stock
   useEffect(() => {
-    const alerts = [];
+    const fetchStockData = async () => {
+      try {
+        setLoading(true);
+        
+        // 1. Obtener lista de modelos (con caché)
+        const cacheKey = 'modelosCache';
+        const cachedModelos = localStorage.getItem(cacheKey);
+        let modelos = [];
+        
+        if (cachedModelos) {
+          modelos = JSON.parse(cachedModelos);
+        } else {
+          const modelosResponse = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos');
+          if (!modelosResponse.ok) throw new Error('Error al obtener modelos');
+          const modelosData = await modelosResponse.json();
+          modelos = modelosData.ListModelos || [];
+          localStorage.setItem(cacheKey, JSON.stringify(modelos));
+        }
+        
+        setTotalModels(modelos.length);
+        
+        // 2. Procesar modelos en lotes
+        const batchSize = 5; // Procesar 5 modelos a la vez
+        const alerts = [];
+        
+        for (let i = 0; i < modelos.length; i += batchSize) {
+          const batch = modelos.slice(i, i + batchSize);
+          
+          // Procesar el lote actual en paralelo
+          const batchResults = await Promise.all(
+            batch.map(async (modelo) => {
+              try {
+                const variacionesResponse = await fetch(
+                  `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelo.modelo}`,
+                  { priority: 'low' } // Navegadores modernos
+                );
+                
+                if (!variacionesResponse.ok) return [];
+                
+                const variacionesData = await variacionesResponse.json();
+                if (!Array.isArray(variacionesData)) return [];
+                
+                const modelAlerts = [];
+                
+                variacionesData.forEach(variacion => {
+                  if (!Array.isArray(variacion.Tallas)) return;
+                  
+                  variacion.Tallas.forEach(talla => {
+                    const stock = parseInt(talla.Exis) || 0;
+                    
+                    if (stock <= 5) { // Solo nos interesan los bajos stocks
+                      modelAlerts.push({
+                        productId: modelo.modelo,
+                        productName: modelo.Descrip,
+                        variant: {
+                          color: variacion.cvariacion || 'Sin color',
+                          sku: variacion.Codigo || 'Sin SKU',
+                          imageUrl: variacion.Imagen 
+                            ? `https://systemweb.ddns.net/CarritoWeb/${variacion.Imagen}`
+                            : null,
+                          sizes: variacion.Tallas.map(t => ({
+                            code: t.id || 'Sin talla',
+                            stock: parseInt(t.Exis) || 0,
+                            articulo: t.Articulo || 'Sin artículo'
+                          }))
+                        },
+                        size: talla.id || 'Sin talla',
+                        status: stock <= 0 ? 'AGOTADO' : 'ÚLTIMAS UNIDADES',
+                        remainingStock: stock,
+                        lastOrder: new Date().toLocaleTimeString()
+                      });
+                    }
+                  });
+                });
+                
+                return modelAlerts;
+              } catch (err) {
+                console.error(`Error procesando modelo ${modelo.modelo}:`, err);
+                return [];
+              } finally {
+                setLoadedModels(prev => prev + 1);
+              }
+            })
+          );
+          
+          // Agregar los resultados del lote actual
+          alerts.push(...batchResults.flat());
+          
+          // Actualizar el estado con lo que llevamos
+          setStockAlerts(current => [...current, ...batchResults.flat()]);
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
 
-    products.forEach(product => {
-      product.variants.forEach(variant => {
-        variant.sizes.forEach(size => {
-          if (size.stock === 0) {
-            alerts.push({
-              productId: product.id,
-              productName: product.name,
-              variant: variant,
-              size: size.code,
-              status: 'AGOTADO',
-              lastOrder: new Date(Date.now() - Math.floor(Math.random() * 24 * 60 * 60 * 1000)).toLocaleTimeString()
-            });
-          } else if (size.stock <= 5) { // Consideramos bajo stock si hay 5 o menos unidades
-            alerts.push({
-              productId: product.id,
-              productName: product.name,
-              variant: variant,
-              size: size.code,
-              status: 'ÚLTIMAS UNIDADES',
-              remainingStock: size.stock,
-              lastOrder: new Date(Date.now() - Math.floor(Math.random() * 60 * 60 * 1000)).toLocaleTimeString()
-            });
-          }
-        });
-      });
-    });
-
-    setStockAlerts(alerts);
+    fetchStockData();
   }, []);
 
   // Rotar alertas cada 5 segundos
@@ -51,6 +124,32 @@ const OutOfStockPreview = () => {
 
     return () => clearInterval(interval);
   }, [stockAlerts]);
+
+    if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-blue-100">
+        <div className="text-center">
+          <p className="text-2xl mb-4">Cargando información de stock...</p>
+          <progress 
+            value={loadedModels} 
+            max={totalModels}
+            className="w-64 h-4"
+          />
+          <p className="mt-2">
+            Progreso: {loadedModels} de {totalModels*2} modelos procesados
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-blue-100">
+        <p className="text-2xl text-red-600">Error: {error}</p>
+      </div>
+    );
+  }
 
   if (stockAlerts.length === 0) {
     return (
@@ -71,6 +170,10 @@ const OutOfStockPreview = () => {
             src={currentAlert.variant.imageUrl} 
             alt={currentAlert.productName}
             className="object-contain h-full w-full"
+            onError={(e) => {
+              e.target.onerror = null; 
+              e.target.src = 'https://via.placeholder.com/500x750?text=Imagen+no+disponible';
+            }}
           />
         ) : (
           <div className="text-center">
@@ -102,7 +205,7 @@ const OutOfStockPreview = () => {
               <span className="font-semibold">SKU:</span> {currentAlert.variant.sku}
             </p>
             <p className="text-2xl">
-              <span className="font-semibold">Precio:</span> ${currentAlert.variant.basePrice.toFixed(2)}
+              <span className="font-semibold">Modelo:</span> {currentAlert.productId}
             </p>
           </div>
         </div>
@@ -115,7 +218,7 @@ const OutOfStockPreview = () => {
               <div 
                 key={index} 
                 className={`p-2 rounded text-center ${
-                  size.stock === 0 ? 'bg-red-700' : 
+                  size.stock <= 0 ? 'bg-red-700' : 
                   size.stock <= 5 ? 'bg-yellow-700' : 'bg-green-700'
                 } ${size.code === currentAlert.size ? 'ring-2 ring-white' : ''}`}
               >
