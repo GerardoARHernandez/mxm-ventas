@@ -22,7 +22,10 @@ const OutOfStockPreview = () => {
         if (cachedModelos) {
           modelos = JSON.parse(cachedModelos);
         } else {
-          const modelosResponse = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos');
+          const modelosResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos?t=${Date.now()}`, {
+          headers: {
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          }, });
           if (!modelosResponse.ok) throw new Error('Error al obtener modelos');
           const modelosData = await modelosResponse.json();
           modelos = modelosData.ListModelos || [];
@@ -43,8 +46,11 @@ const OutOfStockPreview = () => {
             batch.map(async (modelo) => {
               try {
                 const variacionesResponse = await fetch(
-                  `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelo.modelo}`,
-                  { priority: 'low' } // Navegadores modernos
+                  `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelo.modelo}&t=${Date.now()}`,
+                  {
+                    headers: { 'Origin': import.meta.env.VITE_API_ORIGIN },
+                    priority: 'low'  // Navegadores modernos
+                  }                   
                 );
                 
                 if (!variacionesResponse.ok) return [];
