@@ -8,45 +8,42 @@ const OutOfStockPreview = () => {
   const [loadedModels, setLoadedModels] = useState(0);
   const [totalModels, setTotalModels] = useState(0);
 
-  // Obtener datos de productos y stock
+  // Obtener datos de productos agotados
   useEffect(() => {
     const fetchStockData = async () => {
       try {
         setLoading(true);
         
-        // 1. Obtener lista de modelos (con caché)
-        const cacheKey = 'modelosCache';
-        const cachedModelos = localStorage.getItem(cacheKey);
-        let modelos = [];
-        
-        if (cachedModelos) {
-          modelos = JSON.parse(cachedModelos);
-        } else {
-          const modelosResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ListModelos?t=${Date.now()}`, {
+        // 1. Obtener lista de productos agotados
+        const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ListAgotados?t=${Date.now()}`, {
           headers: {
             'Origin': import.meta.env.VITE_API_ORIGIN
-          }, });
-          if (!modelosResponse.ok) throw new Error('Error al obtener modelos');
-          const modelosData = await modelosResponse.json();
-          modelos = modelosData.ListModelos || [];
-          localStorage.setItem(cacheKey, JSON.stringify(modelos));
-        }
+          }
+        });
         
-        setTotalModels(modelos.length);
+        if (!response.ok) throw new Error('Error al obtener productos agotados');
         
-        // 2. Procesar modelos en lotes
-        const batchSize = 5; // Procesar 5 modelos a la vez
+        const data = await response.json();
+        const agotados = data.sdtAgotados || [];
+        
+        setTotalModels(agotados.length);
+        
+        // 2. Procesar productos agotados en lotes
+        const batchSize = 5; // Procesar 5 productos a la vez
         const alerts = [];
         
-        for (let i = 0; i < modelos.length; i += batchSize) {
-          const batch = modelos.slice(i, i + batchSize);
+        for (let i = 0; i < agotados.length; i += batchSize) {
+          const batch = agotados.slice(i, i + batchSize);
           
           // Procesar el lote actual en paralelo
           const batchResults = await Promise.all(
-            batch.map(async (modelo) => {
+            batch.map(async (producto) => {
               try {
+                // Extraer el modelo (posiciones 3-6 del artículo)
+                const modelo = producto.articulo.substring(2, 6);
+                
                 const variacionesResponse = await fetch(
-                  `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelo.modelo}&t=${Date.now()}`,
+                  `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelo}&t=${Date.now()}`,
                   {
                     headers: { 'Origin': import.meta.env.VITE_API_ORIGIN },
                     priority: 'low'  // Navegadores modernos
@@ -68,8 +65,8 @@ const OutOfStockPreview = () => {
                     
                     if (stock <= 5) { // Solo nos interesan los bajos stocks
                       modelAlerts.push({
-                        productId: modelo.modelo,
-                        productName: modelo.Descrip,
+                        productId: modelo,
+                        productName: producto.descrip,
                         variant: {
                           color: variacion.cvariacion || 'Sin color',
                           sku: variacion.Codigo || 'Sin SKU',
@@ -85,7 +82,7 @@ const OutOfStockPreview = () => {
                         size: talla.id || 'Sin talla',
                         status: stock <= 0 ? 'AGOTADO' : 'ÚLTIMAS UNIDADES',
                         remainingStock: stock,
-                        lastOrder: new Date().toLocaleTimeString()
+                        lastOrder: `${producto.FechaVenta.split('T')[0]} ${producto.HoraVenta}`
                       });
                     }
                   });
@@ -93,7 +90,7 @@ const OutOfStockPreview = () => {
                 
                 return modelAlerts;
               } catch (err) {
-                console.error(`Error procesando modelo ${modelo.modelo}:`, err);
+                console.error(`Error procesando producto ${producto.articulo}:`, err);
                 return [];
               } finally {
                 setLoadedModels(prev => prev + 1);
@@ -131,7 +128,7 @@ const OutOfStockPreview = () => {
     return () => clearInterval(interval);
   }, [stockAlerts]);
 
-    if (loading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-blue-100">
         <div className="text-center">
@@ -142,7 +139,7 @@ const OutOfStockPreview = () => {
             className="w-64 h-4"
           />
           <p className="mt-2">
-            Progreso: {loadedModels} de {totalModels*2} modelos procesados
+            Progreso: {loadedModels} de {totalModels} productos procesados
           </p>
         </div>
       </div>
@@ -167,6 +164,12 @@ const OutOfStockPreview = () => {
 
   const currentAlert = stockAlerts[currentAlertIndex];
 
+  const fechaString = currentAlert.lastOrder || new Date().toISOString();
+  const fecha = new Date(fechaString);
+  
+  const fechaFormateada = fecha.toLocaleDateString(); 
+  const horaFormateada = fecha.toLocaleTimeString();
+
   return (
     <div className="bg-gray-900 text-white h-screen overflow-hidden flex py-auto">
       {/* Imagen del producto (50% izquierdo) */}
@@ -178,7 +181,7 @@ const OutOfStockPreview = () => {
             className="object-contain h-full w-full"
             onError={(e) => {
               e.target.onerror = null; 
-              e.target.src = 'https://via.placeholder.com/500x750?text=Imagen+no+disponible';
+              e.target.src = 'https://placehold.co/600x400/orange/white?text=Imagen+No+Disponible';
             }}
           />
         ) : (
@@ -195,7 +198,7 @@ const OutOfStockPreview = () => {
           currentAlert.status === 'AGOTADO' ? 'bg-red-600' : 'bg-yellow-600'
         }`}>
           <h2 className="text-3xl font-bold">{currentAlert.status} - TALLA {currentAlert.size}</h2>
-          {currentAlert.remainingStock && (
+          {currentAlert.remainingStock > 0 && (
             <p className="text-xl mt-2">Quedan: {currentAlert.remainingStock} unidades</p>
           )}
         </div>
@@ -237,9 +240,20 @@ const OutOfStockPreview = () => {
 
         {/* Último pedido y contador */}
         <div className="my-auto flex justify-between items-center">
-          <div className="bg-gray-800 p-3 rounded-lg">
-            <p className="text-xl">Último pedido: {currentAlert.lastOrder}</p>
+          <div className="bg-gray-800/90 p-3 rounded-lg flex items-center gap-3">
+            <div className="text-amber-400 text-2xl">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-lg text-gray-500">Última venta</p>
+              <p className="text-white font-medium text-xl">
+                {fechaFormateada} <span className="text-gray-400 mx-1">|</span> {horaFormateada}
+              </p>
+            </div>
           </div>
+
           <div className="bg-gray-800 p-2 rounded-lg">
             <p className="text-lg">
               {currentAlertIndex + 1}/{stockAlerts.length}
