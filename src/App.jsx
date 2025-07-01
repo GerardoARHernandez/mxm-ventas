@@ -9,8 +9,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Armadores from './pages/Armadores';
 import OutOfStockPreview from './pages/OutOfStockPreview';
 import ProductGrid from './components/ProductGrid';
-import ProductCatalog from './components/ProductCatalog';
 import { CartProvider } from './context/CartContext.jsx'
+import Catalog from './pages/Catalog.jsx';
 
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
@@ -32,7 +32,7 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/agotados" element={<OutOfStockPreview />} />
-      <Route path="/catalog" element={<ProductCatalog />} />
+      <Route path="/catalog" element={<Catalog />} />
 
       {/* Rutas que comparten el Header y el contenedor */}
       <Route path="/" element={<MainLayout />}>
