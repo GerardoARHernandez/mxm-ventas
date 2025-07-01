@@ -167,7 +167,11 @@ const OutOfStockPreview = () => {
   const fechaString = currentAlert.lastOrder || new Date().toISOString();
   const fecha = new Date(fechaString);
   
-  const fechaFormateada = fecha.toLocaleDateString(); 
+  const fechaFormateada = fecha.toLocaleDateString('es-MX', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  }); 
   const horaFormateada = fecha.toLocaleTimeString();
 
   return (
