@@ -39,8 +39,8 @@ const OutOfStockPreview = () => {
           const batchResults = await Promise.all(
             batch.map(async (producto) => {
               try {
-                // Extraer el modelo (posiciones 3-6 del artículo)
-                const modelo = producto.articulo.substring(2, 6);
+                // Extraer el modelo
+                const modelo = producto.Modelo || producto.articulo.substring(2, 6);
                 
                 const variacionesResponse = await fetch(
                   `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelo}&t=${Date.now()}`,
@@ -63,7 +63,7 @@ const OutOfStockPreview = () => {
                   variacion.Tallas.forEach(talla => {
                     const stock = parseInt(talla.Exis) || 0;
                     
-                    if (stock <= 5) { // Solo nos interesan los bajos stocks
+                    if (stock <= 3) { // Solo nos interesan los bajos stocks
                       modelAlerts.push({
                         productId: modelo,
                         productName: producto.descrip,
@@ -228,7 +228,7 @@ const OutOfStockPreview = () => {
                 key={index} 
                 className={`p-2 rounded text-center ${
                   size.stock <= 0 ? 'bg-red-700' : 
-                  size.stock <= 5 ? 'bg-yellow-700' : 'bg-green-700'
+                  size.stock <= 3 ? 'bg-yellow-700' : 'bg-green-700'
                 } ${size.code === currentAlert.size ? 'ring-2 ring-white' : ''}`}
               >
                 <p className="font-bold">{size.code}</p>
