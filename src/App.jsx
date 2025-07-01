@@ -32,7 +32,7 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/agotados" element={<OutOfStockPreview />} />
-      <Route path="/catalog" element={<Catalog />} />
+      <Route path="/catalogo" element={<Catalog />} />
 
       {/* Rutas que comparten el Header y el contenedor */}
       <Route path="/" element={<MainLayout />}>
