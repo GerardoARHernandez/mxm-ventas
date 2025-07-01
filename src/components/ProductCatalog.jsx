@@ -1,141 +1,170 @@
-import React from 'react';
+import { useState } from 'react';
 
 const ProductCatalog = () => {
   const products = [
     {
       id: 1,
-      image: '/images/1-cafe.webp', 
+      images: ['/images/1-cafe.webp', '/images/1-blanco.webp'], // Agrega más si tienes
       rectangles: [
         {
-          code: "RP",
-          description: "T SHIRT #392 BOOT COQUETTE 3D VINTAGE FULL\nPRINT OVERSIZED TALLA: UT PRECIO ESPECIAL POR PAQUETE",
-          bgColor: '#F99DB6',
-          textColor: '#000000',
-        },
-        {
-          code: "AM",
-          description: "SHORT MARILY DENIM DESTROYER TALLAS:\nS/M, M/L, L/XL Y XL/XXL PRECIO ESPECIAL POR PAQUETE",
+          code: 'AM',
+          description:
+            'T SHIRT #428 JESSIE COWGIRL PIXAR FULL PRINT COTTON OVERSIZED TALLA: UT PRECIO ESPECIAL POR PAQUETE',
           bgColor: '#FACB33',
           textColor: '#000000',
-        }
-      ]
+          logoTextColor: '#000000',
+        },
+        {
+          code: 'AZ',
+          description:
+            'SHORT FALDA SOLEIL BOHEME LINEN C/GUIPUR TALLA: UT PRECIO ESPECIAL POR PAQUETE',
+          bgColor: '#3D4ED4',
+          logoTextColor: '#ffffff',
+          textColor: '#000000',
+        },
+      ],
     },
     {
       id: 2,
-      image: '/images/placeholder-product.jpeg', 
+      images: ['/images/2-azul.webp'],
       rectangles: [
         {
-          code: "",
-          description: "",
-          bgColor: '#FACB33',
+          code: 'RP',
+          description:
+            'T SHIRT NEGRA BOOT COQUETTE OVERSIZED TALLA: UT PRECIO ESPECIAL POR PAQUETE',
+          bgColor: '#F99DB6',
           textColor: '#000000',
         },
-        {
-          code: "AM",
-          description: "SHORT MARILY DENIM DESTROYER TALLAS:\nS/M, M/L, L/XL Y XL/XXL PRECIO ESPECIAL POR PAQUETE",
-          bgColor: '#FACB33',
-          textColor: '#000000',
-        }
-      ]
+      ],
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      <div className="container mx-auto px-4 py-12">
-        {/* Header con efecto especial */}
-        <header className="mb-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-yellow-400">
-              Catálogo Exclusivo
-            </span>
-          </h1>
-          <p className="text-lg text-gray-800 max-w-3xl mx-auto">
-            Descubre nuestra colección premium de moda con los mejores precios y diseños únicos. 
-          </p>
-        </header>
-
-        {/* Grid de productos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {products.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+    <div className="min-h-screen bg-blue-100 px-4 py-12">
+      <div className="text-center mb-8 md:mb-12">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-3 md:mb-4">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 animate-text">
+            COLECCIÓN EXCLUSIVA
+          </span>
+        </h1>
+        <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto px-4">
+          Diseños únicos que inspiran y marcan tendencia esta temporada
+        </p>
+        <div className="mt-4 flex justify-center items-center">
+          <span className="inline-block w-12 sm:w-16 h-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></span>
+          <span className="inline-block w-3 h-3 mx-2 bg-pink-500 rounded-full transform rotate-45"></span>
+          <span className="inline-block w-8 sm:w-12 h-1 bg-gradient-to-r from-pink-400 to-pink-600 rounded-full"></span>
         </div>
+      </div>
 
-        {/* Footer */}
-        <footer className="mt-16 text-center text-gray-500 text-sm">
-          <p>© {new Date().getFullYear()} MXM. Todos los derechos reservados.</p>
-        </footer>
+      <div className="max-w-4xl mx-auto space-y-20">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
       </div>
     </div>
   );
 };
 
 const ProductCard = ({ product }) => {
-  const validRectangles = product.rectangles.filter(rect => 
-    rect.code.trim() !== '' || rect.description.trim() !== ''
-  );
+  const [currentImage, setCurrentImage] = useState(0);
 
-  const getWidthClass = () => {
-    if (validRectangles.length === 0) return 'hidden';
-    if (validRectangles.length === 1) return 'w-full';
-    return 'w-full md:w-1/2';
+  const prevImage = () => {
+    setCurrentImage((prev) =>
+      prev === 0 ? product.images.length - 1 : prev - 1
+    );
+  };
+
+  const nextImage = () => {
+    setCurrentImage((prev) =>
+      prev === product.images.length - 1 ? 0 : prev + 1
+    );
   };
 
   return (
-    <div className="group rounded-xl overflow-hidden shadow-lg border border-gray-100 bg-white transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-      {/* Imagen del producto con efecto hover */}
-      <div className="w-full aspect-[3/4] relative overflow-hidden">
-        <img 
-          src={product.image} 
-          alt="Producto" 
-          className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-105"
+    <div className="relative max-w-xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+      {/* Imagen con flechas */}
+      <div className="relative w-full h-full bg-white">
+        <img
+          src={product.images[currentImage]}
+          alt="Producto"
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          onLoad={(e) => {
+            e.target.classList.add('opacity-100');
+            e.target.classList.remove('opacity-0');
+          }}
+          style={{ transition: 'opacity 0.5s ease' }}
         />
-        {/* Badge de nuevo (opcional) */}
-        <span className="absolute top-3 right-3 bg-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
-          Nuevo
-        </span>
+
+        {/* Flechas de navegación */}
+        {product.images.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 w-10 h-10 flex items-center justify-center text-gray-800 shadow-lg hover:bg-white transition-all duration-300 hover:shadow-xl hover:cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={nextImage}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 w-10 h-10 flex items-center justify-center text-gray-800 shadow-lg hover:bg-white transition-all duration-300 hover:shadow-xl hover:cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Contenedor de rectángulos */}
-      <div className="flex flex-col md:flex-row w-full divide-y md:divide-y-0 md:divide-x divide-gray-200">
-        {product.rectangles.map((rectangle, index) => {
-          if (rectangle.code.trim() === '' && rectangle.description.trim() === '') {
-            return null;
-          }
+      {/* Indicadores de imagen */}
+      <div className="flex justify-center mt-4 space-x-2">
+        {product.images.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => setCurrentImage(idx)}
+            className={`w-3 h-3 rounded-full transition-all duration-300 hover:cursor-pointer ${
+              idx === currentImage ? 'bg-gray-800 scale-125' : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+          />
+        ))}
+      </div>
 
-          return (
-            <div 
-              key={index}
-              className={`${getWidthClass()} px-4 py-4 flex items-center transition-colors duration-300`}
-              style={{
-                backgroundColor: rectangle.bgColor,
-                color: rectangle.textColor,
-                minHeight: '100px',
-              }}
-            >
-              {index % 2 === 0 ? (
-                <>
-                  <div className="font-extrabold text-2xl mr-4 whitespace-nowrap transform transition-transform group-hover:scale-110">
-                    {rectangle.code}
-                  </div>
-                  <div className="text-sm leading-snug text-left whitespace-pre-wrap flex-1">
-                    {rectangle.description}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-sm leading-snug text-left whitespace-pre-wrap flex-1">
-                    {rectangle.description}
-                  </div>
-                  <div className="font-extrabold text-2xl ml-4 whitespace-nowrap transform transition-transform group-hover:scale-110">
-                    {rectangle.code}
-                  </div>
-                </>
-              )}
+      {/* Etiquetas con código y descripción */}
+      <div className="flex flex-col items-center gap-4 p-4">
+        {product.rectangles.map((rectangle, index) => (
+          <div
+            key={index}
+            className={`flex w-full max-w-[90%] ${index % 2 !== 0 ? 'justify-end' : ''}`}
+          >
+            <div className={`flex ${index % 2 !== 0 ? 'flex-row-reverse' : ''} gap-4`}>
+              {/* Círculo con código */}
+              <div
+                className="w-16 h-16 flex items-center justify-center rounded-full text-3xl font-bold shrink-0 shadow-md transition-transform duration-300 hover:scale-110"
+                style={{
+                  backgroundColor: rectangle.bgColor,
+                  color: rectangle.logoTextColor,
+                }}
+              >
+                {rectangle.code}
+              </div>
+
+              {/* Descripción con ancho controlado y centrado */}
+              <div
+                className={`leading-snug max-w-[350px] break-words p-3 rounded-lg ${
+                  index % 2 !== 0 ? 'text-right bg-gray-50' : 'text-left bg-gray-50'
+                }`}
+                style={{
+                  color: rectangle.textColor,
+                }}
+              >
+                {rectangle.description}
+              </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

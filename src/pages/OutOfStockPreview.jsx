@@ -251,7 +251,7 @@ const OutOfStockPreview = () => {
               </svg>
             </div>
             <div>
-              <p className="text-lg text-gray-500">Última venta</p>
+              <p className="text-lg text-gray-400">Última venta</p>
               <p className="text-white font-medium text-xl">
                 {fechaFormateada} <span className="text-gray-400 mx-1">|</span> {horaFormateada}
               </p>
