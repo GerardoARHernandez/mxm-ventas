@@ -125,7 +125,7 @@ export const ProductCatalog = ({ product }) => {
                     </div>
                     
                     {/* Descripción estilizada */}
-                    <div className="flex-1 bg-gray-800/50 backdrop-blur-sm rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-gray-700/30 transition-all duration-300 hover:border-purple-500/30 hover:bg-gray-800/70">
+                    <div className="flex-1 bg-gray-800/50 backdrop-blur-sm rounded-xl lg:rounded-2xl px-4 py-1 lg:p-6 border border-gray-700/30 transition-all duration-300 hover:border-purple-500/30 hover:bg-gray-800/70">
                       <p 
                         className="text-sm lg:text-lg leading-relaxed font-medium"
                         style={{ color: '#ffffff' }}
@@ -133,17 +133,7 @@ export const ProductCatalog = ({ product }) => {
                         {item.description.replace(/PRECIO ESPECIAL POR PAQUETE/g, '').replace(/TALLA: UT/g, '').trim()}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Etiquetas debajo */}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300">
-                      COLECCIÓN EXCLUSIVA
-                    </div>
-                    <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300">
-                      PRECIO ESPECIAL POR PAQUETE
-                    </div>
-                  </div>
+                  </div>                  
 
                   {/* Separador elegante - solo en desktop */}
                   {index < product.rectangles.length - 1 && (
@@ -155,6 +145,16 @@ export const ProductCatalog = ({ product }) => {
                   )}
                 </div>
               ))}
+
+              {/* Etiquetas debajo */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300">
+                      IMPORTACIÓN
+                    </div>
+                    <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300">
+                      PRECIO ESPECIAL POR PAQUETE
+                    </div>
+                  </div>
             </div>
           </div>
         </div>
