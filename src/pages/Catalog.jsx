@@ -4,7 +4,7 @@ const Catalog = () => {
   const products = [
     {
       id: 1,
-      images: ['/images/1-cafe.webp', '/images/1-blanco.webp', ],
+      images: ['/images/1-cafe.webp', '/images/1-blanco.webp', '/images/1-rojo.webp'],
       rectangles: [
         {
           code: 'AM',
@@ -28,8 +28,7 @@ const Catalog = () => {
       rectangles: [
         {
           code: 'RP',
-          description:
-            'T SHIRT NEGRA BOOT COQUETTE OVERSIZED TALLA: UT PRECIO ESPECIAL POR PAQUETE',
+          description: 'T SHIRT NEGRA BOOT COQUETTE OVERSIZED TALLA: UT PRECIO ESPECIAL POR PAQUETE',
           bgColor: '#F99DB6',
           textColor: '#000000',
           logoTextColor: '#ffffff',
@@ -39,28 +38,52 @@ const Catalog = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-800 px-4 py-12">
-      <div className="text-center mb-8 md:mb-12">
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-3 md:mb-4">
-          <span className="bg-clip-text text-transparent bg-white">
-            COLECCIÓN VERANO 2025
-          </span>
-        </h1>
-        <div className="mt-4 flex justify-center items-center">
-          <span className="inline-block w-12 sm:w-16 h-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></span>
-          <span className="inline-block w-3 h-3 mx-2 bg-pink-500 rounded-full transform rotate-45"></span>
-          <span className="inline-block w-8 sm:w-12 h-1 bg-gradient-to-r from-pink-400 to-pink-600 rounded-full"></span>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+      {/* Efectos de fondo animados */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-purple-500/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-pink-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      <div className="max-w-4xl mx-auto space-y-20">
-        {products.map((product) => (
-          <ProductCatalog key={product.id} product={product} />
-        ))}
+      <div className="relative z-10 px-4 py-12">
+        {/* Header mejorado */}
+        <div className="text-center mb-16">
+          <div className="inline-block mb-4">
+            <span className="px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-full text-purple-300 text-sm font-semibold border border-purple-500/30">
+              ✨ NUEVA TEMPORADA
+            </span>
+          </div>
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-pink-200 mb-6 leading-tight">
+            COLECCIÓN VERANO 2025
+          </h1>
+          
+          {/* Decoración del título */}
+          <div className="flex justify-center items-center -mt-4 space-x-4">
+            <div className="w-24 h-0.5 bg-gradient-to-r from-blue-500 to-blue-700"></div>
+            <div className="w-3.5 h-3.5 bg-gradient-to-r from-pink-500 to-pink-800 rounded-full"></div>
+            <div className="w-20 h-0.5 bg-gradient-to-r from-pink-500 to-orange-500"></div>
+          </div>
+        </div>
+
+        {/* Productos */}
+        <div className="max-w-7xl mx-auto space-y-20">
+          {products.map((product) => (
+            <ProductCatalog key={product.id} product={product} />
+          ))}
+        </div>
+
+        {/* Footer decorativo */}
+        <div className="text-center mt-20 pt-12 border-t border-gray-700/30">
+          <p className="text-gray-400 text-lg mb-4">Descubre tu estilo único</p>
+          <div className="flex justify-center space-x-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+              ♡
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
-
 
 export default Catalog;

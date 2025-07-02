@@ -17,12 +17,10 @@ export const ProductCatalog = ({ product }) => {
     );
   };
 
-  // Detectar inicio del touch
   const handleTouchStart = (e) => {
     touchStartX.current = e.changedTouches[0].clientX;
   };
 
-  // Detectar final del touch y calcular la dirección del swipe
   const handleTouchEnd = (e) => {
     touchEndX.current = e.changedTouches[0].clientX;
     handleSwipe();
@@ -31,106 +29,145 @@ export const ProductCatalog = ({ product }) => {
   const handleSwipe = () => {
     if (!touchStartX.current || !touchEndX.current) return;
     const distance = touchStartX.current - touchEndX.current;
-    const minSwipeDistance = 50; // puedes ajustar la sensibilidad
+    const minSwipeDistance = 50;
 
     if (distance > minSwipeDistance) {
-      // Swipe hacia la izquierda
       nextImage();
     } else if (distance < -minSwipeDistance) {
-      // Swipe hacia la derecha
       prevImage();
     }
 
-    // Reset refs
     touchStartX.current = null;
     touchEndX.current = null;
   };
 
   return (
-    <div className="relative max-w-xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-      {/* Imagen con flechas */}
-      <div
-        className="relative w-full h-full bg-white"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <img
-          src={product.images[currentImage]}
-          alt="Producto"
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-          onLoad={(e) => {
-            e.target.classList.add('opacity-100');
-            e.target.classList.remove('opacity-0');
-          }}
-          style={{ transition: 'opacity 0.5s ease' }}
-        />
-
-        {/* Flechas de navegación */}
-        {product.images.length > 1 && (
-          <>
-            <button
-              onClick={prevImage}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 w-10 h-10 flex items-center justify-center text-gray-800 shadow-lg hover:bg-white transition-all duration-300 hover:shadow-xl hover:cursor-pointer"
+    <div className="group relative max-w-4xl mx-auto">
+      {/* Contenedor principal con efecto glassmorphism */}
+      <div className="relative bg-gradient-to-br from-gray-900/40 to-gray-800/40 backdrop-blur-xl border border-gray-700/30 rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 hover:shadow-purple-500/20 hover:border-purple-500/30">
+        
+        {/* Header decorativo */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500"></div>
+        
+        <div className="flex flex-col lg:flex-row">
+          {/* Sección de imagen */}
+          <div className="lg:w-1/2 relative">
+            <div
+              className="relative aspect-[4/6.5] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={nextImage}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 w-10 h-10 flex items-center justify-center text-gray-800 shadow-lg hover:bg-white transition-all duration-300 hover:shadow-xl hover:cursor-pointer"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </>
-        )}
-      </div>
+              <img
+                src={product.images[currentImage]}
+                alt="Producto de moda"
+                className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+              />
+              
+              {/* Overlay gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-      {/* Indicadores de imagen */}
-      <div className="flex justify-center mt-4 space-x-2">
-        {product.images.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentImage(idx)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 hover:cursor-pointer ${
-              idx === currentImage ? 'bg-gray-800 scale-125' : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-          />
-        ))}
-      </div>
+              {/* Navegación de imágenes */}
+              {product.images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-105 transition-all duration-300 group/btn"
+                  >
+                    <svg className="w-6 h-6 text-gray-800 group-hover/btn:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-105 transition-all duration-300 group/btn"
+                  >
+                    <svg className="w-6 h-6 text-gray-800 group-hover/btn:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
 
-      {/* Etiquetas con código y descripción */}
-      <div className="flex flex-col items-center gap-4 py-4 justify-end">
-        {product.rectangles.map((rectangle, index) => (
-          <div
-            key={index}
-            className={`flex w-full max-w-[95%] ${index % 2 !== 0 ? 'justify-end' : ''}`}
-          >
-            <div className={`flex ${index % 2 !== 0 ? 'flex-row-reverse' : ''} gap-4`}>
-              <div
-                className="w-16 h-16 flex items-center justify-center rounded-full text-3xl font-bold shrink-0 shadow-md transition-transform duration-300 hover:scale-110 text-shadow-md"
-                style={{
-                  backgroundColor: rectangle.bgColor,
-                  color: rectangle.logoTextColor,
-                }}
-              >
-                {rectangle.code}
-              </div>
-              <div
-                className={`leading-snug break-words p-3 rounded-lg text-[12px] md:text-base ${
-                  index % 2 !== 0 ? 'text-right bg-gray-50' : 'text-left bg-gray-50'
-                }`}
-                style={{
-                  color: rectangle.textColor,
-                }}
-              >
-                {rectangle.description}
-              </div>
+              {/* Indicadores de imagen modernos */}
+              {product.images.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                  {product.images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImage(idx)}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                        idx === currentImage 
+                          ? 'bg-white w-6' 
+                          : 'bg-white/50 hover:bg-white/80'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        ))}
+
+          {/* Sección de información */}
+          <div className="lg:w-1/2 p-4 lg:p-12 flex flex-col justify-center">
+            <div className="space-y-4 lg:space-y-8">
+              {product.rectangles.map((item, index) => (
+                <div key={index} className="group/item">
+                  {/* Badge con código */}
+                  <div className="flex items-start space-x-3 mb-3">
+                    <div 
+                      className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl font-bold shadow-lg transform transition-all duration-300 group-hover/item:scale-105 group-hover/item:rotate-3"
+                      style={{
+                        backgroundColor: item.bgColor,
+                        color: item.logoTextColor,
+                      }}
+                    >
+                      {item.code}
+                    </div>
+                    <div className="flex-1">
+                      <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300 mb-1 lg:mb-2">
+                        COLECCIÓN EXCLUSIVA
+                      </div>
+                      <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300 mb-1 lg:mb-2">
+                        PRECIO ESPECIAL POR PAQUETE
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Descripción estilizada */}
+                  <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-gray-700/30 transition-all duration-300 hover:border-purple-500/30 hover:bg-gray-800/70">
+                    <p 
+                      className="text-sm lg:text-lg leading-relaxed font-medium"
+                      style={{ color: '#ffffff' }}
+                    >
+                      {item.description.replace(/PRECIO ESPECIAL POR PAQUETE/g, '').replace(/TALLA: UT/g, '').trim()}
+                    </p>
+                    
+                    {/* Tags decorativos */}
+                    <div className="flex flex-wrap gap-1 lg:gap-2 mt-3 lg:mt-4">
+                      <span className="px-2 py-1 lg:px-3 lg:py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs lg:text-sm font-medium">
+                        Talla Única
+                      </span>
+                      <span className="px-2 py-1 lg:px-3 lg:py-1 bg-pink-500/20 text-pink-300 rounded-full text-xs lg:text-sm font-medium">
+                        Edición Limitada
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Separador elegante - solo en desktop */}
+                  {index < product.rectangles.length - 1 && (
+                    <div className="hidden lg:flex items-center justify-center my-8">
+                      <div className="w-12 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+                      <div className="w-2 h-2 bg-purple-500/50 rounded-full mx-4"></div>
+                      <div className="w-12 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            
+          </div>
+        </div>
       </div>
     </div>
   );
