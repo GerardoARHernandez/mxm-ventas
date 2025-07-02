@@ -123,33 +123,25 @@ export const ProductCatalog = ({ product }) => {
                     >
                       {item.code}
                     </div>
-                    <div className="flex-1">
-                      <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300 mb-1 lg:mb-2">
-                        COLECCIÓN EXCLUSIVA
-                      </div>
-                      <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300 mb-1 lg:mb-2">
-                        PRECIO ESPECIAL POR PAQUETE
-                      </div>
+                    
+                    {/* Descripción estilizada */}
+                    <div className="flex-1 bg-gray-800/50 backdrop-blur-sm rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-gray-700/30 transition-all duration-300 hover:border-purple-500/30 hover:bg-gray-800/70">
+                      <p 
+                        className="text-sm lg:text-lg leading-relaxed font-medium"
+                        style={{ color: '#ffffff' }}
+                      >
+                        {item.description.replace(/PRECIO ESPECIAL POR PAQUETE/g, '').replace(/TALLA: UT/g, '').trim()}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Descripción estilizada */}
-                  <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-gray-700/30 transition-all duration-300 hover:border-purple-500/30 hover:bg-gray-800/70">
-                    <p 
-                      className="text-sm lg:text-lg leading-relaxed font-medium"
-                      style={{ color: '#ffffff' }}
-                    >
-                      {item.description.replace(/PRECIO ESPECIAL POR PAQUETE/g, '').replace(/TALLA: UT/g, '').trim()}
-                    </p>
-                    
-                    {/* Tags decorativos */}
-                    <div className="flex flex-wrap gap-1 lg:gap-2 mt-3 lg:mt-4">
-                      <span className="px-2 py-1 lg:px-3 lg:py-1 bg-purple-500/20 text-purple-300 rounded-full text-xs lg:text-sm font-medium">
-                        Talla Única
-                      </span>
-                      <span className="px-2 py-1 lg:px-3 lg:py-1 bg-pink-500/20 text-pink-300 rounded-full text-xs lg:text-sm font-medium">
-                        Edición Limitada
-                      </span>
+                  {/* Etiquetas debajo */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300">
+                      COLECCIÓN EXCLUSIVA
+                    </div>
+                    <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300">
+                      PRECIO ESPECIAL POR PAQUETE
                     </div>
                   </div>
 
@@ -164,8 +156,6 @@ export const ProductCatalog = ({ product }) => {
                 </div>
               ))}
             </div>
-
-            
           </div>
         </div>
       </div>

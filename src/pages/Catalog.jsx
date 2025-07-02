@@ -53,7 +53,7 @@ const Catalog = () => {
               ✨ NUEVA TEMPORADA
             </span>
           </div>
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-pink-200 mb-6 leading-tight">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-pink-100 mb-6 leading-tight">
             COLECCIÓN VERANO 2025
           </h1>
           
