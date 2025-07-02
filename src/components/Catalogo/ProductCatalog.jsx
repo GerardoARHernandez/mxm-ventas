@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 export const ProductCatalog = ({ product }) => {
   const [currentImage, setCurrentImage] = useState(0);
+  const touchStartX = useRef(null);
+  const touchEndX = useRef(null);
 
   const prevImage = () => {
     setCurrentImage((prev) =>
@@ -15,10 +17,43 @@ export const ProductCatalog = ({ product }) => {
     );
   };
 
+  // Detectar inicio del touch
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.changedTouches[0].clientX;
+  };
+
+  // Detectar final del touch y calcular la dirección del swipe
+  const handleTouchEnd = (e) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    handleSwipe();
+  };
+
+  const handleSwipe = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    const distance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 50; // puedes ajustar la sensibilidad
+
+    if (distance > minSwipeDistance) {
+      // Swipe hacia la izquierda
+      nextImage();
+    } else if (distance < -minSwipeDistance) {
+      // Swipe hacia la derecha
+      prevImage();
+    }
+
+    // Reset refs
+    touchStartX.current = null;
+    touchEndX.current = null;
+  };
+
   return (
     <div className="relative max-w-xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
       {/* Imagen con flechas */}
-      <div className="relative w-full h-full bg-white">
+      <div
+        className="relative w-full h-full bg-white"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <img
           src={product.images[currentImage]}
           alt="Producto"
@@ -74,19 +109,15 @@ export const ProductCatalog = ({ product }) => {
             className={`flex w-full max-w-[90%] ${index % 2 !== 0 ? 'justify-end' : ''}`}
           >
             <div className={`flex ${index % 2 !== 0 ? 'flex-row-reverse' : ''} gap-4`}>
-              {/* Círculo con código */}
               <div
                 className="w-16 h-16 flex items-center justify-center rounded-full text-3xl font-bold shrink-0 shadow-md transition-transform duration-300 hover:scale-110 text-shadow-md"
                 style={{
                   backgroundColor: rectangle.bgColor,
                   color: rectangle.logoTextColor,
-                  
                 }}
               >
                 {rectangle.code}
               </div>
-
-              {/* Descripción con ancho controlado y centrado */}
               <div
                 className={`leading-snug max-w-[350px] break-words p-3 rounded-lg ${
                   index % 2 !== 0 ? 'text-right bg-gray-50' : 'text-left bg-gray-50'
@@ -104,4 +135,3 @@ export const ProductCatalog = ({ product }) => {
     </div>
   );
 };
-

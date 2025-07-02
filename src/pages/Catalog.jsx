@@ -4,7 +4,7 @@ const Catalog = () => {
   const products = [
     {
       id: 1,
-      images: ['/images/1-cafe.webp', '/images/1-blanco.webp'],
+      images: ['/images/1-cafe.webp', '/images/1-blanco.webp', '/images/1-rojo.webp'],
       rectangles: [
         {
           code: 'AM',
@@ -39,16 +39,13 @@ const Catalog = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-blue-100 px-4 py-12">
+    <div className="min-h-screen bg-gray-800 px-4 py-12">
       <div className="text-center mb-8 md:mb-12">
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mb-3 md:mb-4">
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500 animate-text">
-            COLECCIÓN EXCLUSIVA
+          <span className="bg-clip-text text-transparent bg-white">
+            COLECCIÓN VERANO 2025
           </span>
         </h1>
-        <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto px-4">
-          Diseños únicos que inspiran y marcan tendencia esta temporada
-        </p>
         <div className="mt-4 flex justify-center items-center">
           <span className="inline-block w-12 sm:w-16 h-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"></span>
           <span className="inline-block w-3 h-3 mx-2 bg-pink-500 rounded-full transform rotate-45"></span>
