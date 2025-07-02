@@ -102,11 +102,11 @@ export const ProductCatalog = ({ product }) => {
       </div>
 
       {/* Etiquetas con código y descripción */}
-      <div className="flex flex-col items-center gap-4 p-4">
+      <div className="flex flex-col items-center gap-4 py-4 justify-end">
         {product.rectangles.map((rectangle, index) => (
           <div
             key={index}
-            className={`flex w-full max-w-[90%] ${index % 2 !== 0 ? 'justify-end' : ''}`}
+            className={`flex w-full max-w-[95%] ${index % 2 !== 0 ? 'justify-end' : ''}`}
           >
             <div className={`flex ${index % 2 !== 0 ? 'flex-row-reverse' : ''} gap-4`}>
               <div
@@ -119,7 +119,7 @@ export const ProductCatalog = ({ product }) => {
                 {rectangle.code}
               </div>
               <div
-                className={`leading-snug max-w-[350px] break-words p-3 rounded-lg ${
+                className={`leading-snug max-w-[400px] break-words p-3 rounded-lg text-sm md:text-base ${
                   index % 2 !== 0 ? 'text-right bg-gray-50' : 'text-left bg-gray-50'
                 }`}
                 style={{
