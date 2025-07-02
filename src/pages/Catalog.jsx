@@ -4,7 +4,7 @@ const Catalog = () => {
   const products = [
     {
       id: 1,
-      images: ['/images/1-cafe.webp', '/images/1-blanco.webp', '/images/1-rojo.webp'],
+      images: ['/images/1-cafe.webp', '/images/1-blanco.webp', ],
       rectangles: [
         {
           code: 'AM',

@@ -119,7 +119,7 @@ export const ProductCatalog = ({ product }) => {
                 {rectangle.code}
               </div>
               <div
-                className={`leading-snug max-w-[400px] break-words p-3 rounded-lg text-sm md:text-base ${
+                className={`leading-snug break-words p-3 rounded-lg text-sm md:text-base ${
                   index % 2 !== 0 ? 'text-right bg-gray-50' : 'text-left bg-gray-50'
                 }`}
                 style={{
