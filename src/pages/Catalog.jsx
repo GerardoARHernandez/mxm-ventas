@@ -1,41 +1,101 @@
+import { useEffect, useState } from 'react';
 import { ProductCatalog } from '../components/Catalogo/ProductCatalog';
 
 const Catalog = () => {
-  const products = [
-    {
-      id: 1,
-      images: ['/images/1-cafe.webp', '/images/1-blanco.webp', '/images/1-rojo.webp'],
-      rectangles: [
-        {
-          code: 'AM',
-          description: 'T SHIRT #428 JESSIE COWGIRL PIXAR FULL PRINT COTTON OVERSIZED TALLA: UT PRECIO ESPECIAL POR PAQUETE',
-          bgColor: '#FACB33',
-          textColor: '#000000',
-          logoTextColor: '#ffffff',
-        },
-        {
-          code: 'AZ',
-          description: 'SHORT FALDA SOLEIL BOHEME LINEN C/GUIPUR TALLA: UT PRECIO ESPECIAL POR PAQUETE',
-          bgColor: '#3D4ED4',
-          logoTextColor: '#ffffff',
-          textColor: '#000000',
-        },
-      ],
-    },
-    {
-      id: 2,
-      images: ['/images/2-azul.webp'],
-      rectangles: [
-        {
-          code: 'RP',
-          description: 'T SHIRT NEGRA BOOT COQUETTE OVERSIZED TALLA: UT PRECIO ESPECIAL POR PAQUETE',
-          bgColor: '#F99DB6',
-          textColor: '#000000',
-          logoTextColor: '#ffffff',
-        },
-      ],
-    },
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/ListCatMXM_RGB');
+        if (!response.ok) {
+          throw new Error('Error al obtener los datos');
+        }
+        const data = await response.json();
+        const transformedProducts = transformApiData(data.sdtCatMXM_RGB);
+        setProducts(transformedProducts);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const transformApiData = (apiData) => {
+    // Primero agrupamos por ID de producto
+    const productsById = {};
+    
+    apiData.forEach(item => {
+      if (!productsById[item.Id]) {
+        productsById[item.Id] = {
+          id: item.Id,
+          category: item.RGBNombreCat,
+          rectangles: [],
+          images: []
+        };
+      }
+      
+      // Agregamos todas las cajitas del producto
+      for (let i = 1; i <= 3; i++) {
+        const cajaKey = `Caja${i}`;
+        if (item[cajaKey]) {
+          const caja = item[cajaKey];
+          const imageName = caja[`RGBImagen${i}`];
+          
+          productsById[item.Id].rectangles.push({
+            id: `${item.Id}-${i}`,
+            code: caja[`RGBLT${i}`],
+            description: caja[`RGBdescrip${i}`],
+            bgColor: `rgb(${caja[`RGBR${i}`] || '0'}, ${caja[`RGBG${i}`] || '0'}, ${caja[`RGBB${i}`] || '0'})`,
+            textColor: '#000000',
+            logoTextColor: '#ffffff',
+            price: caja[`RGBprecio1_${i}`],
+            sku: caja[`RGBSKU${i}`],
+            stock: caja[`RGBexistencia${i}`],
+            image: imageName
+          });
+          
+          // Si hay imagen, la agregamos con la URL completa
+          if (imageName && imageName.trim() !== '') {
+            const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/${imageName.trim()}`;
+            // Verificamos que no exista ya en el array
+            if (!productsById[item.Id].images.includes(imageUrl)) {
+              productsById[item.Id].images.push(imageUrl);
+            }
+          }
+        }
+      }
+    });
+    
+    // Convertimos a array y aseguramos al menos una imagen por producto
+    return Object.values(productsById).map(product => ({
+      ...product,
+      images: product.images.length > 0 
+        ? product.images 
+        : [`https://placehold.co/400/orange/white?text=Imagen\n+No+Disponible`]
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+        <div className="text-white text-xl">Cargando catálogo...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+        <div className="text-red-400 text-xl">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
