@@ -27,43 +27,41 @@ const Catalog = () => {
   }, []);
 
   const transformApiData = (apiData) => {
-    // Primero agrupamos por ID de producto
     const productsById = {};
     
     apiData.forEach(item => {
       if (!productsById[item.Id]) {
         productsById[item.Id] = {
           id: item.Id,
-          category: item.RGBNombreCat,
+          category: item.NombreCat,  // Cambiado de RGBNombreCat a NombreCat
           rectangles: [],
           images: []
         };
       }
       
-      // Agregamos todas las cajitas del producto
-      for (let i = 1; i <= 3; i++) {
+      // Agregamos las cajitas del producto (Caja1 y Caja2)
+      for (let i = 1; i <= 2; i++) {  // Solo hasta Caja2 ahora
         const cajaKey = `Caja${i}`;
         if (item[cajaKey]) {
           const caja = item[cajaKey];
-          const imageName = caja[`RGBImagen${i}`];
+          const imageName = caja[`Imagen${i}`];  // Cambiado de RGBImagen a Imagen
           
           productsById[item.Id].rectangles.push({
             id: `${item.Id}-${i}`,
-            code: caja[`RGBLT${i}`],
-            description: caja[`RGBdescrip${i}`],
-            bgColor: `rgb(${caja[`RGBR${i}`] || '0'}, ${caja[`RGBG${i}`] || '0'}, ${caja[`RGBB${i}`] || '0'})`,
+            code: caja[`LT${i}`],  // Cambiado de RGBLT a LT
+            description: caja[`descrip${i}`],  // Cambiado de RGBdescrip a descrip
+            bgColor: `rgb(${caja[`R${i}`] || '0'}, ${caja[`G${i}`] || '0'}, ${caja[`B${i}`] || '0'})`,  // Cambiado de RGBR, RGBG, RGBB
             textColor: '#000000',
             logoTextColor: '#ffffff',
-            price: caja[`RGBprecio1_${i}`],
-            sku: caja[`RGBSKU${i}`],
-            stock: caja[`RGBexistencia${i}`],
+            price: caja[`precio1_${i}`],  // Cambiado de RGBprecio1
+            sku: caja[`SKU${i}`],  // Cambiado de RGBSKU
+            stock: caja[`existencia${i}`],  // Cambiado de RGBexistencia
             image: imageName
           });
           
           // Si hay imagen, la agregamos con la URL completa
           if (imageName && imageName.trim() !== '') {
             const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/${imageName.trim()}`;
-            // Verificamos que no exista ya en el array
             if (!productsById[item.Id].images.includes(imageUrl)) {
               productsById[item.Id].images.push(imageUrl);
             }
@@ -117,7 +115,6 @@ const Catalog = () => {
             COLECCIÓN VERANO 2025
           </h1>
           
-          {/* Decoración del título */}
           <div className="flex justify-center items-center -mt-4 space-x-4">
             <div className="w-24 h-0.5 bg-gradient-to-r from-blue-500 to-blue-700"></div>
             <div className="w-3.5 h-3.5 bg-gradient-to-r from-pink-500 to-pink-800 rounded-full"></div>
@@ -125,14 +122,12 @@ const Catalog = () => {
           </div>
         </div>
 
-        {/* Productos */}
         <div className="max-w-7xl mx-auto space-y-20">
           {products.map((product) => (
             <ProductCatalog key={product.id} product={product} />
           ))}
         </div>
 
-        {/* Footer decorativo */}
         <div className="text-center mt-20 pt-12 border-t border-gray-700/30">
           <p className="text-gray-400 text-lg mb-4">Descubre tu estilo único</p>
           <div className="flex justify-center space-x-6">
