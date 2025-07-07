@@ -40,7 +40,7 @@ const Catalog = () => {
       }
       
       // Agregamos las cajitas del producto (Caja1 y Caja2)
-      for (let i = 1; i <= 2; i++) {  // Solo hasta Caja2 ahora
+      for (let i = 1; i <= 2; i++) {  
         const cajaKey = `Caja${i}`;
         if (item[cajaKey]) {
           const caja = item[cajaKey];
