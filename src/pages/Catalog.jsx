@@ -40,7 +40,7 @@ const Catalog = () => {
       }
       
       // Agregamos las cajitas del producto (Caja1 y Caja2)
-      for (let i = 1; i <= 2; i++) {  
+      for (let i = 1; i <= 2; i++) {  // Solo hasta Caja2 ahora
         const cajaKey = `Caja${i}`;
         if (item[cajaKey]) {
           const caja = item[cajaKey];
@@ -61,7 +61,7 @@ const Catalog = () => {
           
           // Si hay imagen, la agregamos con la URL completa
           if (imageName && imageName.trim() !== '') {
-            const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/${imageName.trim()}`;
+            const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName.trim()}`;
             if (!productsById[item.Id].images.includes(imageUrl)) {
               productsById[item.Id].images.push(imageUrl);
             }
