@@ -27,43 +27,46 @@ const Catalog = () => {
   }, []);
 
   const transformApiData = (apiData) => {
-    const productsById = {};
+    const productsByCategory = {};
     
     apiData.forEach(item => {
-      if (!productsById[item.Id]) {
-        productsById[item.Id] = {
+      // Creamos una clave única combinando ID y categoría
+      const categoryKey = `${item.NombreCat}-${item.Id}`;
+      
+      if (!productsByCategory[categoryKey]) {
+        productsByCategory[categoryKey] = {
           id: item.Id,
-          category: item.NombreCat,  // Cambiado de RGBNombreCat a NombreCat
+          category: item.NombreCat,
           rectangles: [],
           images: []
         };
       }
       
       // Agregamos las cajitas del producto (Caja1 y Caja2)
-      for (let i = 1; i <= 2; i++) {  // Solo hasta Caja2 ahora
+      for (let i = 1; i <= 2; i++) {
         const cajaKey = `Caja${i}`;
         if (item[cajaKey]) {
           const caja = item[cajaKey];
-          const imageName = caja[`Imagen${i}`];  // Cambiado de RGBImagen a Imagen
+          const imageName = caja[`Imagen${i}`];
           
-          productsById[item.Id].rectangles.push({
+          productsByCategory[categoryKey].rectangles.push({
             id: `${item.Id}-${i}`,
-            code: caja[`LT${i}`],  // Cambiado de RGBLT a LT
-            description: caja[`descrip${i}`],  // Cambiado de RGBdescrip a descrip
-            bgColor: `rgb(${caja[`R${i}`] || '0'}, ${caja[`G${i}`] || '0'}, ${caja[`B${i}`] || '0'})`,  // Cambiado de RGBR, RGBG, RGBB
+            code: caja[`LT${i}`],
+            description: caja[`descrip${i}`],
+            bgColor: `rgb(${caja[`R${i}`] || '0'}, ${caja[`G${i}`] || '0'}, ${caja[`B${i}`] || '0'})`,
             textColor: '#000000',
             logoTextColor: '#ffffff',
-            price: caja[`precio1_${i}`],  // Cambiado de RGBprecio1
-            sku: caja[`SKU${i}`],  // Cambiado de RGBSKU
-            stock: caja[`existencia${i}`],  // Cambiado de RGBexistencia
+            price: caja[`precio1_${i}`],
+            sku: caja[`SKU${i}`],
+            stock: caja[`existencia${i}`],
             image: imageName
           });
           
           // Si hay imagen, la agregamos con la URL completa
           if (imageName && imageName.trim() !== '') {
             const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName.trim()}`;
-            if (!productsById[item.Id].images.includes(imageUrl)) {
-              productsById[item.Id].images.push(imageUrl);
+            if (!productsByCategory[categoryKey].images.includes(imageUrl)) {
+              productsByCategory[categoryKey].images.push(imageUrl);
             }
           }
         }
@@ -71,13 +74,22 @@ const Catalog = () => {
     });
     
     // Convertimos a array y aseguramos al menos una imagen por producto
-    return Object.values(productsById).map(product => ({
+    return Object.values(productsByCategory).map(product => ({
       ...product,
       images: product.images.length > 0 
         ? product.images 
         : [`https://placehold.co/400/orange/white?text=Imagen\n+No+Disponible`]
     }));
   };
+
+  // Agrupamos los productos por categoría para mostrarlos en secciones
+  const productsByCategory = products.reduce((acc, product) => {
+    if (!acc[product.category]) {
+      acc[product.category] = [];
+    }
+    acc[product.category].push(product);
+    return acc;
+  }, {});
 
   if (loading) {
     return (
@@ -104,27 +116,34 @@ const Catalog = () => {
       </div>
 
       <div className="relative z-10 px-4 py-12">
-        {/* Header mejorado */}
-        <div className="text-center mb-16">
-          <div className="inline-block mb-4">
+          {/* <div className="inline-block mb-4">
             <span className="px-4 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-full text-purple-300 text-sm font-semibold border border-purple-500/30">
               ✨ NUEVA TEMPORADA
             </span>
-          </div>
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-pink-100 mb-6 leading-tight">
-            COLECCIÓN VERANO 2025
-          </h1>
+          </div> 
           
           <div className="flex justify-center items-center -mt-4 space-x-4">
             <div className="w-24 h-0.5 bg-gradient-to-r from-blue-500 to-blue-700"></div>
             <div className="w-3.5 h-3.5 bg-gradient-to-r from-pink-500 to-pink-800 rounded-full"></div>
             <div className="w-20 h-0.5 bg-gradient-to-r from-pink-500 to-orange-500"></div>
-          </div>
-        </div>
+          </div>*/}
 
         <div className="max-w-7xl mx-auto space-y-20">
-          {products.map((product) => (
-            <ProductCatalog key={product.id} product={product} />
+          {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
+            <div key={category} className="space-y-12">
+              {/* Encabezado de categoría */}
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">
+                  {category}
+                </h2>
+                <div className="w-xl h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mt-2 rounded-full"></div>
+              </div>
+              
+              {/* Productos de esta categoría */}
+              {categoryProducts.map((product) => (
+                <ProductCatalog key={`${category}-${product.id}`} product={product} />
+              ))}
+            </div>
           ))}
         </div>
 
