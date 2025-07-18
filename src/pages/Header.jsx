@@ -55,7 +55,7 @@ const Header = () => {
       {/* Navegación Desktop */}
       <div className="hidden md:flex flex-1 justify-center">
         <ul className="flex space-x-6">
-          {user.role === 'VEN' && location.pathname !== "/" && (
+          {user && user.role === 'VEN' && location.pathname !== "/" && (
             <li className="flex items-center gap-4">
               <Link 
                 to="/" 
