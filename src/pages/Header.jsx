@@ -55,7 +55,7 @@ const Header = () => {
       {/* Navegación Desktop */}
       <div className="hidden md:flex flex-1 justify-center">
         <ul className="flex space-x-6">
-          {user && location.pathname !== "/" && (
+          {user.role === 'VEN' && location.pathname !== "/" && (
             <li className="flex items-center gap-4">
               <Link 
                 to="/" 
@@ -72,12 +72,19 @@ const Header = () => {
                   <FiUser className="h-7 w-7 mx-2 text-pink-500" />
                   <span className="font-medium">{user.name}</span>
                 </div>
-                <Link 
-                  to="/armador" 
-                  className="hover:text-pink-300 transition-colors duration-200 font-medium px-3 py-1 rounded-md hover:bg-gray-700"
-                >
-                  Armador
-                </Link>
+                
+                {/* Mostrar opciones de Vendedor solo si el rol es VEN */}
+                {user.role === 'VEN' && location.pathname !== "/" && (
+                  <>
+                    <Link 
+                      to="/nuevo" 
+                      className="hover:text-pink-300 transition-colors duration-200 font-medium px-3 py-1 rounded-md hover:bg-gray-700"
+                    >
+                      Nuevo Pedido
+                    </Link>                    
+                  </>
+                )}
+                
                 <button 
                   onClick={logout}
                   className="hover:text-pink-300 transition-colors duration-200 font-medium px-3 py-1 rounded-md hover:bg-gray-700 hover:cursor-pointer"
@@ -97,7 +104,7 @@ const Header = () => {
       {isMenuOpen && (
         <div className="md:hidden fixed inset-0 bg-gray-800 z-0 pt-15 px-4">
           <ul className="flex flex-col space-y-3">
-            {user && location.pathname !== "/" && (
+            {user.role === 'VEN' && location.pathname !== "/" && (
               <li>
                 <Link 
                   to="/" 
@@ -114,15 +121,23 @@ const Header = () => {
                   <FiUser className="h-7 w-7 text-pink-500" />
                   <span className="font-medium">{user.name}</span>
                 </li>
-                <li>
-                  <Link 
-                    to="/armador" 
-                    className="block hover:text-pink-300 transition-colors duration-200 font-medium px-3 py-3 rounded-md hover:bg-gray-700 text-center"
-                    onClick={toggleMenu}
-                  >
-                    Armador
-                  </Link>
-                </li>
+                               
+                
+                {/* Mostrar opciones de Vendedor solo si el rol es VEN */}
+                {user.role === 'VEN' && location.pathname !== "/" && (
+                  <>
+                    <li>
+                      <Link 
+                        to="/nuevo" 
+                        className="block hover:text-pink-300 transition-colors duration-200 font-medium px-3 py-3 rounded-md hover:bg-gray-700 text-center"
+                        onClick={toggleMenu}
+                      >
+                        Nuevo Pedido
+                      </Link>
+                    </li>
+                  </>
+                )}
+                
                 <li>
                   <button 
                     onClick={() => {
@@ -151,8 +166,8 @@ const Header = () => {
         </div>
       )}
 
-      {/* Icono del carrito - solo visible cuando está autenticado */}
-      {user && (
+      {/* Icono del carrito - solo visible cuando está autenticado y es VEN */}
+      {user && user.role === 'VEN' && (
         <div className="relative z-10">
           <Link 
             to={getCartLink()}

@@ -12,9 +12,26 @@ import ProductGrid from './components/ProductGrid';
 import { CartProvider } from './context/CartContext.jsx'
 import Catalog from './pages/Catalog.jsx';
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowedRoles }) {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" replace />;
+  const location = useLocation();
+  
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  // Si no se especifican roles permitidos o el usuario tiene un rol permitido
+  if (!allowedRoles || allowedRoles.includes(user.role)) {
+    return children;
+  }
+  
+  // Redirigir según el rol del usuario
+  if (user.role === 'ARM') {
+    return <Navigate to="/armador" replace />;
+  }
+  
+  // Para otros roles no autorizados, redirigir a la página principal
+  return <Navigate to="/" replace />;
 }
 
 function App() {
@@ -30,6 +47,7 @@ function App() {
 function AppContent() {
   return (
     <Routes>
+      {/* Rutas Publicas */}
       <Route path="/login" element={<Login />} />
       <Route path="/agotados" element={<OutOfStockPreview />} />
       <Route path="/catalogo" element={<Catalog />} />
@@ -37,9 +55,9 @@ function AppContent() {
       {/* Rutas que comparten el Header y el contenedor */}
       <Route path="/" element={<MainLayout />}>
         <Route
-          index // path="/" dentro de MainLayout
+          index
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['VEN']}>
               <Home />
             </ProtectedRoute>
           }
@@ -47,7 +65,7 @@ function AppContent() {
         <Route
           path="productos"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['VEN']}>
               <ProductGrid />
             </ProtectedRoute>
           }
@@ -55,7 +73,7 @@ function AppContent() {
         <Route
           path="producto/:modelCode"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['VEN']}>
               <ProductPreview />
             </ProtectedRoute>
           }
@@ -63,7 +81,7 @@ function AppContent() {
         <Route
           path="nuevo"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['VEN']}>
               <ClientSearch />
             </ProtectedRoute>
           }
@@ -71,7 +89,7 @@ function AppContent() {
         <Route
           path="carrito"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['VEN']}>
               <Cart />
             </ProtectedRoute>
           }
@@ -79,7 +97,7 @@ function AppContent() {
         <Route
           path="armador/*"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['ARM']}>
               <Armadores />
             </ProtectedRoute>
           }

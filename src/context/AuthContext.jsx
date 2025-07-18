@@ -92,7 +92,8 @@ export const AuthProvider = ({ children }) => {
       if (data.Acceso) {
         const userData = {
           username: username,
-          name: data.nombre || username // Usa data.nombre si viene en la respuesta, sino usa el username
+          name: data.nombre || username,
+          role: data.UsuRol
         };
         
         setUser(userData);
@@ -100,7 +101,14 @@ export const AuthProvider = ({ children }) => {
         setLastActivity(now);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('lastActivity', now.toString());
-        navigate('/');
+        
+        // Redirigir según el rol
+        if (data.UsuRol === 'ARM') {
+          navigate('/armador');
+        } else {
+          navigate('/');
+        }
+        
         return true;
       }
       return false;
