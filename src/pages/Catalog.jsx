@@ -30,7 +30,6 @@ const Catalog = () => {
     const productsByCategory = {};
     
     apiData.forEach(item => {
-      // Creamos una clave única combinando ID y categoría
       const categoryKey = `${item.NombreCat}-${item.Id}`;
       
       if (!productsByCategory[categoryKey]) {
@@ -42,7 +41,6 @@ const Catalog = () => {
         };
       }
       
-      // Agregamos las cajitas del producto (Caja1 y Caja2)
       for (let i = 1; i <= 2; i++) {
         const cajaKey = `Caja${i}`;
         if (item[cajaKey]) {
@@ -59,10 +57,10 @@ const Catalog = () => {
             price: caja[`precio1_${i}`],
             sku: caja[`SKU${i}`],
             stock: caja[`existencia${i}`],
-            image: imageName
+            image: imageName,
+            isImport: caja[`LogoImp${i}`] == 1 
           });
           
-          // Si hay imagen, la agregamos con la URL completa
           if (imageName && imageName.trim() !== '') {
             const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName.trim()}`;
             if (!productsByCategory[categoryKey].images.includes(imageUrl)) {
@@ -73,7 +71,6 @@ const Catalog = () => {
       }
     });
     
-    // Convertimos a array y aseguramos al menos una imagen por producto
     return Object.values(productsByCategory).map(product => ({
       ...product,
       images: product.images.length > 0 
@@ -148,7 +145,6 @@ const Catalog = () => {
         </div>
 
         <div className="text-center mt-20 pt-12 border-t border-gray-700/30">
-          <p className="text-gray-400 text-lg mb-4">Descubre tu estilo único</p>
           <div className="flex justify-center space-x-6">
             <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
               ♡
