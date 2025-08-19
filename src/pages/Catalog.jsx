@@ -47,10 +47,19 @@ const Catalog = () => {
           const caja = item[cajaKey];
           const imageName = caja[`Imagen${i}`];
           
-          // Verificar si la caja tiene información válida antes de agregarla
+          // Verificar si la caja tiene información válida para agregar rectangle
           const hasValidData = caja[`descrip${i}`]?.trim() !== '' || 
-                               caja[`SKU${i}`]?.trim() !== '';
+                              caja[`SKU${i}`]?.trim() !== '';
           
+          // Siempre agregar la imagen si existe, independientemente de los datos
+          if (imageName && imageName.trim() !== '') {
+            const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName.trim()}`;
+            if (!productsByCategory[categoryKey].images.includes(imageUrl)) {
+              productsByCategory[categoryKey].images.push(imageUrl);
+            }
+          }
+          
+          // Solo agregar rectangle si hay datos válidos
           if (hasValidData) {
             productsByCategory[categoryKey].rectangles.push({
               id: `${item.Id}-${i}`,
@@ -65,13 +74,6 @@ const Catalog = () => {
               image: imageName,
               isImport: caja[`LogoImp${i}`] == 1 
             });
-            
-            if (imageName && imageName.trim() !== '') {
-              const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName.trim()}`;
-              if (!productsByCategory[categoryKey].images.includes(imageUrl)) {
-                productsByCategory[categoryKey].images.push(imageUrl);
-              }
-            }
           }
         }
       }
