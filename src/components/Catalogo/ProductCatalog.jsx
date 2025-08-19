@@ -40,9 +40,9 @@ export const ProductCatalog = ({ product }) => {
     touchStartX.current = null;
     touchEndX.current = null;
   };
-
+  
   return (
-    <div className="group relative max-w-4xl mx-auto">
+    <div className="group relative max-w-4xl mx-auto w-full overflow-x-hidden">
       {/* Contenedor principal con efecto glassmorphism */}
       <div className="relative bg-gradient-to-br from-gray-900/40 to-gray-800/40 backdrop-blur-xl border border-gray-700/30 rounded-3xl overflow-hidden shadow-2xl transition-all duration-500 hover:shadow-purple-500/20 hover:border-purple-500/30">
         
@@ -51,16 +51,16 @@ export const ProductCatalog = ({ product }) => {
         
         <div className="flex flex-col lg:flex-row">
           {/* Sección de imagen */}
-          <div className="lg:w-1/2 relative">
+          <div className="lg:w-1/2 relative w-full">
             <div
-              className="relative aspect-[4/6.5] bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden"
+              className="relative bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden w-full"
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
               <img
                 src={product.images[currentImage]}
                 alt="Producto de moda"
-                className="w-full h-full object-cover transition-all duration-700 group-hover:scale-105"
+                className="w-full h-auto max-w-full object-cover transition-all duration-700 group-hover:scale-105"
               />
               
               {/* Overlay gradient */}
@@ -71,17 +71,17 @@ export const ProductCatalog = ({ product }) => {
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-105 transition-all duration-300 group/btn"
+                    className="absolute left-2 md:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-105 transition-all duration-300 group/btn"
                   >
-                    <svg className="w-6 h-6 text-gray-800 group-hover/btn:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-800 group-hover/btn:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-105 transition-all duration-300 group/btn"
+                    className="absolute right-2 md:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white hover:scale-105 transition-all duration-300 group/btn"
                   >
-                    <svg className="w-6 h-6 text-gray-800 group-hover/btn:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-800 group-hover/btn:text-purple-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
@@ -108,43 +108,41 @@ export const ProductCatalog = ({ product }) => {
           </div>
 
           {/* Sección de información */}
-          <div className="lg:w-1/2 p-4 lg:p-12 flex flex-col justify-center">
-            <div className="space-y-4 lg:space-y-8">
+          <div className="lg:w-1/2 p-4 lg:p-12 flex flex-col justify-center w-full">
+            <div className="space-y-4 lg:space-y-8 w-full">
               {product.rectangles.map((item, index) => (
-                <>
-                  <div key={index} className="group/item">
-                    {/* Badge con código */}
-                    <div className="flex items-start space-x-3 mb-3">
-                      <div 
-                        className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl font-bold shadow-lg transform transition-all duration-300 group-hover/item:scale-105 group-hover/item:rotate-3"
-                        style={{
-                          backgroundColor: item.bgColor,
-                          color: item.logoTextColor,
-                        }}
+                <div key={index} className="group/item w-full">
+                  {/* Badge con código */}
+                  <div className="flex items-start space-x-3 mb-3 w-full">
+                    <div 
+                      className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl font-bold shadow-lg transform transition-all duration-300 group-hover/item:scale-105 group-hover/item:rotate-3 flex-shrink-0"
+                      style={{
+                        backgroundColor: item.bgColor,
+                        color: item.logoTextColor,
+                      }}
+                    >
+                      {item.code.trim()}
+                    </div>
+                    
+                    {/* Descripción estilizada */}
+                    <div className="flex-1 bg-gray-800/50 backdrop-blur-sm rounded-xl lg:rounded-2xl px-4 py-1 lg:p-6 border border-gray-700/30 transition-all duration-300 hover:border-purple-500/30 hover:bg-gray-800/70 min-w-0">
+                      <p 
+                        className="text-sm lg:text-lg leading-relaxed font-medium break-words"
+                        style={{ color: '#ffffff' }}
                       >
-                        {item.code}
-                      </div>
-                      
-                      {/* Descripción estilizada */}
-                      <div className="flex-1 bg-gray-800/50 backdrop-blur-sm rounded-xl lg:rounded-2xl px-4 py-1 lg:p-6 border border-gray-700/30 transition-all duration-300 hover:border-purple-500/30 hover:bg-gray-800/70">
-                        <p 
-                          className="text-sm lg:text-lg leading-relaxed font-medium"
-                          style={{ color: '#ffffff' }}
-                        >
-                          {item.description.replace(/PRECIO ESPECIAL POR PAQUETE/g, '').replace(/TALLA: UT/g, '').trim()}
-                        </p>
-                      </div>
-                    </div>                  
+                        {item.description.replace(/PRECIO ESPECIAL POR PAQUETE/g, '').replace(/TALLA: UT/g, '').trim()}
+                      </p>
+                    </div>
+                  </div>                  
 
-                    {/* Separador elegante - solo en desktop */}
-                    {index < product.rectangles.length - 1 && (
-                      <div className="hidden lg:flex items-center justify-center my-8">
-                        <div className="w-12 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
-                        <div className="w-2 h-2 bg-purple-500/50 rounded-full mx-4"></div>
-                        <div className="w-12 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
-                      </div>
-                    )}
-                  </div>
+                  {/* Separador elegante - solo en desktop */}
+                  {index < product.rectangles.length - 1 && (
+                    <div className="hidden lg:flex items-center justify-center my-8">
+                      <div className="w-12 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+                      <div className="w-2 h-2 bg-purple-500/50 rounded-full mx-4"></div>
+                      <div className="w-12 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+                    </div>
+                  )}
 
                   {/* Etiquetas debajo */}
                   <div className="flex flex-wrap gap-2 mt-2">
@@ -157,7 +155,7 @@ export const ProductCatalog = ({ product }) => {
                       PRECIO ESPECIAL POR PAQUETE
                     </div>
                   </div>
-                </>
+                </div>
               ))}              
             </div>
           </div>
