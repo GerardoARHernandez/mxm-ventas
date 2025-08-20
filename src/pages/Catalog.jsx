@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ProductCatalog } from '../components/Catalogo/ProductCatalog';
+import { CategoryFilter } from '../components/Catalogo/CategoryFilter';
 
 const Catalog = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -24,6 +27,15 @@ const Catalog = () => {
     };
 
     fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const transformApiData = (apiData) => {
@@ -47,11 +59,9 @@ const Catalog = () => {
           const caja = item[cajaKey];
           const imageName = caja[`Imagen${i}`];
           
-          // Verificar si la caja tiene información válida para agregar rectangle
           const hasValidData = caja[`descrip${i}`]?.trim() !== '' || 
                               caja[`SKU${i}`]?.trim() !== '';
           
-          // Siempre agregar la imagen si existe, independientemente de los datos
           if (imageName && imageName.trim() !== '') {
             const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName.trim()}`;
             if (!productsByCategory[categoryKey].images.includes(imageUrl)) {
@@ -59,7 +69,6 @@ const Catalog = () => {
             }
           }
           
-          // Solo agregar rectangle si hay datos válidos
           if (hasValidData) {
             productsByCategory[categoryKey].rectangles.push({
               id: `${item.Id}-${i}`,
@@ -86,11 +95,15 @@ const Catalog = () => {
           ? product.images 
           : [`https://placehold.co/400/orange/white?text=Imagen\n+No+Disponible`]
       }))
-      .filter(product => product.rectangles.length > 0); // Filtrar productos sin rectangles
+      .filter(product => product.rectangles.length > 0);
   };
 
-  // Agrupamos los productos por categoría para mostrarlos en secciones
-  const productsByCategory = products.reduce((acc, product) => {
+  const categories = ['Todas', ...new Set(products.map(product => product.category))];
+  const filteredProducts = selectedCategory === 'Todas' 
+    ? products 
+    : products.filter(product => product.category === selectedCategory);
+
+  const productsByCategory = filteredProducts.reduce((acc, product) => {
     if (!acc[product.category]) {
       acc[product.category] = [];
     }
@@ -122,8 +135,25 @@ const Catalog = () => {
         <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-pink-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      <div className="relative z-10 px-4 py-12 w-full">
-        <div className="max-w-7xl mx-auto space-y-20 w-full">
+      {/* Menú sticky */}
+      <div className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-gray-900/95 backdrop-blur-md border-b border-gray-700/30 shadow-xl py-2' 
+          : 'bg-transparent py-3'
+      }`}>
+        <div className="max-w-7xl mx-auto px-4">
+          <CategoryFilter
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            isScrolled={isScrolled}
+          />
+        </div>
+      </div>
+
+      {/* Contenido principal con padding para el menú fijo */}
+      <div className="relative z-10 pt-20 pb-12 w-full">
+        <div className="max-w-7xl mx-auto px-4 space-y-20 w-full">
           {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
             <div key={category} className="space-y-12 w-full">
               {/* Encabezado de categoría */}
