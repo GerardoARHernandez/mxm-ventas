@@ -6,31 +6,16 @@ export const DownloadButton = ({ product, currentImage }) => {
 
   const downloadProductImage = async () => {
     setIsDownloading(true);
-    
+
     try {
       // Crear canvas y contexto
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      
-      // Tamaño del canvas - mantener ancho pero ajustar altura según contenido
-      const canvasWidth = 800;
-      // Altura inicial, se ajustará dinámicamente después
-      let canvasHeight = 1000;
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-      
-      // Fondo degradado
-      const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
-      gradient.addColorStop(0, '#1f2937');
-      gradient.addColorStop(0.5, '#374151');
-      gradient.addColorStop(1, '#111827');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-      
+
       // Intentar cargar la imagen con diferentes métodos
       const img = new Image();
       img.crossOrigin = "Anonymous";
-      
+
       // Función para intentar múltiples métodos de carga de imagen
       const loadImageWithFallbacks = async (imageUrl) => {
         // Método 1: Intentar con proxy CORS
@@ -44,7 +29,7 @@ export const DownloadButton = ({ product, currentImage }) => {
         } catch (error) {
           console.log("Proxy CORS falló, intentando método alternativo");
         }
-        
+
         // Método 2: Intentar con otro proxy
         try {
           const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
@@ -56,19 +41,19 @@ export const DownloadButton = ({ product, currentImage }) => {
         } catch (error) {
           console.log("Segundo proxy falló, intentando método directo");
         }
-        
-        // Método 3: Intentar carga directa (pode fallar por CORS)
+
+        // Método 3: Intentar carga directa (puede fallar por CORS)
         return new Promise((resolve, reject) => {
           img.onload = () => resolve(imageUrl);
           img.onerror = reject;
           img.src = imageUrl;
         });
       };
-      
+
       try {
         const imageUrl = await loadImageWithFallbacks(product.images[currentImage]);
         img.src = imageUrl;
-        
+
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
@@ -76,78 +61,100 @@ export const DownloadButton = ({ product, currentImage }) => {
       } catch (error) {
         console.error("Todos los métodos de carga fallaron:", error);
         alert("No se pudo cargar la imagen para descarga. Se usará un marcador de posición.");
-        
+
         // Crear una imagen de placeholder
+        const placeholderWidth = 600;
+        const placeholderHeight = 400;
+        canvas.width = placeholderWidth;
+        canvas.height = placeholderHeight;
+        
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(0, 0, placeholderWidth, placeholderHeight);
+        
         ctx.fillStyle = '#4B5563';
         ctx.font = 'bold 36px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Imagen no disponible', canvasWidth / 2, canvasHeight / 2);
+        ctx.fillText('Imagen no disponible', placeholderWidth / 2, placeholderHeight / 2);
+
+        // Descargar la imagen de placeholder
+        const link = document.createElement('a');
+        link.download = `producto_${product.category}_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
         
         throw new Error("Imagen no disponible para descarga");
       }
+
+      // Obtener dimensiones originales de la imagen
+      const originalImgWidth = img.width;
+      const originalImgHeight = img.height;
       
-      // Calcular dimensiones para la imagen - AHORA MÁS GRANDE
-      const imgMaxWidth = canvasWidth - 40;  // Menos margen
-      const imgMaxHeight = canvasHeight * 0.95; // 95% 
+      // Establecer el ancho del canvas igual al ancho de la imagen
+      const canvasWidth = originalImgWidth;
       
-      let imgWidth = img.width;
-      let imgHeight = img.height;
+      // Calcular la altura proporcional de la imagen para el canvas
+      const imgHeight = originalImgHeight;
       
-      if (imgWidth > imgMaxWidth) {
-        imgHeight = (imgHeight * imgMaxWidth) / imgWidth;
-        imgWidth = imgMaxWidth;
-      }
-      
-      if (imgHeight > imgMaxHeight) {
-        imgWidth = (imgWidth * imgMaxHeight) / imgHeight;
-        imgHeight = imgMaxHeight;
-      }
-      
-      // Dibujar la imagen centrada
-      const imgX = (canvasWidth - imgWidth) / 2;
-      const imgY = 10;  // Menos espacio superior
-      
+      // Altura inicial del canvas (imagen + espacio estimado para texto)
+      let canvasHeight = imgHeight + 100; // Espacio adicional para texto
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // Fondo degradado
+      const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+      gradient.addColorStop(0, '#1f2937');
+      gradient.addColorStop(0.5, '#374151');
+      gradient.addColorStop(1, '#111827');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // Dibujar la imagen a su tamaño original
+      const imgX = 0;
+      const imgY = 0;
+
       // Sombra para la imagen
       ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
       ctx.shadowBlur = 15;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 8;
-      
-      ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
-      
+
+      ctx.drawImage(img, imgX, imgY, canvasWidth, imgHeight);
+
       // Reset shadow
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
-      
+
       // Calcular la altura necesaria para el contenido textual
       let textContentHeight = 0;
-      
+
       // Altura del título y separadores
-      textContentHeight += 1; // Título + línea decorativa + espacios
-      
+      textContentHeight += 40; // Título + línea decorativa + espacios
+
       // Calcular altura para cada producto
       product.rectangles.forEach((item) => {
         const description = item.description
           .replace(/PRECIO ESPECIAL POR PAQUETE/g, '')
           .replace(/TALLA: UT/g, '')
           .trim();
-        
+
         // Simular el contexto para medir texto
         const tempCtx = canvas.getContext('2d');
-        tempCtx.font = '20px Arial, sans-serif';
-        
+        tempCtx.font = '30px Arial, sans-serif';
+
         const words = description.split(' ');
         const lines = [];
         let currentLine = words[0];
-        const maxWidth = canvasWidth - 140;
-        
+        const maxWidth = canvasWidth - 80; // Margen reducido
+
         for (let i = 1; i < words.length; i++) {
           const testLine = currentLine + ' ' + words[i];
           const testWidth = tempCtx.measureText(testLine).width;
-          
-          if (testWidth > maxWidth && i > 1) {
+
+          if (testWidth > maxWidth) {
             lines.push(currentLine);
             currentLine = words[i];
           } else {
@@ -155,17 +162,17 @@ export const DownloadButton = ({ product, currentImage }) => {
           }
         }
         lines.push(currentLine);
-        
+
         // Altura del bloque de producto
-        textContentHeight += 30; // Círculo del código
-        textContentHeight += lines.length * 24; // Líneas de texto
-        textContentHeight += 40; // Espacio para etiquetas
-        textContentHeight += 30; // Espaciado entre productos
+        textContentHeight += 40; // Círculo del código (aumentado)
+        textContentHeight += lines.length * 30; // Líneas de texto (más espacio)
+        textContentHeight += 50; // Espacio para etiquetas (aumentado)
+        textContentHeight += 40; // Espaciado entre productos (aumentado)
       });
-      
+
       // Altura total del canvas (imagen + contenido + márgenes)
-      const totalCanvasHeight = imgY + imgHeight + textContentHeight + 30;
-      
+      const totalCanvasHeight = imgHeight + textContentHeight + 40;
+
       // Si la altura calculada es mayor que la actual, redimensionar el canvas
       if (totalCanvasHeight > canvasHeight) {
         canvas.height = totalCanvasHeight;
@@ -181,40 +188,33 @@ export const DownloadButton = ({ product, currentImage }) => {
         ctx.shadowBlur = 15;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 8;
-        ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+        ctx.drawImage(img, imgX, imgY, canvasWidth, imgHeight);
         ctx.shadowColor = 'transparent';
         ctx.shadowBlur = 0;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
       }
-      
+
       // Área de información
-      const infoY = imgY + imgHeight + 29;  // Menos espacio entre imagen y texto
+      const infoY = imgHeight + 20;
       let currentY = infoY;
-      
-      // Título de la categoría
-      ctx.fillStyle = '#e5e7eb';
-      ctx.font = 'bold 28px Arial, sans-serif';  // Texto un poco más pequeño
-      ctx.textAlign = 'center';
-      ctx.fillText(product.category, canvasWidth / 2, currentY);
-      currentY += 50;
-      
+
       // Línea decorativa
-      const lineGradient = ctx.createLinearGradient(canvasWidth * 0.25, 0, canvasWidth * 0.75, 0);
+      const lineGradient = ctx.createLinearGradient(canvasWidth * 0.1, 0, canvasWidth * 0.9, 0);
       lineGradient.addColorStop(0, '#8b5cf6');
       lineGradient.addColorStop(0.5, '#ec4899');
       lineGradient.addColorStop(1, '#f59e0b');
       ctx.fillStyle = lineGradient;
-      ctx.fillRect(canvasWidth * 0.25, currentY, canvasWidth * 0.5, 2);  // Línea más delgada
-      currentY += 22;
-      
+      ctx.fillRect(canvasWidth * 0.1, currentY, canvasWidth * 0.8, 2);
+      currentY += 30;
+
       // Información de productos
       product.rectangles.forEach((item, index) => {
         // Código del producto en círculo
-        const codeSize = 35;
-        const codeX = 50;
-        const codeY = currentY + 15;
-        
+        const codeSize = 40;
+        const codeX = 45;
+        const codeY = currentY + 20;
+
         // Convertir RGB string a valores
         const rgbMatch = item.bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
         if (rgbMatch) {
@@ -222,38 +222,38 @@ export const DownloadButton = ({ product, currentImage }) => {
         } else {
           ctx.fillStyle = '#8b5cf6';
         }
-        
+
         ctx.beginPath();
         ctx.arc(codeX, codeY, codeSize / 2, 0, 2 * Math.PI);
         ctx.fill();
-        
+
         // Texto del código
         ctx.fillStyle = item.logoTextColor || '#ffffff';
-        ctx.font = 'bold 16px Arial, sans-serif';
+        ctx.font = 'bold 26px Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(item.code.trim(), codeX, codeY + 5);
-        
+
         // Descripción del producto
         ctx.fillStyle = '#ffffff';
-        ctx.font = '20px Arial, sans-serif';  // Texto más pequeño
+        ctx.font = '35px Arial, sans-serif';
         ctx.textAlign = 'left';
-        
+
         const description = item.description
           .replace(/PRECIO ESPECIAL POR PAQUETE/g, '')
           .replace(/TALLA: UT/g, '')
           .trim();
-        
+
         // Dividir texto en líneas
         const words = description.split(' ');
         const lines = [];
         let currentLine = words[0];
-        const maxWidth = canvasWidth - 120;
-        
+        const maxWidth = canvasWidth - 80; // Margen reducido
+
         for (let i = 1; i < words.length; i++) {
           const testLine = currentLine + ' ' + words[i];
           const testWidth = ctx.measureText(testLine).width;
-          
-          if (testWidth > maxWidth && i > 1) {
+
+          if (testWidth > maxWidth) {
             lines.push(currentLine);
             currentLine = words[i];
           } else {
@@ -261,56 +261,59 @@ export const DownloadButton = ({ product, currentImage }) => {
           }
         }
         lines.push(currentLine);
-        
-        // Dibujar las líneas de descripción
-        let lineY = currentY;
+
+        // Dibujar las líneas de descripción con más interlineado
+        let lineY = currentY + 10; // Añadido espacio adicional
         lines.forEach(line => {
           ctx.fillText(line, codeX + codeSize + 15, lineY + 5);
-          lineY += 22;  // Menos espacio entre líneas
+          lineY += 40; // Aumentado el interlineado de 24 a 40
         });
-        
-        currentY = lineY + 12;
-        
-        // Etiquetas
+
+        currentY = lineY + 20; // Aumentado espacio después del texto
+
+        // Etiquetas - recuadros más grandes
         let tagX = codeX + codeSize + 15;
         let tagY = currentY;
-        
+
         const tags = [];
         if (item.isImport) {
           tags.push('IMPORTACIÓN');
         }
         tags.push('PRECIO ESPECIAL POR PAQUETE');
-        
+
         tags.forEach((tag, tagIndex) => {
-          // Fondo de la etiqueta
+          // Fondo de la etiqueta - recuadro más grande
           ctx.fillStyle = 'rgba(139, 92, 246, 0.3)';
-          const tagWidth = ctx.measureText(tag).width + 14;
-          const tagHeight = 20;
-          
-          ctx.fillRect(tagX, tagY - 14, tagWidth, tagHeight);
-          
-          // Texto de la etiqueta
+          const tagWidth = ctx.measureText(tag).width + 20; // Aumentado de 14 a 20
+          const tagHeight = 28; // Aumentado de 20 a 28
+
+          // Dibujar recuadro redondeado
+          ctx.beginPath();
+          ctx.roundRect(tagX, tagY - 16, tagWidth, tagHeight, 6);
+          ctx.fill();
+
+          // Texto de la etiqueta - centrado verticalmente
           ctx.fillStyle = '#c4b5fd';
-          ctx.font = 'bold 11px Arial, sans-serif';
-          ctx.fillText(tag, tagX + 7, tagY - 3);
-          
-          tagX += tagWidth + 8;
+          ctx.font = 'bold 16px Arial, sans-serif'; // Aumentado de 14 a 16
+          ctx.fillText(tag, tagX + 10, tagY); // Ajustada posición vertical
+
+          tagX += tagWidth + 12; // Aumentado espacio entre etiquetas
           if (tagX + 120 > canvasWidth) {
             tagX = codeX + codeSize + 15;
-            tagY += 25;
+            tagY += 35; // Aumentado espacio entre líneas de etiquetas
           }
         });
-        
-        currentY = tagY + 30;
-        
+
+        currentY = tagY + 45; // Aumentado espacio después de las etiquetas
+
         // Añadir separador entre productos si no es el último
         if (index < product.rectangles.length - 1) {
           ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
           ctx.fillRect(canvasWidth * 0.1, currentY, canvasWidth * 0.8, 1);
-          currentY += 15;
+          currentY += 25; // Aumentado espacio después del separador
         }
       });
-      
+
       // Crear y descargar la imagen
       const link = document.createElement('a');
       link.download = `producto_${product.category}_${Date.now()}.png`;
@@ -318,7 +321,7 @@ export const DownloadButton = ({ product, currentImage }) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
     } catch (error) {
       console.error('Error al generar la imagen:', error);
       if (!error.message.includes("Imagen no disponible")) {
