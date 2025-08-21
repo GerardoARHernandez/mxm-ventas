@@ -148,7 +148,7 @@ export const DownloadButton = ({ product, currentImage }) => {
         const words = description.split(' ');
         const lines = [];
         let currentLine = words[0];
-        const maxWidth = canvasWidth - 80; // Margen reducido
+        const maxWidth = canvasWidth - 120; // Aumentado margen de 80 a 120
 
         for (let i = 1; i < words.length; i++) {
           const testLine = currentLine + ' ' + words[i];
@@ -164,7 +164,7 @@ export const DownloadButton = ({ product, currentImage }) => {
         lines.push(currentLine);
 
         // Altura del bloque de producto
-        textContentHeight += 40; // Círculo del código (aumentado)
+        textContentHeight += 50; // Círculo del código (aumentado de 40 a 50)
         textContentHeight += lines.length * 30; // Líneas de texto (más espacio)
         textContentHeight += 50; // Espacio para etiquetas (aumentado)
         textContentHeight += 40; // Espaciado entre productos (aumentado)
@@ -199,7 +199,7 @@ export const DownloadButton = ({ product, currentImage }) => {
       const infoY = imgHeight + 20;
       let currentY = infoY;
 
-      // Línea decorativa
+      // Línea decorativa con márgenes
       const lineGradient = ctx.createLinearGradient(canvasWidth * 0.1, 0, canvasWidth * 0.9, 0);
       lineGradient.addColorStop(0, '#8b5cf6');
       lineGradient.addColorStop(0.5, '#ec4899');
@@ -210,10 +210,10 @@ export const DownloadButton = ({ product, currentImage }) => {
 
       // Información de productos
       product.rectangles.forEach((item, index) => {
-        // Código del producto en círculo
-        const codeSize = 40;
-        const codeX = 45;
-        const codeY = currentY + 20;
+        // Código del producto en círculo - MÁS GRANDE
+        const codeSize = 50; // Aumentado de 40 a 50
+        const codeX = 60; // Aumentado de 45 a 60 para más margen izquierdo
+        const codeY = currentY + 25; // Aumentado de 20 a 25
 
         // Convertir RGB string a valores
         const rgbMatch = item.bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
@@ -227,11 +227,13 @@ export const DownloadButton = ({ product, currentImage }) => {
         ctx.arc(codeX, codeY, codeSize / 2, 0, 2 * Math.PI);
         ctx.fill();
 
-        // Texto del código
+        // Texto del código - MÁS GRANDE
         ctx.fillStyle = item.logoTextColor || '#ffffff';
-        ctx.font = 'bold 26px Arial, sans-serif';
+        ctx.font = 'bold 30px Arial, sans-serif'; // Aumentado de 26 a 30
         ctx.textAlign = 'center';
-        ctx.fillText(item.code.trim(), codeX, codeY + 5);
+        ctx.textBaseline = 'middle'; // Centrado vertical perfecto
+        ctx.fillText(item.code.trim(), codeX, codeY); // Eliminado +5 para mejor centrado
+        ctx.textBaseline = 'alphabetic'; // Restaurar valor por defecto
 
         // Descripción del producto
         ctx.fillStyle = '#ffffff';
@@ -247,7 +249,7 @@ export const DownloadButton = ({ product, currentImage }) => {
         const words = description.split(' ');
         const lines = [];
         let currentLine = words[0];
-        const maxWidth = canvasWidth - 80; // Margen reducido
+        const maxWidth = canvasWidth - 120; // Aumentado margen de 80 a 120
 
         for (let i = 1; i < words.length; i++) {
           const testLine = currentLine + ' ' + words[i];
@@ -263,16 +265,16 @@ export const DownloadButton = ({ product, currentImage }) => {
         lines.push(currentLine);
 
         // Dibujar las líneas de descripción con más interlineado
-        let lineY = currentY + 10; // Añadido espacio adicional
+        let lineY = currentY + 15; // Aumentado de 10 a 15
         lines.forEach(line => {
-          ctx.fillText(line, codeX + codeSize + 15, lineY + 5);
+          ctx.fillText(line, codeX + codeSize + 20, lineY + 5); // Aumentado margen de 15 a 20
           lineY += 40; // Aumentado el interlineado de 24 a 40
         });
 
-        currentY = lineY + 20; // Aumentado espacio después del texto
+        currentY = lineY + 25; // Aumentado de 20 a 25
 
         // Etiquetas - recuadros más grandes
-        let tagX = codeX + codeSize + 15;
+        let tagX = codeX + codeSize + 0; 
         let tagY = currentY;
 
         const tags = [];
@@ -284,33 +286,35 @@ export const DownloadButton = ({ product, currentImage }) => {
         tags.forEach((tag, tagIndex) => {
           // Fondo de la etiqueta - recuadro más grande
           ctx.fillStyle = 'rgba(139, 92, 246, 0.3)';
-          const tagWidth = ctx.measureText(tag).width + 20; // Aumentado de 14 a 20
-          const tagHeight = 28; // Aumentado de 20 a 28
+          const tagWidth = ctx.measureText(tag).width + 15; // Aumentado de 15
+          const tagHeight = 32; // Aumentado de 28 a 32
 
           // Dibujar recuadro redondeado
           ctx.beginPath();
-          ctx.roundRect(tagX, tagY - 16, tagWidth, tagHeight, 6);
+          ctx.roundRect(tagX, tagY - 18, tagWidth, tagHeight, 8); // Aumentado redondeo de 6 a 8
           ctx.fill();
 
           // Texto de la etiqueta - centrado verticalmente
           ctx.fillStyle = '#c4b5fd';
-          ctx.font = 'bold 16px Arial, sans-serif'; // Aumentado de 14 a 16
-          ctx.fillText(tag, tagX + 10, tagY); // Ajustada posición vertical
+          ctx.font = 'bold 16px Arial, sans-serif'; // Aumentado de 16 
+          ctx.textBaseline = 'middle'; // Centrado vertical perfecto
+          ctx.fillText(tag, tagX + 10, tagY); // Aumentado padding de 10 
+          ctx.textBaseline = 'alphabetic'; // Restaurar valor por defecto
 
-          tagX += tagWidth + 12; // Aumentado espacio entre etiquetas
-          if (tagX + 120 > canvasWidth) {
-            tagX = codeX + codeSize + 15;
-            tagY += 35; // Aumentado espacio entre líneas de etiquetas
+          tagX += tagWidth + 15; // Aumentado espacio entre etiquetas de 12 a 15
+          if (tagX + 140 > canvasWidth) { // Aumentado de 120 a 140
+            tagX = codeX + codeSize + 20;
+            tagY += 40; // Aumentado de 35 a 40
           }
         });
 
-        currentY = tagY + 45; // Aumentado espacio después de las etiquetas
+        currentY = tagY + 50; // Aumentado de 45 a 50
 
         // Añadir separador entre productos si no es el último
         if (index < product.rectangles.length - 1) {
           ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
           ctx.fillRect(canvasWidth * 0.1, currentY, canvasWidth * 0.8, 1);
-          currentY += 25; // Aumentado espacio después del separador
+          currentY += 30; // Aumentado de 25 a 30
         }
       });
 
