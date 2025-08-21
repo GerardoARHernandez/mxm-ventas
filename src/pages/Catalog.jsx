@@ -6,7 +6,7 @@ const Catalog = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [selectedCategory, setSelectedCategory] = useState('NEW ARRIVALS'); // Cambiado aquí
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -98,9 +98,17 @@ const Catalog = () => {
       .filter(product => product.rectangles.length > 0);
   };
 
-  const categories = ['Todas', ...new Set(products.map(product => product.category))];
-  const filteredProducts = selectedCategory === 'Todas' 
-    ? products 
+  // Obtener todas las categorías únicas de los productos
+  const allCategories = [...new Set(products.map(product => product.category))];
+  
+  // Si existe la categoría "NEW ARRIVALS", la ponemos primero
+  const categories = allCategories.includes('NEW ARRIVALS') 
+    ? ['NEW ARRIVALS', ...allCategories.filter(cat => cat !== 'NEW ARRIVALS')]
+    : allCategories;
+
+  // Filtrar productos por categoría seleccionada (incluyendo NEW ARRIVALS como categoría normal)
+  const filteredProducts = selectedCategory === 'NEW ARRIVALS'
+    ? products.filter(product => product.category === 'NEW ARRIVALS')
     : products.filter(product => product.category === selectedCategory);
 
   const productsByCategory = filteredProducts.reduce((acc, product) => {
@@ -183,5 +191,6 @@ const Catalog = () => {
     </div>
   );
 };
+
 
 export default Catalog;
