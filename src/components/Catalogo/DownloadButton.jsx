@@ -167,7 +167,7 @@ export const DownloadButton = ({ product, currentImage }) => {
         lines.push(currentLine);
 
         // Altura del bloque de producto
-        textContentHeight += 50; // Círculo del código
+        textContentHeight += 60; // Aumentado para el rectángulo redondeado más grande
         textContentHeight += lines.length * 30; // Líneas de texto
         textContentHeight += 50; // Espacio para etiquetas
         textContentHeight += 40; // Espaciado entre productos
@@ -213,10 +213,11 @@ export const DownloadButton = ({ product, currentImage }) => {
 
       // Información de productos
       product.rectangles.forEach((item, index) => {
-        // Código del producto en círculo
-        const codeSize = 50;
+        // Código del producto en rectángulo redondeado (como en el diseño original)
+        const codeWidth = 60; // Ancho del rectángulo
+        const codeHeight = 60; // Alto del rectángulo (cuadrado)
         const codeX = 60; // Margen izquierdo
-        const codeY = currentY + 25;
+        const codeY = currentY + 20; // Posición vertical
 
         // Convertir RGB string a valores
         const rgbMatch = item.bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
@@ -226,16 +227,38 @@ export const DownloadButton = ({ product, currentImage }) => {
           ctx.fillStyle = '#8b5cf6';
         }
 
+        // Dibujar rectángulo redondeado (como en el diseño original)
+        const borderRadius = 16; // Radio de borde similar al diseño
         ctx.beginPath();
-        ctx.arc(codeX, codeY, codeSize / 2, 0, 2 * Math.PI);
+        ctx.moveTo(codeX + borderRadius, codeY);
+        ctx.lineTo(codeX + codeWidth - borderRadius, codeY);
+        ctx.quadraticCurveTo(codeX + codeWidth, codeY, codeX + codeWidth, codeY + borderRadius);
+        ctx.lineTo(codeX + codeWidth, codeY + codeHeight - borderRadius);
+        ctx.quadraticCurveTo(codeX + codeWidth, codeY + codeHeight, codeX + codeWidth - borderRadius, codeY + codeHeight);
+        ctx.lineTo(codeX + borderRadius, codeY + codeHeight);
+        ctx.quadraticCurveTo(codeX, codeY + codeHeight, codeX, codeY + codeHeight - borderRadius);
+        ctx.lineTo(codeX, codeY + borderRadius);
+        ctx.quadraticCurveTo(codeX, codeY, codeX + borderRadius, codeY);
+        ctx.closePath();
         ctx.fill();
 
-        // Texto del código
+        // Añadir sombra al rectángulo (como en el diseño original)
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Texto del código - centrado en el rectángulo
         ctx.fillStyle = item.logoTextColor || '#ffffff';
-        ctx.font = 'bold 30px Arial, sans-serif';
+        ctx.font = 'bold 28px Arial, sans-serif'; // Tamaño ajustado para el rectángulo
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(item.code.trim(), codeX, codeY);
+        ctx.fillText(item.code.trim(), codeX + codeWidth / 2, codeY + codeHeight / 2);
         ctx.textBaseline = 'alphabetic';
 
         // Descripción del producto
@@ -252,7 +275,7 @@ export const DownloadButton = ({ product, currentImage }) => {
         const words = description.split(' ');
         const lines = [];
         let currentLine = words[0];
-        const maxWidth = canvasWidth - codeX - codeSize - 20 - rightPadding; // Respeta padding derecho
+        const maxWidth = canvasWidth - codeX - codeWidth - 20 - rightPadding; // Respeta padding derecho
 
         for (let i = 1; i < words.length; i++) {
           const testLine = currentLine + ' ' + words[i];
@@ -270,14 +293,14 @@ export const DownloadButton = ({ product, currentImage }) => {
         // Dibujar las líneas de descripción
         let lineY = currentY + 15;
         lines.forEach(line => {
-          ctx.fillText(line, codeX + codeSize + 20, lineY + 5);
+          ctx.fillText(line, codeX + codeWidth + 20, lineY + 5);
           lineY += 40;
         });
 
         currentY = lineY + 25;
 
         // Etiquetas - respetando padding derecho
-        let tagX = codeX + codeSize + 20;
+        let tagX = codeX + codeWidth + 20;
         let tagY = currentY;
         const maxTagX = canvasWidth - rightPadding - 20; // Límite con padding derecho
 
@@ -295,7 +318,7 @@ export const DownloadButton = ({ product, currentImage }) => {
 
           // Verificar si la etiqueta cabe en la línea actual
           if (tagX + tagWidth > maxTagX) {
-            tagX = codeX + codeSize + 20;
+            tagX = codeX + codeWidth + 20;
             tagY += 40;
           }
 
