@@ -184,7 +184,7 @@ const Catalog = () => {
                 Descubre Nuestras Colecciones
               </h2>
               <p className="text-gray-300 text-lg max-w-md">
-                Selecciona una categoría del menú superior para explorar nuestros productos exclusivos
+                Selecciona uno de nuestros catálogos en el menú superior para explorar nuestros productos exclusivos.
               </p>
               <div className="mt-8 w-32 h-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
             </div>
