@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ProductCatalog } from '../components/Catalogo/ProductCatalog';
 import { CategoryFilter } from '../components/Catalogo/CategoryFilter';
+import { BulkDownloadButton } from '../components/Catalogo/BulkDownloadButton';
 
 const Catalog = () => {
   const [products, setProducts] = useState([]);
@@ -158,22 +159,27 @@ const Catalog = () => {
       <div className="relative z-10 pt-20 pb-12 w-full">
         <div className="max-w-7xl mx-auto px-4 space-y-20 w-full">
           {selectedCategory ? (
-            Object.entries(productsByCategory).map(([category, categoryProducts]) => (
+          <>
+            {/* Botón de descarga masiva */}
+            <div className="text-left mb-10 md:pl-12">
+              <BulkDownloadButton 
+                products={filteredProducts} 
+                category={selectedCategory} 
+              />
+            </div>
+
+            {/* Productos con botón de descarga individual */}
+            {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
               <div key={category} className="space-y-12 w-full">
-                {/* Encabezado de categoría */}
-                <div className="text-center mb-8 w-full">
-                  <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">
-                    {category}
-                  </h2>
-                  <div className="w-xl h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mt-2 rounded-full"></div>
-                </div>
-                
-                {/* Productos de esta categoría */}
                 {categoryProducts.map((product) => (
-                  <ProductCatalog key={`${category}-${product.id}`} product={product} />
+                  <ProductCatalog 
+                    key={`${category}-${product.id}`} 
+                    product={product} 
+                  />
                 ))}
               </div>
-            ))
+            ))}
+          </>
           ) : (
             // Mensaje cuando no hay categoría seleccionada
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
