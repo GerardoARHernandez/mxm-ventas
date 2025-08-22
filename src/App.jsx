@@ -51,6 +51,7 @@ function AppContent() {
       <Route path="/login" element={<Login />} />
       <Route path="/agotados" element={<OutOfStockPreview />} />
       <Route path="/catalogo" element={<Catalog />} />
+      <Route path="/catalogousuario" element={<Catalog />} />
 
       {/* Rutas que comparten el Header y el contenedor */}
       <Route path="/" element={<MainLayout />}>

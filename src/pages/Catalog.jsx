@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react';
 import { ProductCatalog } from '../components/Catalogo/ProductCatalog';
 import { CategoryFilter } from '../components/Catalogo/CategoryFilter';
 import { BulkDownloadButton } from '../components/Catalogo/BulkDownloadButton';
+import { useLocation } from 'react-router-dom';
 
 const Catalog = () => {
+  const location = useLocation().pathname === '/catalogousuario';
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -160,13 +163,16 @@ const Catalog = () => {
         <div className="max-w-7xl mx-auto px-4 space-y-20 w-full">
           {selectedCategory ? (
           <>
-            {/* Botón de descarga masiva */}
-            <div className="text-left mb-10 md:pl-12">
+          {location && (
+            /* Botón de descarga masiva */
+            <div className="text-left mb-10">
               <BulkDownloadButton 
                 products={filteredProducts} 
                 category={selectedCategory} 
               />
             </div>
+          )}
+            
 
             {/* Productos con botón de descarga individual */}
             {Object.entries(productsByCategory).map(([category, categoryProducts]) => (

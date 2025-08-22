@@ -1,7 +1,12 @@
 import { useState, useRef } from 'react';
-import { DownloadButton } from "./DownloadButton"
+import { DownloadButton } from "./DownloadButton";
+import { useLocation } from 'react-router-dom';
+
 
 export const ProductCatalog = ({ product }) => {
+  const location = useLocation().pathname === '/catalogousuario';
+
+
   const [currentImage, setCurrentImage] = useState(0);
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
@@ -50,8 +55,10 @@ export const ProductCatalog = ({ product }) => {
         {/* Header decorativo */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500"></div>
         
-        {/* Botón de descarga como componente separado */}
-        <DownloadButton product={product} currentImage={currentImage} />
+        {location && (
+          /* Botón de descarga como componente separado */
+          <DownloadButton product={product} currentImage={currentImage} />
+        )}
         
         <div className="flex flex-col lg:flex-row">
           {/* Sección de imagen */}
