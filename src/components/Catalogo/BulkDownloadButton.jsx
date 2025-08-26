@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 // Función para detectar Safari en iOS
 const isSafariOnIOS = () => {
