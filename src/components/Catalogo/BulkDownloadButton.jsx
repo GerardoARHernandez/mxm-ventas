@@ -416,77 +416,82 @@ export const BulkDownloadButton = ({ products, category }) => {
   };
   
   // Función para generar y descargar ZIP en Safari
-    const downloadAsZip = async () => {
-        if (!products || products.length === 0) return;
-        
-        setIsDownloading(true);
-        setProgress(0);
-        isCancelled.current = false;
+    // Función para generar y descargar ZIP en Safari (solo primeras 5 imágenes para prueba)
+const downloadAsZip = async () => {
+    if (!products || products.length === 0) return;
+    
+    setIsDownloading(true);
+    setProgress(0);
+    isCancelled.current = false;
 
-        try {
-            const zip = new JSZip();
-            const totalImages = products.reduce((total, product) => total + product.images.length, 0);
-            let processedCount = 0;
+    try {
+        const zip = new JSZip();
+        const totalImages = products.reduce((total, product) => total + product.images.length, 0);
+        let processedCount = 0;
+        let imagesToProcess = 5; // Límite para la prueba
 
-            showStatusMessage("Preparando archivo ZIP...", 3000);
+        showStatusMessage("Preparando archivo ZIP (prueba: 5 imágenes)...", 3000);
 
-            // Para cada producto
-            for (const product of products) {
-                if (isCancelled.current) break;
+        // Para cada producto
+        for (const product of products) {
+            if (isCancelled.current) break;
+            
+            // Para cada imagen del producto
+            for (let i = 0; i < product.images.length; i++) {
+                if (isCancelled.current || processedCount >= imagesToProcess) break;
                 
-                // Para cada imagen del producto
-                for (let i = 0; i < product.images.length; i++) {
-                    if (isCancelled.current) break;
+                try {
+                    // Crear canvas y generar imagen
+                    const canvas = document.createElement('canvas');
+                    const dataUrl = await generateImageForZip(product, product.images[i], i, canvas);
                     
-                    try {
-                        // Crear canvas y generar imagen
-                        const canvas = document.createElement('canvas');
-                        const dataUrl = await generateImageForZip(product, product.images[i], i, canvas);
+                    if (dataUrl) {
+                        // Convertir data URL a blob
+                        const response = await fetch(dataUrl);
+                        const blob = await response.blob();
                         
-                        if (dataUrl) {
-                            // Convertir data URL a blob
-                            const response = await fetch(dataUrl);
-                            const blob = await response.blob();
-                            
-                            // Añadir al ZIP
-                            const fileName = `producto_${product.category}_${product.id}_${i + 1}_${Date.now()}.png`;
-                            zip.file(fileName, blob);
-                        }
-                        
-                        processedCount++;
-                        setProgress(Math.round((processedCount / totalImages) * 100));
-                        
-                        // Pequeña pausa para no sobrecargar el navegador
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                    } catch (error) {
-                        console.error('Error procesando imagen para ZIP:', error);
+                        // Añadir al ZIP
+                        const fileName = `producto_${product.category}_${product.id}_${i + 1}_${Date.now()}.png`;
+                        zip.file(fileName, blob);
                     }
+                    
+                    processedCount++;
+                    setProgress(Math.round((processedCount / imagesToProcess) * 100));
+                    
+                    // Pequeña pausa para no sobrecargar el navegador
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (error) {
+                    console.error('Error procesando imagen para ZIP:', error);
                 }
             }
-
-            if (isCancelled.current) {
-                showStatusMessage("Descarga cancelada", 3000);
-                return;
-            }
-
-            // Generar el ZIP
-            showStatusMessage("Comprimiendo imágenes...", 3000);
-            const zipBlob = await zip.generateAsync({type: 'blob'}, (metadata) => {
-                setProgress(Math.round(metadata.percent));
-            });
-
-            // Descargar el ZIP
-            saveAs(zipBlob, `productos_${category}_${Date.now()}.zip`);
-            showStatusMessage("¡ZIP descargado correctamente!", 4000);
             
-        } catch (error) {
-            console.error('Error generando ZIP:', error);
-            showStatusMessage(`Error al generar el ZIP ${error}`, 3000);
-        } finally {
-            setIsDownloading(false);
-            setProgress(0);
+            // Salir del bucle exterior si ya procesamos las imágenes de prueba
+            if (processedCount >= imagesToProcess) break;
         }
-    };
+
+        if (isCancelled.current) {
+            showStatusMessage("Descarga cancelada", 3000);
+            return;
+        }
+
+        // Generar el ZIP
+        showStatusMessage("Comprimiendo imágenes...", 3000);
+        const zipBlob = await zip.generateAsync({type: 'blob'}, (metadata) => {
+            setProgress(Math.round(metadata.percent));
+        });
+
+        // Descargar el ZIP
+        saveAs(zipBlob, `productos_${category}_PRUEBA_${Date.now()}.zip`);
+        showStatusMessage("¡ZIP de prueba descargado correctamente!", 4000);
+        
+    } catch (error) {
+        console.error('Error generando ZIP:', error);
+        showStatusMessage(`Error al generar el ZIP: ${error.message}`, 3000);
+    } finally {
+        setIsDownloading(false);
+        setProgress(0);
+    }
+};
 
     const generateImageForZip = async (product, imageUrl, imageIndex, canvas) => {
     return new Promise(async (resolve) => {
