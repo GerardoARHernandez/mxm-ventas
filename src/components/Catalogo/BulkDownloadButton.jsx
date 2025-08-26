@@ -1040,7 +1040,7 @@ return (
         </div>
     )}
 
-    {zipDownloadUrl && (
+    {/* {zipDownloadUrl && (
     <div className="fixed bottom-4 left-4 right-4 bg-blue-900 text-white p-4 rounded-lg shadow-lg z-50">
         <div className="flex justify-between items-center">
             <span>ZIP listo para descargar: {zipFileName}</span>
@@ -1068,7 +1068,7 @@ return (
             </button>
         </div>
     </div>
-)}
+)} */}
 
     </div>
   );
