@@ -479,7 +479,7 @@ export const BulkDownloadButton = ({ products, category }) => {
             
         } catch (error) {
             console.error('Error generando ZIP:', error);
-            showStatusMessage('Error al generar el ZIP', 3000);
+            showStatusMessage(`Error al generar el ZIP ${error}`, 3000);
         } finally {
             setIsDownloading(false);
             setProgress(0);
