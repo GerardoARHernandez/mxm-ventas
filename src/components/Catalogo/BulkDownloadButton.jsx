@@ -430,9 +430,8 @@ export const BulkDownloadButton = ({ products, category }) => {
         const zip = new JSZip();
         const totalImages = products.reduce((total, product) => total + product.images.length, 0);
         let processedCount = 0;
-        let imagesToProcess = 5; // Límite para la prueba
 
-        showStatusMessage("Preparando archivo ZIP (prueba: 5 imágenes)...", 3000);
+        showStatusMessage(`Preparando archivo ZIP con ${totalImages} imágenes...`, 3000);
 
         // Para cada producto
         for (const product of products) {
@@ -440,7 +439,7 @@ export const BulkDownloadButton = ({ products, category }) => {
             
             // Para cada imagen del producto
             for (let i = 0; i < product.images.length; i++) {
-                if (isCancelled.current || processedCount >= imagesToProcess) break;
+                if (isCancelled.current) break;
                 
                 try {
                     // Crear canvas y generar imagen
@@ -458,7 +457,7 @@ export const BulkDownloadButton = ({ products, category }) => {
                     }
                     
                     processedCount++;
-                    setProgress(Math.round((processedCount / imagesToProcess) * 100));
+                    setProgress(Math.round((processedCount / totalImages) * 100));
                     
                     // Pequeña pausa para no sobrecargar el navegador
                     await new Promise(resolve => setTimeout(resolve, 100));
@@ -466,9 +465,6 @@ export const BulkDownloadButton = ({ products, category }) => {
                     console.error('Error procesando imagen para ZIP:', error);
                 }
             }
-            
-            // Salir del bucle exterior si ya procesamos las imágenes de prueba
-            if (processedCount >= imagesToProcess) break;
         }
 
         if (isCancelled.current) {
@@ -484,7 +480,7 @@ export const BulkDownloadButton = ({ products, category }) => {
 
         // Crear URL para el blob
         const url = URL.createObjectURL(zipBlob);
-        const fileName = `productos_${category}_PRUEBA_${Date.now()}.zip`;
+        const fileName = `productos_${category}_${Date.now()}.zip`;
 
         // Para Safari, mostrar un enlace de descarga en lugar de descargar automáticamente
         if (isSafari.current) {
@@ -496,23 +492,6 @@ export const BulkDownloadButton = ({ products, category }) => {
             saveAs(zipBlob, fileName);
             showStatusMessage("¡ZIP descargado! Revisa tus descargas.", 4000);
         }
-
-        // Intentar diferentes métodos de descarga
-        try {
-            // Primero intentar con file-saver
-            saveAs(zipBlob, `productos_${category}_PRUEBA_${Date.now()}.zip`);
-        } catch (error) {
-            console.log('FileSaver falló, usando método alternativo:', error);
-            
-            // Usar método alternativo para Safari
-            if (isSafari.current) {
-                safariDownload(zipBlob, `productos_${category}_PRUEBA_${Date.now()}.zip`);
-            } else {
-                fallbackSaveAs(zipBlob, `productos_${category}_PRUEBA_${Date.now()}.zip`);
-            }
-        }
-        
-        showStatusMessage("¡ZIP de prueba generado! Revisa tus descargas.", 4000);
         
     } catch (error) {
         console.error('Error generando ZIP:', error);
