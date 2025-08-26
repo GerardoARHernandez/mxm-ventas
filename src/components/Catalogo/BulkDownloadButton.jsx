@@ -1,5 +1,12 @@
 import { useState, useRef } from 'react';
 
+// Función para detectar Safari en iOS
+const isSafariOnIOS = () => {
+  return /iP(ad|od|hone)/i.test(navigator.userAgent) && 
+         /WebKit/i.test(navigator.userAgent) && 
+         !/(CriOS|FxiOS|OPiOS|Mercury|EdgiOS)/i.test(navigator.userAgent);
+};
+
 // Componente para descarga masiva de imágenes CON información
 export const BulkDownloadButton = ({ products, category }) => {
     const [isDownloading, setIsDownloading] = useState(false);
@@ -8,10 +15,16 @@ export const BulkDownloadButton = ({ products, category }) => {
     const [showConfirm, setShowConfirm] = useState(false);
     const [showMessage, setShowMessage] = useState(false);
     const [message, setMessage] = useState('');
+    const [safariDownloadIndex, setSafariDownloadIndex] = useState(0);
+    const [showSafariConfirm, setShowSafariConfirm] = useState(false);
   
     // Referencia para controlar la cancelación
     const isCancelled = useRef(false);
     const downloadPromise = useRef(null);
+    const isSafari = useRef(isSafariOnIOS());
+    const currentProductIndex = useRef(0);
+    const currentImageIndex = useRef(0);
+    const downloadQueue = useRef([]);
 
     const showStatusMessage = (text, duration = 3000) => {
         setMessage(text);
@@ -400,17 +413,93 @@ export const BulkDownloadButton = ({ products, category }) => {
     }
   };
 
-     const startDownload = async () => {
+  // Nueva función para manejar descarga en Safari
+    const downloadForSafari = async () => {
         if (!products || products.length === 0) return;
-    
-        if (isDownloading) {
-            // Si ya está descargando, cancelar inmediatamente
-            cancelDownload();
+        
+        setIsDownloading(true);
+        setProgress(0);
+        isCancelled.current = false;
+
+        // Crear una cola de todas las imágenes a descargar
+        downloadQueue.current = [];
+        products.forEach(product => {
+            product.images.forEach((image, idx) => {
+                downloadQueue.current.push({
+                    product,
+                    imageUrl: image,
+                    imageIndex: idx
+                });
+            });
+        });
+
+        setSafariDownloadIndex(0);
+        setShowSafariConfirm(true);
+    };
+
+    // Confirmar descarga de imagen individual en Safari
+    const confirmSafariDownload = async () => {
+        setShowSafariConfirm(false);
+        
+        if (isCancelled.current || safariDownloadIndex >= downloadQueue.current.length) {
+            setIsDownloading(false);
+            showStatusMessage(isCancelled.current ? 
+                "Descarga cancelada" : "¡Descarga completada!", 3000);
             return;
         }
 
-        // Mostrar confirmación antes de empezar
-        setShowConfirm(true);
+        const { product, imageUrl, imageIndex } = downloadQueue.current[safariDownloadIndex];
+        
+        try {
+            await downloadImageWithInfo(product, imageUrl, imageIndex);
+            
+            // Actualizar progreso
+            const newIndex = safariDownloadIndex + 1;
+            setSafariDownloadIndex(newIndex);
+            setProgress(Math.round((newIndex / downloadQueue.current.length) * 100));
+            
+            // Si hay más imágenes, mostrar confirmación para la siguiente
+            if (newIndex < downloadQueue.current.length && !isCancelled.current) {
+                setTimeout(() => {
+                    setShowSafariConfirm(true);
+                }, 500);
+            } else {
+                setIsDownloading(false);
+                if (!isCancelled.current) {
+                    showStatusMessage("¡Descarga completada!", 3000);
+                }
+            }
+        } catch (error) {
+            console.error('Error en descarga Safari:', error);
+            setIsDownloading(false);
+            showStatusMessage('Error en la descarga', 3000);
+        }
+    };
+
+    // Cancelar descarga en Safari
+    const cancelSafariDownload = () => {
+        isCancelled.current = true;
+        setShowSafariConfirm(false);
+        setIsDownloading(false);
+        showStatusMessage('Descarga cancelada', 3000);
+    };
+
+    const startDownload = async () => {
+      if (!products || products.length === 0) return;
+  
+      if (isDownloading) {
+          cancelDownload();
+          return;
+      }
+
+      // Para Safari, usar el flujo especial
+      if (isSafari.current) {
+          downloadForSafari();
+          return;
+      }
+
+      // Para otros navegadores, comportamiento normal
+      setShowConfirm(true);
     };
 
     const confirmDownload = async () => {
@@ -480,111 +569,147 @@ export const BulkDownloadButton = ({ products, category }) => {
     };
 
     const cancelDownload = () => {
-        if (isDownloading) {
-        isCancelled.current = true;
-        setShowCancel(false);
-        showStatusMessage('Cancelando descarga...', 3000);
-        } else {
-        setShowConfirm(false);
-        }
+      if (isDownloading) {
+      isCancelled.current = true;
+      setShowCancel(false);
+      showStatusMessage('Cancelando descarga...', 3000);
+      } else {
+      setShowConfirm(false);
+      }
     };
 
     const cancelConfirm = () => {
-        setShowConfirm(false);
-        showStatusMessage('Descarga cancelada', 3000);
+      setShowConfirm(false);
+      showStatusMessage('Descarga cancelada', 3000);
     };
 
-    return (
-        <div className="relative ">
-        <button
-            onClick={startDownload}
-            disabled={!products || products.length === 0}
-            className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg disabled:opacity-50 shadow-md border relative z-10 min-w-[140px] justify-center hover:cursor-pointer ${
-            isDownloading 
-                ? 'bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 border-red-400/30' 
-                : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 border-green-400/30'
-            } text-white`}
-            title={isDownloading ? "Cancelar descarga" : "Descargar todas las imágenes con información"}
-        >
-            {isDownloading ? (
-            <>
-                {/* Icono de cancelar (X) */}
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span className="text-sm font-medium">Cancelar</span>
-            </>
-            ) : (
-            <>
-                {/* Icono de descargar */}
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span className="text-sm font-medium">Descargar Todo</span>
-            </>
-            )}
-        </button>
+return (
+    <div className="relative ">
+      <button
+          onClick={startDownload}
+          disabled={!products || products.length === 0}
+          className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-semibold transition-all duration-300 hover:shadow-lg disabled:opacity-50 shadow-md border relative z-10 min-w-[140px] justify-center hover:cursor-pointer ${
+          isDownloading 
+              ? 'bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 border-red-400/30' 
+              : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 border-green-400/30'
+          } text-white`}
+          title={isDownloading ? "Cancelar descarga" : "Descargar todas las imágenes con información"}
+      >
+          {isDownloading ? (
+          <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="text-sm font-medium">Cancelar</span>
+          </>
+          ) : (
+          <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span className="text-sm font-medium">Descargar Todo</span>
+          </>
+          )}
+      </button>
 
-        {/* Barra de progreso debajo del botón cuando está descargando */}
-        {isDownloading && (
-            <div className="my-0.5 -bottom-2 left-0 right-0">
-                <div className="my-2.5 h-1 bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                    className="h-full bg-gradient-to-r from-green-400 to-cyan-400 transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                    />
-                </div>
-                <div className="text-xs my-2.5 text-gray-400 text-center mt-1">
-                    {progress}% completado
-                </div>
-            </div>
-        )}
+      {/* Barra de progreso debajo del botón cuando está descargando */}
+      {isDownloading && (
+          <div className="my-0.5 -bottom-2 left-0 right-0">
+              <div className="my-2.5 h-1 bg-gray-700 rounded-full overflow-hidden">
+                  <div 
+                  className="h-full bg-gradient-to-r from-green-400 to-cyan-400 transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                  />
+              </div>
+              <div className="text-xs my-2.5 text-gray-400 text-center mt-1">
+                  {progress}% completado
+              </div>
+          </div>
+      )}
 
-        {/* Mensaje de estado */}
-        {showMessage && (
-            <div className=" -bottom-10 left-0 right-0">
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg animate-pulse">
-                {message}
-            </div>
-            </div>
-        )}
+      {/* Mensaje de estado */}
+      {showMessage && (
+          <div className=" -bottom-10 left-0 right-0">
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg animate-pulse">
+              {message}
+          </div>
+          </div>
+      )}
 
-        {/* Modal de confirmación */}
-        {showConfirm && (
-            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 max-w-md w-full border border-purple-500/30 shadow-2xl">
-                <div className="text-center">
-                <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                    </svg>
-                </div>
-                
-                <h3 className="text-xl font-bold text-white mb-2">¿Iniciar descarga masiva?</h3>
-                <p className="text-gray-300 mb-6">
-                    Esto descargará {products.reduce((total, product) => total + product.images.length, 0)} imágenes 
-                    con información. Puede tomar varios minutos.
-                </p>
-                
-                <div className="flex space-x-4 justify-center">
-                    <button
-                    onClick={cancelConfirm}
-                    className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors duration-200"
-                    >
-                    Cancelar
-                    </button>
-                    <button
-                    onClick={confirmDownload}
-                    className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors duration-200"
-                    >
-                    Sí, Descargar
-                    </button>
-                </div>
-                </div>
-            </div>
-            </div>
-        )}
+      {/* Modal de confirmación para navegadores normales */}
+      {showConfirm && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 max-w-md w-full border border-purple-500/30 shadow-2xl">
+              <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+              </div>
+              
+              <h3 className="text-xl font-bold text-white mb-2">¿Iniciar descarga masiva?</h3>
+              <p className="text-gray-300 mb-6">
+                  Esto descargará {products.reduce((total, product) => total + product.images.length, 0)} imágenes 
+                  con información. Puede tomar varios minutos.
+              </p>
+              
+              <div className="flex space-x-4 justify-center">
+                  <button
+                  onClick={cancelConfirm}
+                  className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors duration-200"
+                  >
+                  Cancelar
+                  </button>
+                  <button
+                  onClick={confirmDownload}
+                  className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-colors duration-200"
+                  >
+                  Sí, Descargar
+                  </button>
+              </div>
+              </div>
+          </div>
+          </div>
+      )}
 
-        </div>
-    );
+      {/* Modal de confirmación para Safari (descarga individual) */}
+      {showSafariConfirm && downloadQueue.current.length > 0 && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 max-w-md w-full border border-purple-500/30 shadow-2xl">
+              <div className="text-center">
+              <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+              </div>
+              
+              <h3 className="text-xl font-bold text-white mb-2">Descargar imagen {safariDownloadIndex + 1} de {downloadQueue.current.length}</h3>
+              <p className="text-gray-300 mb-4">
+                  Safari requiere confirmación para cada descarga. Por favor, acepta la descarga cuando se te solicite.
+              </p>
+              <p className="text-gray-400 text-sm mb-6">
+                  Producto: {downloadQueue.current[safariDownloadIndex].product.category}
+              </p>
+              
+              <div className="flex space-x-4 justify-center">
+                  <button
+                  onClick={cancelSafariDownload}
+                  className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors duration-200"
+                  >
+                  Cancelar todo
+                  </button>
+                  <button
+                  onClick={confirmSafariDownload}
+                  className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors duration-200"
+                  >
+                  Descargar esta imagen
+                  </button>
+              </div>
+              </div>
+          </div>
+          </div>
+      )}
+
+    </div>
+  );
 };
