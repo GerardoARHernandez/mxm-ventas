@@ -1,6 +1,12 @@
 import { useState } from 'react';
 
-export const CategoryFilter = ({ categories, selectedCategory, onCategoryChange, isScrolled }) => {
+export const CategoryFilter = ({ 
+  categories, 
+  selectedCategory, 
+  onCategoryChange, 
+  isScrolled,
+  isUsuarioRoute 
+}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -51,9 +57,8 @@ export const CategoryFilter = ({ categories, selectedCategory, onCategoryChange,
         )}
       </div>
 
-      {/* Menú desktop - Diseño mejorado */}
+      {/* Menú desktop */}
       <div className="hidden lg:flex flex-wrap gap-2 justify-center items-center">
-        {/* Texto "Elige tu catálogo" solo cuando no hay categoría seleccionada */}
         {!selectedCategory && (
           <div className="px-4 py-2 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-lg border border-purple-500/30">
             <span className="text-purple-300 font-medium text-sm">

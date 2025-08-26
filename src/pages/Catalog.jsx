@@ -5,12 +5,14 @@ import { BulkDownloadButton } from '../components/Catalogo/BulkDownloadButton';
 import { useLocation } from 'react-router-dom';
 
 const Catalog = () => {
-  const location = useLocation().pathname === '/catalogousuario';
-
+  const location = useLocation();
+  const isUsuarioRoute = location.pathname === '/catalogousuario';
+  
   const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null); // Cambiado a null
+  const [selectedFilter, setSelectedFilter] = useState(null); // Cambiado de selectedCategory a selectedFilter
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -23,6 +25,16 @@ const Catalog = () => {
         const data = await response.json();
         const transformedProducts = transformApiData(data.sdtCatMXM_RGB);
         setProducts(transformedProducts);
+        
+        // Filtrar productos según la ruta
+        if (!isUsuarioRoute) {
+          const filtered = transformedProducts.filter(product => 
+            product.activo === 1
+          );
+          setFilteredProducts(filtered);
+        } else {
+          setFilteredProducts(transformedProducts);
+        }
       } catch (err) {
         setError(err.message);
       } finally {
@@ -31,7 +43,7 @@ const Catalog = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [isUsuarioRoute]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,12 +58,19 @@ const Catalog = () => {
     const productsByCategory = {};
     
     apiData.forEach(item => {
+      // Solo procesar productos activos si estamos en la ruta /catalogo
+      if (!isUsuarioRoute && item.Activo !== 1) {
+        return;
+      }
+      
       const categoryKey = `${item.NombreCat.trim()}-${item.Id}`;
       
       if (!productsByCategory[categoryKey]) {
         productsByCategory[categoryKey] = {
           id: item.Id,
-          category: item.NombreCat.trim(), 
+          category: item.NombreCat.trim(),
+          clasificacion: item.Clasificacion || item.NombreCat.trim(),
+          activo: item.Activo,
           rectangles: [],
           images: []
         };
@@ -85,7 +104,8 @@ const Catalog = () => {
               sku: caja[`SKU${i}`]?.trim() || '',
               stock: caja[`existencia${i}`],
               image: imageName,
-              isImport: caja[`LogoImp${i}`] == 1 
+              isImport: caja[`LogoImp${i}`] == 1,
+              activo: item.Activo
             });
           }
         }
@@ -102,15 +122,22 @@ const Catalog = () => {
       .filter(product => product.rectangles.length > 0);
   };
 
-  // Obtener todas las categorías únicas de los productos
+  // Obtener categorías para la ruta /catalogousuario
   const categories = [...new Set(products.map(product => product.category))];
-  
-  // Filtrar productos por categoría seleccionada
-  const filteredProducts = selectedCategory
-    ? products.filter(product => product.category === selectedCategory)
+
+  // Obtener clasificaciones para la ruta /catalogo
+  const classifications = [...new Set(filteredProducts.map(product => product.clasificacion))].filter(Boolean);
+
+  // Filtrar productos según la selección
+  const filteredProductsBySelection = selectedFilter
+    ? (isUsuarioRoute 
+        ? products.filter(product => product.category === selectedFilter)
+        : filteredProducts.filter(product => product.clasificacion === selectedFilter)
+      )
     : [];
 
-  const productsByCategory = filteredProducts.reduce((acc, product) => {
+  // Agrupar productos por categoría para mostrar
+  const productsByCategory = filteredProductsBySelection.reduce((acc, product) => {
     if (!acc[product.category]) {
       acc[product.category] = [];
     }
@@ -150,44 +177,42 @@ const Catalog = () => {
       }`}>
         <div className="max-w-7xl mx-auto px-4">
           <CategoryFilter
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
+            categories={isUsuarioRoute ? categories : classifications}
+            selectedCategory={selectedFilter}
+            onCategoryChange={setSelectedFilter}
             isScrolled={isScrolled}
+            isUsuarioRoute={isUsuarioRoute}
           />
         </div>
       </div>
 
-      {/* Contenido principal con padding para el menú fijo */}
+      {/* Contenido principal */}
       <div className="relative z-10 pt-20 pb-12 w-full">
         <div className="max-w-7xl mx-auto px-4 space-y-20 w-full">
-          {selectedCategory ? (
-          <>
-          {location && (
-            /* Botón de descarga masiva */
-            <div className="text-left mb-10">
-              <BulkDownloadButton 
-                products={filteredProducts} 
-                category={selectedCategory} 
-              />
-            </div>
-          )}
-            
-
-            {/* Productos con botón de descarga individual */}
-            {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
-              <div key={category} className="space-y-12 w-full">
-                {categoryProducts.map((product) => (
-                  <ProductCatalog 
-                    key={`${category}-${product.id}`} 
-                    product={product} 
+          {selectedFilter ? (
+            <>
+              {isUsuarioRoute && (
+                <div className="text-left mb-10">
+                  <BulkDownloadButton 
+                    products={filteredProductsBySelection} 
+                    category={selectedFilter} 
                   />
-                ))}
-              </div>
-            ))}
-          </>
+                </div>
+              )}
+              
+              {/* Productos */}
+              {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
+                <div key={category} className="space-y-12 w-full">
+                  {categoryProducts.map((product) => (
+                    <ProductCatalog 
+                      key={`${category}-${product.id}`} 
+                      product={product} 
+                    />
+                  ))}
+                </div>
+              ))}
+            </>
           ) : (
-            // Mensaje cuando no hay categoría seleccionada
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center">
               <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-4xl mb-6 shadow-lg">
                 ✨
@@ -203,7 +228,7 @@ const Catalog = () => {
           )}
         </div>
 
-        {selectedCategory && (
+        {selectedFilter && (
           <div className="text-center mt-20 pt-12 border-t border-gray-700/30 w-full">
             <div className="flex justify-center space-x-6">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
