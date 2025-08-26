@@ -415,9 +415,8 @@ export const BulkDownloadButton = ({ products, category }) => {
     }
   };
   
-  // Función para generar y descargar ZIP en Safari
-    // Función para generar y descargar ZIP en Safari (solo primeras 5 imágenes para prueba)
-const downloadAsZip = async () => {
+  // Función para generar y descargar ZIP en Safari (solo primeras 5 imágenes para prueba)
+  const downloadAsZip = async () => {
     if (!products || products.length === 0) return;
     
     setIsDownloading(true);
@@ -480,9 +479,68 @@ const downloadAsZip = async () => {
             setProgress(Math.round(metadata.percent));
         });
 
-        // Descargar el ZIP
-        saveAs(zipBlob, `productos_${category}_PRUEBA_${Date.now()}.zip`);
-        showStatusMessage("¡ZIP de prueba descargado correctamente!", 4000);
+        // Método alternativo para Safari que funciona mejor
+        const safariDownload = (blob, fileName) => {
+            // Método 1: Usar URL.createObjectURL con un enlace
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            // Limpiar después de un tiempo
+            setTimeout(() => {
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }, 100);
+        };
+
+        // Método alternativo para navegadores que no soportan saveAs
+        const fallbackSaveAs = (blob, fileName) => {
+            if (typeof navigator !== 'undefined' && navigator.msSaveOrOpenBlob) {
+                // Para IE
+                return navigator.msSaveOrOpenBlob(blob, fileName);
+            }
+            
+            // Para Safari y otros navegadores
+            const url = URL.createObjectURL(blob);
+            
+            // Intentar con un iframe primero
+            try {
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+                
+                iframe.src = url;
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                    URL.revokeObjectURL(url);
+                }, 100);
+            } catch (e) {
+                // Fallback al método del enlace
+                safariDownload(blob, fileName);
+            }
+        };
+
+        // Intentar diferentes métodos de descarga
+        try {
+            // Primero intentar con file-saver
+            saveAs(zipBlob, `productos_${category}_PRUEBA_${Date.now()}.zip`);
+        } catch (error) {
+            console.log('FileSaver falló, usando método alternativo:', error);
+            
+            // Usar método alternativo para Safari
+            if (isSafari.current) {
+                safariDownload(zipBlob, `productos_${category}_PRUEBA_${Date.now()}.zip`);
+            } else {
+                fallbackSaveAs(zipBlob, `productos_${category}_PRUEBA_${Date.now()}.zip`);
+            }
+        }
+        
+        showStatusMessage("¡ZIP de prueba generado! Revisa tus descargas.", 4000);
         
     } catch (error) {
         console.error('Error generando ZIP:', error);
@@ -491,7 +549,7 @@ const downloadAsZip = async () => {
         setIsDownloading(false);
         setProgress(0);
     }
-};
+  };
 
     const generateImageForZip = async (product, imageUrl, imageIndex, canvas) => {
     return new Promise(async (resolve) => {
