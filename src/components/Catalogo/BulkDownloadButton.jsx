@@ -19,6 +19,9 @@ export const BulkDownloadButton = ({ products, category }) => {
     const [message, setMessage] = useState('');
     const [safariDownloadIndex, setSafariDownloadIndex] = useState(0);
     const [showSafariConfirm, setShowSafariConfirm] = useState(false);
+
+    const [zipDownloadUrl, setZipDownloadUrl] = useState(null);
+    const [zipFileName, setZipFileName] = useState('');
   
     // Referencia para controlar la cancelación
     const isCancelled = useRef(false);
@@ -479,51 +482,20 @@ export const BulkDownloadButton = ({ products, category }) => {
             setProgress(Math.round(metadata.percent));
         });
 
-        // Método alternativo para Safari que funciona mejor
-        const safariDownload = (blob, fileName) => {
-            // Método 1: Usar URL.createObjectURL con un enlace
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            link.style.display = 'none';
-            
-            document.body.appendChild(link);
-            link.click();
-            
-            // Limpiar después de un tiempo
-            setTimeout(() => {
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }, 100);
-        };
+        // Crear URL para el blob
+        const url = URL.createObjectURL(zipBlob);
+        const fileName = `productos_${category}_PRUEBA_${Date.now()}.zip`;
 
-        // Método alternativo para navegadores que no soportan saveAs
-        const fallbackSaveAs = (blob, fileName) => {
-            if (typeof navigator !== 'undefined' && navigator.msSaveOrOpenBlob) {
-                // Para IE
-                return navigator.msSaveOrOpenBlob(blob, fileName);
-            }
-            
-            // Para Safari y otros navegadores
-            const url = URL.createObjectURL(blob);
-            
-            // Intentar con un iframe primero
-            try {
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                document.body.appendChild(iframe);
-                
-                iframe.src = url;
-                setTimeout(() => {
-                    document.body.removeChild(iframe);
-                    URL.revokeObjectURL(url);
-                }, 100);
-            } catch (e) {
-                // Fallback al método del enlace
-                safariDownload(blob, fileName);
-            }
-        };
+        // Para Safari, mostrar un enlace de descarga en lugar de descargar automáticamente
+        if (isSafari.current) {
+            setZipDownloadUrl(url);
+            setZipFileName(fileName);
+            showStatusMessage("¡ZIP listo! Haz clic en el enlace para descargar.", 10000);
+        } else {
+            // Para otros navegadores, descargar automáticamente
+            saveAs(zipBlob, fileName);
+            showStatusMessage("¡ZIP descargado! Revisa tus descargas.", 4000);
+        }
 
         // Intentar diferentes métodos de descarga
         try {
@@ -1067,6 +1039,36 @@ return (
         </div>
         </div>
     )}
+
+    {zipDownloadUrl && (
+    <div className="fixed bottom-4 left-4 right-4 bg-blue-900 text-white p-4 rounded-lg shadow-lg z-50">
+        <div className="flex justify-between items-center">
+            <span>ZIP listo para descargar: {zipFileName}</span>
+            <a
+                href={zipDownloadUrl}
+                download={zipFileName}
+                className="ml-4 px-4 py-2 bg-green-500 hover:bg-green-600 rounded-md font-medium"
+                onClick={() => {
+                    setTimeout(() => {
+                        setZipDownloadUrl(null);
+                        URL.revokeObjectURL(zipDownloadUrl);
+                    }, 100);
+                }}
+            >
+                Descargar ZIP
+            </a>
+            <button
+                onClick={() => {
+                    setZipDownloadUrl(null);
+                    URL.revokeObjectURL(zipDownloadUrl);
+                }}
+                className="ml-2 px-3 py-2 bg-gray-500 hover:bg-gray-600 rounded-md"
+            >
+                ×
+            </button>
+        </div>
+    </div>
+)}
 
     </div>
   );
