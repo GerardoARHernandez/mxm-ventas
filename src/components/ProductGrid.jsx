@@ -170,7 +170,7 @@ const ProductGrid = () => {
                   <div className="bg-gray-100 h-48 flex items-center justify-center relative">
                     {firstProduct.Foto ? (
                       <img 
-                        src={`https://systemweb.ddns.net/CarritoWeb/imgMXM/${firstProduct.Foto}`}
+                        src={`https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${firstProduct.Foto}`}
                         alt={group.baseDescription} 
                         className="h-full w-full object-contain"
                         loading="lazy"
