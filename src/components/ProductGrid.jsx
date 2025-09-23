@@ -5,7 +5,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 
 const ProductGrid = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // Obtener la ubicación actual
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [products, setProducts] = useState([]);
@@ -13,13 +13,11 @@ const ProductGrid = () => {
   const [error, setError] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({});
 
-  // Obtener el parámetro pedido de la URL si existe
   const queryParams = new URLSearchParams(location.search);
   const pedidoId = queryParams.get('pedido');
   
-  // Estado para la paginación
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20); // Puedes ajustar este número según necesidades
+  const [itemsPerPage] = useState(20);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -54,32 +52,40 @@ const ProductGrid = () => {
     }
   };
 
-  // Memoizar la agrupación de productos
+  // Memoizar la agrupación de productos CON FILTRO
   const productGroups = useMemo(() => {
     const groups = {};
     
     products.forEach(product => {
-      const modelCode = product.modelo;
-      const baseDescription = product.Descrip;
+      // Filtrar productos donde Por_recib_total > 0 O Existencia_total > 0
+      const porRecibir = parseFloat(product.Por_recib_total) || 0;
+      const existencia = parseFloat(product.Existencia_total) || 0;
       
-      if (!groups[modelCode]) {
-        groups[modelCode] = {
-          baseDescription,
-          products: [],
-          allVariants: []
-        };
+      if (porRecibir > 0 || existencia > 0) {
+        const modelCode = product.modelo;
+        const baseDescription = product.Descrip;
+        
+        if (!groups[modelCode]) {
+          groups[modelCode] = {
+            baseDescription,
+            products: [],
+            allVariants: []
+          };
+        }
+        
+        groups[modelCode].products.push(product);
+        
+        // Extraer color y talla si están en la descripción
+        const colorMatch = product.Descrip.match(/(AZUL|ROJO|VERDE|NEGRO|BLANCO|AMARILLO|ROSA|FUCSIA|MARINO|MULTICOLOR)/i);
+        const sizeMatch = product.Descrip.match(/T-?(\d+)/i);
+        
+        groups[modelCode].allVariants.push({
+          color: colorMatch ? colorMatch[0] : 'No especificado',
+          size: sizeMatch ? sizeMatch[1] : 'UT',
+          existencia: existencia,
+          porRecibir: porRecibir
+        });
       }
-      
-      groups[modelCode].products.push(product);
-      
-      // Extraer color y talla si están en la descripción
-      const colorMatch = product.Descrip.match(/(AZUL|ROJO|VERDE|NEGRO|BLANCO|AMARILLO|ROSA|FUCSIA|MARINO|MULTICOLOR)/i);
-      const sizeMatch = product.Descrip.match(/T-?(\d+)/i);
-      
-      groups[modelCode].allVariants.push({
-        color: colorMatch ? colorMatch[0] : 'No especificado',
-        size: sizeMatch ? sizeMatch[1] : 'UT'
-      });
     });
     
     return groups;
@@ -130,7 +136,7 @@ const ProductGrid = () => {
 
   return (
      <div className="mt-5 mx-2 sm:mx-0">
-      {/* Barra de búsqueda - puedes añadir un indicador si estamos editando un pedido */}
+      {/* Barra de búsqueda */}
       {pedidoId && (
         <div className="mb-2 bg-blue-100 text-center text-lg text-blue-800 p-2 border border-gray-600 rounded-md">
           Editando Pedido #{pedidoId}
@@ -145,7 +151,7 @@ const ProductGrid = () => {
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
-              setCurrentPage(1); // Resetear a la primera página al buscar
+              setCurrentPage(1);
             }}
           />
           <FiSearch className="absolute right-4 top-4.5 text-gray-400 text-xl" />
@@ -160,6 +166,10 @@ const ProductGrid = () => {
               const firstProduct = group.products[0];
               const variantCount = group.products.length;
               const isExpanded = expandedGroups[modelCode];
+              
+              // Calcular existencia total y por recibir total del grupo
+              const totalExistencia = group.products.reduce((sum, p) => sum + (parseFloat(p.Existencia_total) || 0), 0);
+              const totalPorRecibir = group.products.reduce((sum, p) => sum + (parseFloat(p.Por_recib_total) || 0), 0);
               
               return (
                 <div 
@@ -194,13 +204,19 @@ const ProductGrid = () => {
                     
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-blue-600 font-bold">${firstProduct.Precio1}</span>
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                        Disponible
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        totalExistencia > 0 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {totalExistencia > 0 ? 'En stock' : 'Por recibir'}
                       </span>
                     </div>
                     
                     <div className="text-xs text-gray-500 mb-2">
                       <div>Código: {modelCode}</div>
+                      <div>Existencia: {totalExistencia}</div>
+                      <div>Por recibir: {totalPorRecibir}</div>
                     </div>
                     
                     <div className="flex justify-between items-center mt-2">
@@ -232,12 +248,18 @@ const ProductGrid = () => {
                     {isExpanded && variantCount > 1 && (
                       <div className="mt-2 text-xs">
                         <div className="font-medium mb-1">Variantes disponibles:</div>
-                        <div className="grid grid-cols-2 gap-1">
+                        <div className="grid grid-cols-1 gap-1">
                           {group.allVariants.map((variant, idx) => (
-                            <div key={idx} className="flex items-center">
-                              <span className="inline-block w-3 h-3 rounded-full mr-1" 
-                                style={{backgroundColor: getColorCode(variant.color)}} />
-                              {variant.color} - T{variant.size}
+                            <div key={idx} className="flex justify-between items-center p-1 border-b">
+                              <div className="flex items-center">
+                                <span className="inline-block w-3 h-3 rounded-full mr-2" 
+                                  style={{backgroundColor: getColorCode(variant.color)}} />
+                                <span>{variant.color} - T{variant.size}</span>
+                              </div>
+                              <div className="text-right">
+                                <div>Stock: {variant.existencia}</div>
+                                <div>Por rec: {variant.porRecibir}</div>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -312,7 +334,7 @@ const ProductGrid = () => {
   );
 };
 
-// Función auxiliar para obtener código de color (sin cambios)
+// Función auxiliar para obtener código de color
 const getColorCode = (colorName) => {
   const colors = {
     'BLANCO': '#FFFFFF',
