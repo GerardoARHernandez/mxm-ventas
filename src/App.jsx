@@ -98,9 +98,9 @@ function AppContent() {
         <Route
           path="armador/*"
           element={
-            <ProtectedRoute allowedRoles={['ARM']}>
+            // <ProtectedRoute allowedRoles={['ARM']}>
               <Armadores />
-            </ProtectedRoute>
+            // </ProtectedRoute>
           }
         />
       </Route>

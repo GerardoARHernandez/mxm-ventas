@@ -195,11 +195,11 @@ const PedidoDetail = () => {
                     Ubicación
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Imagen
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Imagen
+                  </th>                  
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -243,7 +243,7 @@ const PedidoDetail = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {part.Imagen && (
+                      {getImageUrl(part.Imagen) && (
                         <img 
                           src={getImageUrl(part.Imagen)} 
                           alt='No disponible' 
