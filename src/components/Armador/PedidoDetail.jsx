@@ -216,17 +216,7 @@ const PedidoDetail = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {part.Ubicacion}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {part.Imagen && (
-                        <img 
-                          src={getImageUrl(part.Imagen)} 
-                          alt='No disponible' 
-                          className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
-                          onClick={() => openImageModal(getImageUrl(part.Imagen))}
-                        />
-                      ) || 'No Disponible'} 
-                    </td>
+                    </td>                    
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center space-x-2">
                         <button
@@ -251,6 +241,16 @@ const PedidoDetail = () => {
                           </span>
                         </button>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {part.Imagen && (
+                        <img 
+                          src={getImageUrl(part.Imagen)} 
+                          alt='No disponible' 
+                          className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
+                          onClick={() => openImageModal(getImageUrl(part.Imagen))}
+                        />
+                      ) || 'No Disponible'} 
                     </td>
                   </tr>
                 ))}
