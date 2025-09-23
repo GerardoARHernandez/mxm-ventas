@@ -104,6 +104,12 @@ const PedidoDetail = () => {
     }
   };
 
+  const getImageUrl = (imageName) => {
+    if (!imageName) return null;
+    if (imageName.startsWith('http')) return imageName;
+    return `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName}`;
+  };
+
   const openImageModal = (imageUrl) => {
     setCurrentImage(imageUrl);
     setModalOpen(true);
@@ -113,6 +119,7 @@ const PedidoDetail = () => {
     setModalOpen(false);
     setCurrentImage('');
   };
+  
 
   if (loading) return <LoadingScreen />;
   if (error) return <ErrorScreen error={error} />;
@@ -213,10 +220,10 @@ const PedidoDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {part.Imagen && (
                         <img 
-                          src={part.Imagen} 
+                          src={getImageUrl(part.Imagen)} 
                           alt='No disponible' 
                           className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
-                          onClick={() => openImageModal(part.Imagen)}
+                          onClick={() => openImageModal(getImageUrl(part.Imagen))}
                         />
                       ) || 'No Disponible'} 
                     </td>
