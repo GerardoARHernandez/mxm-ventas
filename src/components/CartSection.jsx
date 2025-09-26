@@ -9,8 +9,11 @@ const CartSection = ({
   processButtonText = "Completar", 
   processButtonColor = 'blue', 
   removeItem,
-  loading = false
+  loading = false,
+  onImageClick // Nueva prop para manejar clic en imagen
 }) => {
+
+  console.log(items);
   return (
     <div className="bg-white shadow border border-gray-400 rounded-lg overflow-hidden mb-8">
       <div className="px-6 py-4 border-b border-gray-300">
@@ -21,7 +24,8 @@ const CartSection = ({
         {items.length > 0 ? (
           <>
             <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-sm font-medium text-gray-500 uppercase tracking-wider">
-              <div className="col-span-5">Artículo</div>
+              <div className="col-span-1">Imagen</div> {/* Nueva columna */}
+              <div className="col-span-4">Artículo</div> {/* Reducida de 5 a 4 */}
               <div className="col-span-2 text-right">Precio Unit.</div>
               <div className="col-span-2 text-center">Cantidad</div>
               <div className="col-span-3 text-left">Importe</div>
@@ -29,10 +33,11 @@ const CartSection = ({
             
             {items.map((item) => (
               <CartItem 
-                key={item.code} // Mejor usar item.code que item.id
+                key={item.code}
                 item={item} 
                 removeItem={removeItem} 
-                loading={loading} // Pasamos el estado de carga
+                loading={loading}
+                onImageClick={onImageClick} // Pasar la función al CartItem
               />
             ))}
           </>
