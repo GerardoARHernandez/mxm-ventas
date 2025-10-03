@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext'; // Importar el contexto del carrito
 import SizeButton from '../components/Product/SizeButton';
 import ColorButton from '../components/Product/ColorButton';
 import ProductImage from '../components/Product/ProductImage';
@@ -12,6 +13,7 @@ const ProductPreview = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { updateCartCount } = useCart(); // Usar el contexto del carrito
   
   const queryParams = new URLSearchParams(location.search);
   const pedidoId = queryParams.get('pedido');
@@ -25,8 +27,10 @@ const ProductPreview = () => {
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [addingToCart, setAddingToCart] = useState(false);
-
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Nuevo estado para controlar si se puede vender por paquete
+  const [canSellByPackage, setCanSellByPackage] = useState(false);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -56,6 +60,10 @@ const ProductPreview = () => {
         const variationsData = await variationsResponse.json();
         
         setVariations(variationsData || []);
+        
+        // Verificar si se puede vender por paquete
+        const canPackage = variationsData.some(variation => variation.pzasPaq === 1);
+        setCanSellByPackage(canPackage);
         
         if (variationsData.length > 0) {
           setSelectedColor(variationsData[0].Codigo);
@@ -131,11 +139,25 @@ const ProductPreview = () => {
     return selectedSizeData ? parseInt(selectedSizeData.PorRecibir) : 0;
   };
 
+  // Obtener precio individual (precio2)
+  const getIndividualPrice = () => {
+    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+    const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+    return selectedSizeData ? parseFloat(selectedSizeData.precio2) : 0;
+  };
+
+  // Obtener precio por paquete (precio3)
+  const getPackagePrice = () => {
+    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+    const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+    return selectedSizeData ? parseFloat(selectedSizeData.precio3) : 0;
+  };
+
   const handleAddToCart = async () => {
     if (!selectedColor || !selectedSize) return;
     
     setAddingToCart(true);
-    setSuccessMessage(''); // Limpiar mensaje anterior
+    setSuccessMessage('');
     try {
       const selectedVariation = variations.find(v => v.Codigo === selectedColor);
       const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
@@ -144,6 +166,9 @@ const ProductPreview = () => {
         throw new Error("No se pudo determinar el código de artículo");
       }
 
+      const individualPrice = getIndividualPrice();
+
+      // Actualizar stock localmente
       const updatedVariations = variations.map(variation => {
         if (variation.Codigo === selectedColor) {
           return {
@@ -173,22 +198,23 @@ const ProductPreview = () => {
           Usuario: user.username,
           articulo: selectedSizeData.Articulo,
           cantidad: quantity,
-          precio: product.Precio1,
+          precio: individualPrice, // Usar precio2 individual
           venta: pedidoId || 'NUEVO'
         })
       });
 
       if (!response.ok) {
+        // Revertir cambios locales si hay error
         setVariations(variations);
         throw new Error("Error al agregar el artículo al pedido");
       }
 
       const result = await response.json();
       
-      // Mostrar mensaje de éxito
-      setSuccessMessage('Pedido agregado correctamente');
+      // Actualizar contador del carrito
+      updateCartCount(true);
       
-      // Opcional: Ocultar el mensaje después de 3 segundos
+      setSuccessMessage('Pedido agregado correctamente');
       setTimeout(() => setSuccessMessage(''), 3000);
       
     } catch (err) {
@@ -211,6 +237,7 @@ const ProductPreview = () => {
         throw new Error("No se pudo determinar el código de artículo");
       }
 
+      const individualPrice = getIndividualPrice();
       const ventaId = pedidoId || 'NUEVO';
       
       const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
@@ -223,7 +250,7 @@ const ProductPreview = () => {
           Usuario: user.username,
           articulo: selectedSizeData.Articulo,
           cantidad: preorderQuantity,
-          precio: product.Precio1,
+          precio: individualPrice, // Usar precio2 individual para preventas
           venta: ventaId
         })
       });
@@ -233,6 +260,9 @@ const ProductPreview = () => {
       }
 
       const result = await response.json();
+      
+      // Actualizar contador del carrito
+      updateCartCount(true);
       
       if (pedidoId) {
         navigate(`/carrito?pedido=${pedidoId}`);
@@ -247,13 +277,17 @@ const ProductPreview = () => {
     }
   };
 
+  // Modificar la validación para incluir pzasPaq
   const allSizesHaveStock = () => {
     const selectedVariation = variations.find(v => v.Codigo === selectedColor);
     if (!selectedVariation || !selectedVariation.Tallas) return false;
     
-    return selectedVariation.Tallas.every(size => 
+    // Verificar que todas las tallas tengan stock y que se pueda vender por paquete
+    const hasStockForAllSizes = selectedVariation.Tallas.every(size => 
       parseInt(size.Exis) > 0 || parseInt(size.PorRecibir) > 0
     );
+    
+    return hasStockForAllSizes && selectedVariation.pzasPaq === 1;
   };
 
   const handleAddPackage = async () => {
@@ -266,6 +300,8 @@ const ProductPreview = () => {
       let lastResponse = null;
       
       for (const size of selectedVariation.Tallas) {
+        const packagePrice = parseFloat(size.precio3) || 0; // Usar precio3 para paquetes
+        
         const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
           method: 'POST',
           headers: {
@@ -275,8 +311,8 @@ const ProductPreview = () => {
           body: JSON.stringify({
             Usuario: user.username,
             articulo: size.Articulo,
-            cantidad: 1,
-            precio: product.Precio1,
+            cantidad: 1, // Siempre 1 por talla en paquete
+            precio: packagePrice, // Usar precio3 (descuento por paquete)
             venta: ventaId
           })
         });
@@ -289,6 +325,9 @@ const ProductPreview = () => {
       }
 
       const result = await lastResponse.json();
+      
+      // Actualizar contador del carrito
+      updateCartCount(true);
       
       if (pedidoId) {
         navigate(`/carrito?pedido=${pedidoId}`);
@@ -312,6 +351,8 @@ const ProductPreview = () => {
   const selectedSizeData = sizes.find(s => s.id === selectedSize) || {};
   const availableStock = getAvailableStock();
   const preorderStock = getPreorderStock();
+  const individualPrice = getIndividualPrice();
+  const packagePrice = getPackagePrice();
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -323,7 +364,10 @@ const ProductPreview = () => {
         
         <ProductInfo 
           product={product} 
-          selectedSizeData={selectedSizeData} 
+          selectedSizeData={selectedSizeData}
+          individualPrice={individualPrice}
+          packagePrice={packagePrice}
+          canSellByPackage={canSellByPackage}
         />
         
         {variations.length > 0 && (
@@ -383,6 +427,9 @@ const ProductPreview = () => {
             onAddPackage={handleAddPackage}
             allSizesHaveStock={allSizesHaveStock()}
             addingToCart={addingToCart}
+            individualPrice={individualPrice}
+            packagePrice={packagePrice}
+            canSellByPackage={canSellByPackage}
           />
         </div>
       </div>

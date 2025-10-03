@@ -1,4 +1,4 @@
-import { FiShoppingCart, FiCalendar } from 'react-icons/fi';
+import { FiShoppingCart, FiCalendar, FiPackage } from 'react-icons/fi';
 import QuantitySelector from './QuantitySelector'; 
 
 const ProductActions = ({
@@ -16,11 +16,21 @@ const ProductActions = ({
   onPreorder,
   onAddPackage,
   allSizesHaveStock,
-  addingToCart
+  addingToCart,
+  individualPrice,
+  packagePrice,
+  canSellByPackage
 }) => (
   <div className="space-y-6">
     {/* Selector de cantidad para stock disponible */}
     <div className="flex flex-col items-center gap-4">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg font-semibold text-gray-700">Cantidad:</span>
+        <span className="text-lg font-bold text-rose-600">
+          ${individualPrice ? (individualPrice * quantity).toFixed(2) : '0.00'}
+        </span>
+      </div>
+      
       <QuantitySelector
         value={quantity}
         max={availableStock}
@@ -48,28 +58,44 @@ const ProductActions = ({
       </button>
     </div>
 
-    {/* Botón para agregar por paquete */}
-    <div className="flex flex-col items-center gap-4 mt-6">
-      <button
-        onClick={onAddPackage}
-        disabled={!allSizesHaveStock || addingToCart}
-        className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
-          allSizesHaveStock && !addingToCart
-            ? 'bg-purple-600 hover:bg-purple-700 text-white'
-            : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-        }`}
-      >
-        <FiShoppingCart className='text-3xl'/>
-        {addingToCart 
-          ? 'Agregando paquete...'
-          : allSizesHaveStock
-            ? 'Agregar por paquete (1 de cada talla)'
-            : 'No hay stock completo para agregar paquete'}
-      </button>
-    </div>
+    {/* Botón para agregar por paquete - Solo mostrar si se puede vender por paquete */}
+    {canSellByPackage && (
+      <div className="flex flex-col items-center gap-4 mt-6">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg font-semibold text-gray-700">Paquete completo:</span>
+          <span className="text-lg font-bold text-purple-600">
+            ${packagePrice ? packagePrice.toFixed(2) : '0.00'}
+          </span>
+        </div>
+        
+        <button
+          onClick={onAddPackage}
+          disabled={!allSizesHaveStock || addingToCart}
+          className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
+            allSizesHaveStock && !addingToCart
+              ? 'bg-purple-600 hover:bg-purple-700 text-white'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          }`}
+        >
+          <FiPackage className='text-3xl'/>
+          {addingToCart 
+            ? 'Agregando paquete...'
+            : allSizesHaveStock
+              ? 'Agregar por paquete (1 de cada talla)'
+              : 'No hay stock completo para agregar paquete'}
+        </button>
+      </div>
+    )}
 
     {/* Selector de cantidad para preventa */}
     <div className="flex flex-col items-center gap-4">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg font-semibold text-gray-700">Preventa:</span>
+        <span className="text-lg font-bold text-blue-600">
+          ${individualPrice ? (individualPrice * preorderQuantity).toFixed(2) : '0.00'}
+        </span>
+      </div>
+      
       <QuantitySelector
         value={preorderQuantity}
         max={preorderStock}
