@@ -46,7 +46,7 @@ const ClientsTable = ({ clients, onSelectClient, creatingOrder, creatingQuote })
                           : 'bg-green-600 text-white hover:bg-green-700 hover:cursor-pointer'
                       }`}
                     >
-                      {creatingOrder ? 'Creando...' : 'Nuevo'}
+                      {creatingOrder ? 'Creando...' : 'Pedido'}
                     </button>
                     
                     {/* Botón Cotización */}

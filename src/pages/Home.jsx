@@ -82,12 +82,7 @@ const Home = () => {
             <div className="flex gap-2 mb-4">
                 <Link to={'/nuevo'}>
                     <button className="border border-rose-500 text-pink-800 px-3 py-1.5 hover:cursor-pointer hover:bg-pink-50 transition-colors">
-                        + Nuevo Pedido
-                    </button>
-                </Link>
-                <Link to={'/nuevo'}>
-                    <button className="border border-blue-500 text-blue-800 px-3 py-1.5 hover:cursor-pointer hover:bg-blue-50 transition-colors">
-                        + Cotización
+                        + Nueva Orden
                     </button>
                 </Link>
             </div>

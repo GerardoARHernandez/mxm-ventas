@@ -2,22 +2,80 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { FiSearch, FiChevronDown, FiChevronUp, FiEye } from "react-icons/fi";
 import { useDebounce } from "use-debounce";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // Asegúrate de importar useAuth
 
 const ProductGrid = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth(); // Obtener el usuario actual
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({});
+  const [orderInfo, setOrderInfo] = useState(null);
+  const [orderLoading, setOrderLoading] = useState(false);
 
   const queryParams = new URLSearchParams(location.search);
   const pedidoId = queryParams.get('pedido');
   
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+
+  // Consultar información del pedido/cotización
+  useEffect(() => {
+    const fetchOrderInfo = async () => {
+      if (!pedidoId || !user) return;
+      
+      try {
+        setOrderLoading(true);
+        // Usar el username del usuario actual para consultar sus pedidos
+        const response = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaPedidos?Usuario=${user.username}&t=${Date.now()}`, {
+          headers: {
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error("Error al obtener información del pedido");
+        }
+        
+        const data = await response.json();
+        
+        // Buscar el pedido específico en la lista usando el pedidoId de la URL
+        const currentOrder = data.ListPedidos?.find(pedido => pedido.VENTA === pedidoId);
+        
+        if (currentOrder) {
+          setOrderInfo({
+            id: currentOrder.VENTA,
+            estado: currentOrder.ESTADO,
+            nombreCliente: currentOrder.NombreCLIENTE,
+            esCotizacion: currentOrder.ESTADO === 'CT'
+          });
+        } else {
+          // Si no encuentra el pedido, asumimos que es un pedido normal
+          setOrderInfo({
+            id: pedidoId,
+            estado: 'PE',
+            esCotizacion: false
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching order info:", err);
+        // Si hay error, asumimos que es un pedido normal
+        setOrderInfo({
+          id: pedidoId,
+          estado: 'PE',
+          esCotizacion: false
+        });
+      } finally {
+        setOrderLoading(false);
+      }
+    };
+
+    fetchOrderInfo();
+  }, [pedidoId, user]); // Agregar user como dependencia
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -118,6 +176,33 @@ const ProductGrid = () => {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  // Determinar el texto del header según el tipo de documento
+  const getHeaderText = () => {
+    if (!pedidoId) return null;
+    
+    if (orderLoading) {
+      return "Cargando información...";
+    }
+    
+    if (orderInfo?.esCotizacion) {
+      return `Editando Cotización #${orderInfo.id}`;
+    } else {
+      return `Editando Pedido #${pedidoId}`;
+    }
+  };
+
+  // Determinar la clase CSS según el tipo de documento
+  const getHeaderClass = () => {
+    if (orderInfo?.esCotizacion) {
+      return "bg-blue-100 text-blue-800 border-blue-300";
+    } else {
+      return "bg-green-100 text-green-800 border-green-300";
+    }
+  };
+
+  // Debug: mostrar información de orderInfo
+  console.log('Order Info:', orderInfo);
+
   if (loading) {
     return (
       <div className="mt-5 mx-2 sm:mx-0 text-center py-8">
@@ -136,12 +221,19 @@ const ProductGrid = () => {
 
   return (
      <div className="mt-5 mx-2 sm:mx-0">
-      {/* Barra de búsqueda */}
+      {/* Barra de información del pedido/cotización */}
       {pedidoId && (
-        <div className="mb-2 bg-blue-100 text-center text-lg text-blue-800 p-2 border border-gray-600 rounded-md">
-          Editando Pedido #{pedidoId}
+        <div className={`mb-4 text-center text-lg font-medium p-3 border rounded-md ${getHeaderClass()}`}>
+          {getHeaderText()}
+          {orderInfo?.nombreCliente && (
+            <div className="text-sm font-normal mt-1">
+              Cliente: {orderInfo.nombreCliente}
+            </div>
+          )}          
         </div>
       )}
+      
+      {/* Barra de búsqueda */}
       <div className="mb-6">
         <div className="relative max-w-4xl mx-auto py-2">
           <input
