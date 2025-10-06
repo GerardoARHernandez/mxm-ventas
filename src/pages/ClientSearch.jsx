@@ -12,6 +12,7 @@ const ClientSearch = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [creatingOrder, setCreatingOrder] = useState(false);
+  const [creatingQuote, setCreatingQuote] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -66,10 +67,15 @@ const ClientSearch = () => {
     return () => debouncedFilter.cancel();
   }, [searchQuery, clients, debouncedFilter]);
 
-  const handleSelectClient = async (clientId) => {
-    if (!user || creatingOrder) return;
+  const handleCreateOrder = async (clientId, isQuote = false) => {
+    if (!user || creatingOrder || creatingQuote) return;
     
-    setCreatingOrder(true);
+    if (isQuote) {
+      setCreatingQuote(true);
+    } else {
+      setCreatingOrder(true);
+    }
+    
     try {
       const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/CrearPedido', {
         method: 'POST',
@@ -79,21 +85,26 @@ const ClientSearch = () => {
         },
         body: JSON.stringify({
           Usuario: user.username,
-          cliente: clientId
+          cliente: clientId,
+          Cotizacion: isQuote
         })
       });
 
       if (!response.ok) {
-        throw new Error("Error al crear el pedido");
+        throw new Error("Error al crear el " + (isQuote ? "cotización" : "pedido"));
       }
 
       const data = await response.json();
-      navigate(`/productos?pedido=${data.Folio}`);
+      navigate(`/productos?pedido=${data.Folio}${isQuote ? '&cotizacion=true' : ''}`);
     } catch (err) {
-      console.error("Error al crear pedido:", err);
-      alert("Ocurrió un error al crear el pedido. Por favor intenta nuevamente.");
+      console.error("Error al crear " + (isQuote ? "cotización" : "pedido") + ":", err);
+      alert(`Ocurrió un error al crear ${isQuote ? "la cotización" : "el pedido"}. Por favor intenta nuevamente.`);
     } finally {
-      setCreatingOrder(false);
+      if (isQuote) {
+        setCreatingQuote(false);
+      } else {
+        setCreatingOrder(false);
+      }
     }
   };
 
@@ -131,8 +142,9 @@ const ClientSearch = () => {
 
       <ClientsTable
         clients={filteredClients} 
-        onSelectClient={handleSelectClient} 
+        onSelectClient={handleCreateOrder} 
         creatingOrder={creatingOrder}
+        creatingQuote={creatingQuote}
       />
     </div>
   );

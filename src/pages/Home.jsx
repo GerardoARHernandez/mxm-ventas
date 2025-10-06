@@ -47,7 +47,7 @@ const Home = () => {
                       pzas: 0
                     };
                   })
-                ).then(results => results.filter(item => item.estado === 'PE'));
+                ).then(results => results.filter(item => item.estado === 'PE' || item.estado === 'CT')); 
                 
                 setSalesData(transformedData);
                 setLoading(false);
@@ -79,11 +79,18 @@ const Home = () => {
 
     return (
         <div className="mt-5 mx-2 sm:mx-0">
-            <Link to={'/nuevo'}>
-                <button className="border border-rose-500 text-pink-800 px-3 py-1.5 mb-1.5 hover:cursor-pointer hover:bg-pink-50 transition-colors">
-                    + Nuevo
-                </button>
-            </Link>
+            <div className="flex gap-2 mb-4">
+                <Link to={'/nuevo'}>
+                    <button className="border border-rose-500 text-pink-800 px-3 py-1.5 hover:cursor-pointer hover:bg-pink-50 transition-colors">
+                        + Nuevo Pedido
+                    </button>
+                </Link>
+                <Link to={'/nuevo'}>
+                    <button className="border border-blue-500 text-blue-800 px-3 py-1.5 hover:cursor-pointer hover:bg-blue-50 transition-colors">
+                        + Cotización
+                    </button>
+                </Link>
+            </div>
             <div className="overflow-x-auto pt-3">
                 {salesData.length === 0 ? 
                     <div className="flex justify-center items-center h-64">
@@ -96,7 +103,7 @@ const Home = () => {
                                 <th className="border border-blue-400 px-4 py-2 text-left">Venta</th>
                                 <th className="border border-blue-400 px-4 py-2 text-left">Nombre</th>
                                 <th className="border border-blue-400 px-4 py-2 text-left">Importe</th>
-                                <th className="border border-blue-400 px-4 py-2 text-left">Estado</th>
+                                <th className="border border-blue-400 px-3 py-2 text-left">Tipo</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -124,8 +131,13 @@ const Home = () => {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="border border-blue-400 px-4 py-2">${item.importe.toFixed(2)}</td>
-                                    <td className="border border-blue-400 px-4 py-2">{item.estado}</td>
+                                    <td className="border border-blue-400 px-3 py-2">${item.importe.toFixed(2)}</td>
+                                    <td className="border border-blue-400 px-3 py-2">
+                                        {item.estado === 'CT' ? 
+                                            <span className="bg-blue-500 text-white font-bold px-2 py-1 rounded text-xs uppercase">Cotización</span> : 
+                                            <span className="bg-green-800 text-white font-bold px-2 py-1 rounded text-xs uppercase">Pedido</span>
+                                        }
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>

@@ -1,7 +1,7 @@
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useState } from "react";
 
-const ClientsTable = ({ clients, onSelectClient, creatingOrder }) => {
+const ClientsTable = ({ clients, onSelectClient, creatingOrder, creatingQuote }) => {
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(30);
@@ -16,7 +16,7 @@ const ClientsTable = ({ clients, onSelectClient, creatingOrder }) => {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
-    <div className="overflow-x-auto relative"> {/* Agregamos relative para el scroll horizontal */}
+    <div className="overflow-x-auto relative">
       {/* Tabla */}
       <table className="min-w-full table-auto border-collapse border border-gray-50">
         <thead>
@@ -35,13 +35,33 @@ const ClientsTable = ({ clients, onSelectClient, creatingOrder }) => {
                 <td className="border border-gray-300 px-4 py-2">{client.CORREO || "-"}</td>
                 <td className="border border-gray-300 px-4 py-2">{client.TELEFONO}</td>
                 <td className="border border-gray-300 px-4 py-2">
-                  <button
-                    onClick={() => onSelectClient(client.CLIENTE)}
-                    disabled={creatingOrder}
-                    className={`${creatingOrder ? 'text-gray-400 cursor-not-allowed' : 'text-rose-600 hover:text-rose-800 hover:cursor-pointer'} transition-colors duration-200`}
-                  >
-                    {creatingOrder ? 'Creando pedido...' : 'Seleccionar'}
-                  </button>
+                  <div className="flex gap-2">
+                    {/* Botón Nuevo Pedido */}
+                    <button
+                      onClick={() => onSelectClient(client.CLIENTE, false)}
+                      disabled={creatingOrder}
+                      className={`px-3 py-1 text-sm rounded transition-colors duration-200 ${
+                        creatingOrder 
+                          ? 'bg-gray-400 text-white cursor-not-allowed' 
+                          : 'bg-green-600 text-white hover:bg-green-700 hover:cursor-pointer'
+                      }`}
+                    >
+                      {creatingOrder ? 'Creando...' : 'Nuevo'}
+                    </button>
+                    
+                    {/* Botón Cotización */}
+                    <button
+                      onClick={() => onSelectClient(client.CLIENTE, true)}
+                      disabled={creatingQuote}
+                      className={`px-3 py-1 text-sm rounded transition-colors duration-200 ${
+                        creatingQuote 
+                          ? 'bg-gray-400 text-white cursor-not-allowed' 
+                          : 'bg-blue-600 text-white hover:bg-blue-700 hover:cursor-pointer'
+                      }`}
+                    >
+                      {creatingQuote ? 'Creando...' : 'Cotización'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))
