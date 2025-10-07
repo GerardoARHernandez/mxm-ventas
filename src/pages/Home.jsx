@@ -129,8 +129,8 @@ const Home = () => {
                                     <td className="border border-blue-400 px-3 py-2">${item.importe.toFixed(2)}</td>
                                     <td className="border border-blue-400 px-3 py-2">
                                         {item.estado === 'CT' ? 
-                                            <span className="bg-blue-500 text-white font-bold px-2 py-1 rounded text-xs uppercase">Cotización</span> : 
-                                            <span className="bg-green-800 text-white font-bold px-2 py-1 rounded text-xs uppercase">Pedido</span>
+                                            <span className="bg-blue-500 text-white font-bold px-2 py-1 rounded text-sm uppercase">En Cotización</span> : 
+                                            <span className="bg-green-800 text-white font-bold px-2 py-1 rounded text-sm uppercase">En Pedido</span>
                                         }
                                     </td>
                                 </tr>
