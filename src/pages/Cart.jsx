@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import CartSection from "../components/CartSection";
 import { useAuth } from "../context/AuthContext";
-import ImageModal from "../components/ImageModal"; // Nuevo componente que crearemos
+import ImageModal from "../components/ImageModal";
 
 const Cart = () => {
   const location = useLocation();
@@ -14,17 +14,18 @@ const Cart = () => {
   const [cartData, setCartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [imagesData, setImagesData] = useState({}); // Para almacenar las imágenes
-  const [selectedImage, setSelectedImage] = useState(null); // Para el modal
+  const [imagesData, setImagesData] = useState({});
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [processingOrder, setProcessingOrder] = useState(false);
 
   // Función para obtener el modelo del artículo (caracteres 3-6)
   const getModeloFromArticulo = (articulo) => {
-    return articulo.substring(2, 6); // Índices 2 a 5 (caracteres 3-6)
+    return articulo.substring(2, 6);
   };
 
   // Función para obtener el código de variación (caracteres 3-7)
   const getCodigoVariacionFromArticulo = (articulo) => {
-    return articulo.substring(2, 7); // Índices 2 a 6 (caracteres 2-7)
+    return articulo.substring(2, 7);
   };
 
   // Función para buscar la imagen de un artículo
@@ -47,7 +48,6 @@ const Cart = () => {
       const variacion = variaciones.find(v => v.Codigo === codigoVariacion);
       
       if (variacion && variacion.Imagen) {
-        // Reemplazar las barras invertidas por barras normales y construir la URL
         const imagenPath = variacion.Imagen.replace(/\\/g, '/');
         console.log(`Imagen para artículo ${articulo}: ${imagenPath}`);
         return `https://systemweb.ddns.net/CarritoWeb/${imagenPath}`;
@@ -113,23 +113,41 @@ const Cart = () => {
     }
   }, [pedidoId, user]);
 
-  console.log(imagesData);
-
-  // Transformar los datos del pedido al formato que espera CartSection
-  const cartItems = useMemo(() => {
-    if (!cartData?.Part) return [];
+  // Separar artículos por PartVta
+  const { itemsStock, itemsNoStock } = useMemo(() => {
+    if (!cartData?.Part) return { itemsStock: [], itemsNoStock: [] };
     
-    return cartData.Part.map((item, index) => ({
-      id: index,
-      name: item.Descrip || `Artículo ${item.Articulo}`,
-      price: parseFloat(item.Precio),
-      quantity: parseInt(item.Cant),
-      importe: parseFloat(item.Importe),
-      code: item.Articulo,
-      status: cartData.ESTADO === 'PE' ? 'preventa' : 'stock',
-      image: imagesData[item.Articulo] || null // Agregar la imagen
-    }));
+    const stockItems = [];
+    const noStockItems = [];
+    
+    cartData.Part.forEach((item, index) => {
+      const cartItem = {
+        id: index,
+        name: item.Descrip || `Artículo ${item.Articulo}`,
+        price: parseFloat(item.Precio),
+        quantity: parseInt(item.Cant),
+        importe: parseFloat(item.Importe),
+        code: item.Articulo,
+        status: cartData.ESTADO === 'PE' ? 'preventa' : 'stock',
+        image: imagesData[item.Articulo] || null,
+        partId: item.PartId,
+        partVta: item.PartVta
+      };
+      
+      if (item.PartVta === 1) {
+        noStockItems.push(cartItem);
+      } else {
+        stockItems.push(cartItem);
+      }
+    });
+    
+    return { itemsStock: stockItems, itemsNoStock: noStockItems };
   }, [cartData, imagesData]);
+
+  // Calcular totales
+  const totalStock = itemsStock.reduce((sum, item) => sum + item.importe, 0);
+  const totalNoStock = itemsNoStock.reduce((sum, item) => sum + item.importe, 0);
+  const totalGeneral = totalStock + totalNoStock;
 
   // Función para abrir el modal de imagen
   const openImageModal = (imageUrl) => {
@@ -141,10 +159,11 @@ const Cart = () => {
     setSelectedImage(null);
   };
 
-  const removeItem = async (index) => {
+  const removeItem = async (index, isNoStockItem = false) => {
     try {
-      // Obtenemos el PartId real del artículo a eliminar
-      const itemToRemove = cartData.Part[index];
+      const itemsArray = isNoStockItem ? itemsNoStock : itemsStock;
+      const itemToRemove = itemsArray[index];
+      
       if (!itemToRemove) {
         throw new Error("Artículo no encontrado en el carrito");
       }
@@ -158,7 +177,7 @@ const Cart = () => {
           },
           body: JSON.stringify({
             Folio: pedidoId,
-            PartId: itemToRemove.PartId // Usamos el PartId real del artículo
+            PartId: itemToRemove.partId
           })
         }
       );
@@ -170,7 +189,7 @@ const Cart = () => {
       // Actualizar el estado del carrito después de eliminar el artículo
       setCartData(prevData => ({
         ...prevData,
-        Part: prevData.Part.filter(item => item.PartId !== itemToRemove.PartId)
+        Part: prevData.Part.filter(item => item.PartId !== itemToRemove.partId)
       }));
 
       alert(`Artículo eliminado del pedido #${pedidoId}`);
@@ -248,7 +267,6 @@ const Cart = () => {
         throw new Error("Error al cancelar el pedido");
       }
       
-      // Redirigir a la página principal después de cancelar
       alert('Pedido cancelado correctamente');
       navigate('/');
     } catch (err) {
@@ -259,18 +277,16 @@ const Cart = () => {
     }
   };
 
-  const processOrder = async () => {
-    if (!pedidoId) {
-      alert("Procesando nuevo pedido");
-      return;
-    }
-
-    if (!window.confirm('¿Estás seguro que deseas CONFIRMAR este pedido como completado?')) {
+  // Confirmar solo artículos en stock (Parcial = true)
+  const confirmStockOnly = async () => {
+    if (!pedidoId) return;
+    
+    if (!window.confirm('¿Estás seguro que deseas confirmar SOLO los artículos en stock? Los artículos sin stock permanecerán en el pedido.')) {
       return;
     }
 
     try {
-      setLoading(true);
+      setProcessingOrder(true);
       const response = await fetch(
         `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConfirmarPedido`,
         {
@@ -279,22 +295,61 @@ const Cart = () => {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            Folio: pedidoId
+            Folio: parseInt(pedidoId),
+            EsParcial: true
           })
         }
       );
       
       if (!response.ok) {
-        throw new Error("Error al confirmar el pedido");
+        throw new Error("Error al confirmar el pedido parcial");
       }
       
-      alert('Pedido confirmado como completado');
+      alert('Pedido parcial confirmado correctamente (solo artículos en stock)');
       navigate('/');
     } catch (err) {
       setError(err.message);
-      alert(`Error al confirmar el pedido: ${err.message}`);
+      alert(`Error al confirmar el pedido parcial: ${err.message}`);
     } finally {
-      setLoading(false);
+      setProcessingOrder(false);
+    }
+  };
+
+  // Confirmar todos los artículos (Parcial = false)
+  const confirmAll = async () => {
+    if (!pedidoId) return;
+    
+    if (!window.confirm('¿Estás seguro que deseas confirmar TODOS los artículos del pedido (stock y sin stock)?')) {
+      return;
+    }
+
+    try {
+      setProcessingOrder(true);
+      const response = await fetch(
+        `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConfirmarPedido`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            Folio: parseInt(pedidoId),
+            EsParcial: false
+          })
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error("Error al confirmar el pedido completo");
+      }
+      
+      alert('Pedido completo confirmado correctamente');
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+      alert(`Error al confirmar el pedido completo: ${err.message}`);
+    } finally {
+      setProcessingOrder(false);
     }
   };
 
@@ -327,7 +382,7 @@ const Cart = () => {
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex justify-between items-start mb-4">
+            <div className="flex justify-between items-start mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   {pedidoId ? `Pedido #${pedidoId}` : 'Mi Carrito'}
@@ -340,19 +395,19 @@ const Cart = () => {
                 )}
               </div>
               
-              <div className="flex flex-wrap gap-2 font-semibold">
+              <div className="flex flex-wrap gap-2">
                 {pedidoId && (
                   <>
                     <Link 
                       to={`/productos?pedido=${pedidoId}`}
-                      className="bg-blue-600 hover:bg-blue-700 hover:cursor-pointer text-white px-4 py-2 rounded-md"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
                     >
                       Agregar más productos
                     </Link>
                     <button
                       onClick={cancelOrder}
                       disabled={loading}
-                      className="bg-red-600 hover:bg-red-700 hover:cursor-pointer text-white px-4 py-2 rounded-md disabled:opacity-50"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md disabled:opacity-50 transition-colors"
                     >
                       Cancelar Pedido
                     </button>
@@ -361,24 +416,97 @@ const Cart = () => {
               </div>
             </div>
 
-            <CartSection 
-              title="Artículos del Pedido" 
-              items={cartItems} 
-              subtotal={parseFloat(cartData.TotVenta)} 
-              onProcess={processOrder}
-              processButtonText="Confirmar Pedido"
-              processButtonColor="green"
-              removeItem={removeItem}
-              loading={loading}
-              onClean={clearCart}
-              onImageClick={openImageModal} // Pasar función para abrir modal
-            />
+            {/* Sección de Artículos en Stock */}
+            {itemsStock.length > 0 && (
+              <CartSection 
+                title="🟢 Artículos en Stock" 
+                items={itemsStock} 
+                subtotal={totalStock}
+                removeItem={(index) => removeItem(index, false)}
+                loading={loading}
+                onImageClick={openImageModal}
+                showProcessButton={false}
+              />
+            )}
 
-            <div className="border-t border-gray-200 mt-6 pt-6">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold">Total:</span>
-                <span className="text-xl font-bold">${parseFloat(cartData.TotVenta).toFixed(2)}</span>
+            {/* Sección de Artículos Sin Stock */}
+            {itemsNoStock.length > 0 && (
+              <div className="mt-8">
+                <CartSection 
+                  title="🟡 Artículos Sin Stock" 
+                  items={itemsNoStock} 
+                  subtotal={totalNoStock}
+                  removeItem={(index) => removeItem(index, true)}
+                  loading={loading}
+                  onImageClick={openImageModal}
+                  showProcessButton={false}
+                />
               </div>
+            )}
+
+            {/* Resumen de Totales */}
+            <div className="border-t border-gray-200 mt-6 pt-6 space-y-3">
+              {itemsStock.length > 0 && (
+                <div className="flex justify-between items-center text-green-600">
+                  <span className="font-semibold">Total Artículos en Stock:</span>
+                  <span className="font-bold">${totalStock.toFixed(2)}</span>
+                </div>
+              )}
+              
+              {itemsNoStock.length > 0 && (
+                <div className="flex justify-between items-center text-yellow-600">
+                  <span className="font-semibold">Total Artículos Sin Stock:</span>
+                  <span className="font-bold">${totalNoStock.toFixed(2)}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center text-lg border-t border-gray-300 pt-3">
+                <span className="font-semibold">Total General:</span>
+                <span className="font-bold">${totalGeneral.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Botones de Acción */}
+            <div className="mt-8 flex flex-wrap gap-4 justify-between items-center">
+              <div className="flex gap-2">
+                <button
+                  onClick={clearCart}
+                  disabled={loading}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
+                >
+                  Vaciar Carrito
+                </button>
+              </div>
+              
+              <div className="flex flex-wrap gap-2">
+                {itemsNoStock.length > 0 && (
+                  <button
+                    onClick={confirmStockOnly}
+                    disabled={processingOrder || loading}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
+                  >
+                    {processingOrder ? 'Procesando...' : 'Confirmar Solo Stock'}
+                  </button>
+                )}
+                
+                <button
+                  onClick={confirmAll}
+                  disabled={processingOrder || loading}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
+                >
+                  {processingOrder ? 'Procesando...' : 'Confirmar Todos'}
+                </button>
+              </div>
+            </div>
+
+            {/* Información adicional */}
+            <div className="mt-6 p-4 bg-blue-50 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Nota:</strong> 
+                {itemsNoStock.length > 0 
+                  ? ' Los artículos marcados como "Sin Stock" requieren confirmación especial. Puede confirmar solo los disponibles o todo el pedido.'
+                  : ' Todos los artículos están disponibles en stock.'}
+              </p>
             </div>
           </div>
         </div>
