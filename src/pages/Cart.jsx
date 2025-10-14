@@ -113,7 +113,7 @@ const Cart = () => {
     }
   }, [pedidoId, user]);
 
-  // Separar artículos por PartVta
+  // Separar artículos por Stock
   const { itemsStock, itemsNoStock } = useMemo(() => {
     if (!cartData?.Part) return { itemsStock: [], itemsNoStock: [] };
     
@@ -131,10 +131,11 @@ const Cart = () => {
         status: cartData.ESTADO === 'PE' ? 'preventa' : 'stock',
         image: imagesData[item.Articulo] || null,
         partId: item.PartId,
-        partVta: item.PartVta
+        partVta: item.PartVta,
+        Stock: item.Stock
       };
       
-      if (item.PartVta === 1) {
+      if (item.Stock === 2) {
         noStockItems.push(cartItem);
       } else {
         stockItems.push(cartItem);
@@ -425,7 +426,11 @@ const Cart = () => {
                 removeItem={(index) => removeItem(index, false)}
                 loading={loading}
                 onImageClick={openImageModal}
-                showProcessButton={false}
+                showProcessButton={true}
+                onProcess={confirmStockOnly}
+                processButtonText="Confirmar Solo Stock"
+                processButtonColor="yellow"
+                onClean={clearCart}
               />
             )}
 
@@ -439,7 +444,8 @@ const Cart = () => {
                   removeItem={(index) => removeItem(index, true)}
                   loading={loading}
                   onImageClick={openImageModal}
-                  showProcessButton={false}
+                  showProcessButton={false} // Cambiado a false para quitar el botón "Completar"
+                  onClean={clearCart}
                 />
               </div>
             )}
@@ -466,38 +472,40 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Botones de Acción */}
-            <div className="mt-8 flex flex-wrap gap-4 justify-between items-center">
-              <div className="flex gap-2">
-                <button
-                  onClick={clearCart}
-                  disabled={loading}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
-                >
-                  Vaciar Carrito
-                </button>
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {itemsNoStock.length > 0 && (
+            {/* Botones de Acción Globales */}
+            {(itemsStock.length > 0 || itemsNoStock.length > 0) && (
+              <div className="mt-8 flex flex-wrap gap-4 justify-between items-center">
+                <div className="flex gap-2">
                   <button
-                    onClick={confirmStockOnly}
-                    disabled={processingOrder || loading}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
+                    onClick={clearCart}
+                    disabled={loading}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
                   >
-                    {processingOrder ? 'Procesando...' : 'Confirmar Solo Stock'}
+                    Vaciar Carrito
                   </button>
-                )}
+                </div>
                 
-                <button
-                  onClick={confirmAll}
-                  disabled={processingOrder || loading}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
-                >
-                  {processingOrder ? 'Procesando...' : 'Confirmar Todos'}
-                </button>
+                <div className="flex flex-wrap gap-2">
+                  {itemsStock.length > 0 && itemsNoStock.length > 0 && (
+                    <button
+                      onClick={confirmStockOnly}
+                      disabled={processingOrder || loading}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
+                    >
+                      {processingOrder ? 'Procesando...' : 'Confirmar Solo Stock'}
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={confirmAll}
+                    disabled={processingOrder || loading}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
+                  >
+                    {processingOrder ? 'Procesando...' : 'Confirmar Todos'}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Información adicional */}
             <div className="mt-6 p-4 bg-blue-50 rounded-md">

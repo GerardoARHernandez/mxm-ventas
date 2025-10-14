@@ -167,6 +167,7 @@ const ProductPreview = () => {
       }
 
       const individualPrice = getIndividualPrice();
+      const desdeInventario = availableStock > 0; // true si hay stock, false si no hay
 
       // Actualizar stock localmente
       const updatedVariations = variations.map(variation => {
@@ -199,7 +200,8 @@ const ProductPreview = () => {
           articulo: selectedSizeData.Articulo,
           cantidad: quantity,
           precio: individualPrice, // Usar precio2 individual
-          venta: pedidoId || 'NUEVO'
+          venta: pedidoId || 'NUEVO',
+          desdeInventario: desdeInventario // Nuevo parámetro agregado
         })
       });
 
@@ -239,6 +241,7 @@ const ProductPreview = () => {
 
       const individualPrice = getIndividualPrice();
       const ventaId = pedidoId || 'NUEVO';
+      const desdeInventario = false; // Para preventas siempre es false
       
       const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
         method: 'POST',
@@ -251,7 +254,8 @@ const ProductPreview = () => {
           articulo: selectedSizeData.Articulo,
           cantidad: preorderQuantity,
           precio: individualPrice, // Usar precio2 individual para preventas
-          venta: ventaId
+          venta: ventaId,
+          desdeInventario: desdeInventario // Nuevo parámetro agregado
         })
       });
 
@@ -277,19 +281,6 @@ const ProductPreview = () => {
     }
   };
 
-  // Modificar la validación para incluir pzasPaq
-  const allSizesHaveStock = () => {
-    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
-    if (!selectedVariation || !selectedVariation.Tallas) return false;
-    
-    // Verificar que todas las tallas tengan stock y que se pueda vender por paquete
-    const hasStockForAllSizes = selectedVariation.Tallas.every(size => 
-      parseInt(size.Exis) > 0 || parseInt(size.PorRecibir) > 0
-    );
-    
-    return hasStockForAllSizes && selectedVariation.pzasPaq === 1;
-  };
-
   const handleAddPackage = async () => {
     if (!selectedColor || !allSizesHaveStock()) return;
     
@@ -301,7 +292,8 @@ const ProductPreview = () => {
       
       for (const size of selectedVariation.Tallas) {
         const packagePrice = parseFloat(size.precio3) || 0; // Usar precio3 para paquetes
-        
+        const desdeInventario = parseInt(size.Exis) > 0; // true si hay stock, false si no hay
+
         const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
           method: 'POST',
           headers: {
@@ -313,7 +305,8 @@ const ProductPreview = () => {
             articulo: size.Articulo,
             cantidad: 1, // Siempre 1 por talla en paquete
             precio: packagePrice, // Usar precio3 (descuento por paquete)
-            venta: ventaId
+            venta: ventaId,
+            desdeInventario: desdeInventario // Nuevo parámetro agregado
           })
         });
 
@@ -340,6 +333,19 @@ const ProductPreview = () => {
     } finally {
       setAddingToCart(false);
     }
+  };
+
+  // Modificar la validación para incluir pzasPaq
+  const allSizesHaveStock = () => {
+    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+    if (!selectedVariation || !selectedVariation.Tallas) return false;
+    
+    // Verificar que todas las tallas tengan stock y que se pueda vender por paquete
+    const hasStockForAllSizes = selectedVariation.Tallas.every(size => 
+      parseInt(size.Exis) > 0 || parseInt(size.PorRecibir) > 0
+    );
+    
+    return hasStockForAllSizes && selectedVariation.pzasPaq === 1;
   };
 
   if (loading) return <div className="mt-5 mx-2 sm:mx-0 text-center py-8"><p>Cargando producto...</p></div>;

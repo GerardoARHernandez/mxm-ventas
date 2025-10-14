@@ -31,11 +31,11 @@ const CartItem = ({ item, removeItem, loading, onImageClick }) => {
           >
             <img 
               src={item.image} 
-              alt={item.name}
+              alt="Imagen No Disponible"
               className="w-12 h-12 object-cover rounded border border-gray-300 group-hover:opacity-80 transition-opacity"
               onError={() => setImageError(true)}
             />
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-opacity-10 transition-all rounded flex items-center justify-center">
               <FiImage className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>

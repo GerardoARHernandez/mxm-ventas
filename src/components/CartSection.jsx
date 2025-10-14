@@ -4,13 +4,14 @@ const CartSection = ({
   title, 
   items, 
   subtotal, 
-  onProcess, 
+  onProcess,
   onClean,
   processButtonText = "Completar", 
   processButtonColor = 'blue', 
   removeItem,
   loading = false,
-  onImageClick // Nueva prop para manejar clic en imagen
+  onImageClick,
+  showProcessButton = true // Nuevo prop para controlar si mostrar el botón de proceso
 }) => {
 
   console.log(items);
@@ -24,20 +25,20 @@ const CartSection = ({
         {items.length > 0 ? (
           <>
             <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-sm font-medium text-gray-500 uppercase tracking-wider">
-              <div className="col-span-1">Imagen</div> {/* Nueva columna */}
-              <div className="col-span-4">Artículo</div> {/* Reducida de 5 a 4 */}
+              <div className="col-span-1">Imagen</div>
+              <div className="col-span-4">Artículo</div>
               <div className="col-span-2 text-right">Precio Unit.</div>
               <div className="col-span-2 text-center">Cantidad</div>
               <div className="col-span-3 text-left">Importe</div>
             </div>
             
-            {items.map((item) => (
+            {items.map((item, index) => (
               <CartItem 
                 key={item.code}
                 item={item} 
-                removeItem={removeItem} 
+                removeItem={() => removeItem(index)} 
                 loading={loading}
-                onImageClick={onImageClick} // Pasar la función al CartItem
+                onImageClick={onImageClick}
               />
             ))}
           </>
@@ -63,13 +64,15 @@ const CartSection = ({
               >
                 Vaciar Carrito
               </button>
-              <button 
-                onClick={onProcess}
-                disabled={loading}
-                className={`bg-${processButtonColor}-600 hover:bg-${processButtonColor}-700 text-white py-2 px-6 rounded-md hover:cursor-pointer transition-colors disabled:opacity-50`}
-              >
-                {loading ? 'Procesando...' : processButtonText}
-              </button>
+              {showProcessButton && onProcess && (
+                <button 
+                  onClick={onProcess}
+                  disabled={loading}
+                  className={`bg-${processButtonColor}-600 hover:bg-${processButtonColor}-700 text-white py-2 px-6 rounded-md hover:cursor-pointer transition-colors disabled:opacity-50`}
+                >
+                  {loading ? 'Procesando...' : processButtonText}
+                </button>
+              )}
             </div>
           </div>
         </div>
