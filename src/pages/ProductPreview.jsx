@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext'; // Importar el contexto del carrito
+import { useCart } from '../context/CartContext';
 import SizeButton from '../components/Product/SizeButton';
 import ColorButton from '../components/Product/ColorButton';
 import ProductImage from '../components/Product/ProductImage';
@@ -13,7 +13,7 @@ const ProductPreview = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { updateCartCount } = useCart(); // Usar el contexto del carrito
+  const { updateCartCount } = useCart();
   
   const queryParams = new URLSearchParams(location.search);
   const pedidoId = queryParams.get('pedido');
@@ -28,9 +28,14 @@ const ProductPreview = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [addingToCart, setAddingToCart] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-
-  // Nuevo estado para controlar si se puede vender por paquete
   const [canSellByPackage, setCanSellByPackage] = useState(false);
+  
+  // Nuevo estado para el precio personalizado
+  const [customPrice, setCustomPrice] = useState('');
+  const [isEditingPrice, setIsEditingPrice] = useState(false);
+
+  // Verificar si es un modelo PAQ
+  const isPAQModel = modelCode === 'PAQ';
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -81,6 +86,14 @@ const ProductPreview = () => {
     fetchProductData();
   }, [modelCode]);
 
+  // Actualizar el precio personalizado cuando cambia la variación seleccionada
+  useEffect(() => {
+    if (isPAQModel && variations.length > 0 && selectedColor && selectedSize) {
+      const price = getIndividualPrice();
+      setCustomPrice(price.toString());
+    }
+  }, [selectedColor, selectedSize, variations, isPAQModel]);
+
   const handleSizeChange = (sizeId) => {
     setSelectedSize(sizeId);
     setQuantity(1);
@@ -97,6 +110,28 @@ const ProductPreview = () => {
     }
     setQuantity(1);
     setPreorderQuantity(1);
+  };
+
+  // Manejar cambio del precio personalizado
+  const handleCustomPriceChange = (e) => {
+    const value = e.target.value;
+    // Permitir solo números y punto decimal
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setCustomPrice(value);
+    }
+  };
+
+  // Activar/desactivar edición del precio
+  const togglePriceEdit = () => {
+    setIsEditingPrice(!isEditingPrice);
+  };
+
+  // Obtener el precio final a usar (personalizado o normal)
+  const getFinalPrice = () => {
+    if (isPAQModel && customPrice) {
+      return parseFloat(customPrice);
+    }
+    return getIndividualPrice();
   };
 
   const handleQuantityChange = (e) => {
@@ -166,8 +201,8 @@ const ProductPreview = () => {
         throw new Error("No se pudo determinar el código de artículo");
       }
 
-      const individualPrice = getIndividualPrice();
-      const desdeInventario = availableStock > 0; // true si hay stock, false si no hay
+      const finalPrice = getFinalPrice();
+      const desdeInventario = availableStock > 0;
 
       // Actualizar stock localmente
       const updatedVariations = variations.map(variation => {
@@ -199,9 +234,9 @@ const ProductPreview = () => {
           Usuario: user.username,
           articulo: selectedSizeData.Articulo,
           cantidad: quantity,
-          precio: individualPrice, // Usar precio2 individual
+          precio: finalPrice, // Usar el precio final (personalizado o normal)
           venta: pedidoId || 'NUEVO',
-          desdeInventario: desdeInventario // Nuevo parámetro agregado
+          desdeInventario: desdeInventario
         })
       });
 
@@ -239,9 +274,9 @@ const ProductPreview = () => {
         throw new Error("No se pudo determinar el código de artículo");
       }
 
-      const individualPrice = getIndividualPrice();
+      const finalPrice = getFinalPrice();
       const ventaId = pedidoId || 'NUEVO';
-      const desdeInventario = false; // Para preventas siempre es false
+      const desdeInventario = false;
       
       const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
         method: 'POST',
@@ -253,9 +288,9 @@ const ProductPreview = () => {
           Usuario: user.username,
           articulo: selectedSizeData.Articulo,
           cantidad: preorderQuantity,
-          precio: individualPrice, // Usar precio2 individual para preventas
+          precio: finalPrice, // Usar el precio final (personalizado o normal)
           venta: ventaId,
-          desdeInventario: desdeInventario // Nuevo parámetro agregado
+          desdeInventario: desdeInventario
         })
       });
 
@@ -291,8 +326,8 @@ const ProductPreview = () => {
       let lastResponse = null;
       
       for (const size of selectedVariation.Tallas) {
-        const packagePrice = parseFloat(size.precio3) || 0; // Usar precio3 para paquetes
-        const desdeInventario = parseInt(size.Exis) > 0; // true si hay stock, false si no hay
+        const finalPrice = isPAQModel && customPrice ? parseFloat(customPrice) : (parseFloat(size.precio3) || 0);
+        const desdeInventario = parseInt(size.Exis) > 0;
 
         const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
           method: 'POST',
@@ -303,10 +338,10 @@ const ProductPreview = () => {
           body: JSON.stringify({
             Usuario: user.username,
             articulo: size.Articulo,
-            cantidad: 1, // Siempre 1 por talla en paquete
-            precio: packagePrice, // Usar precio3 (descuento por paquete)
+            cantidad: 1,
+            precio: finalPrice, // Usar precio final (personalizado o precio3)
             venta: ventaId,
-            desdeInventario: desdeInventario // Nuevo parámetro agregado
+            desdeInventario: desdeInventario
           })
         });
 
@@ -335,12 +370,10 @@ const ProductPreview = () => {
     }
   };
 
-  // Modificar la validación para incluir pzasPaq
   const allSizesHaveStock = () => {
     const selectedVariation = variations.find(v => v.Codigo === selectedColor);
     if (!selectedVariation || !selectedVariation.Tallas) return false;
     
-    // Verificar que todas las tallas tengan stock y que se pueda vender por paquete
     const hasStockForAllSizes = selectedVariation.Tallas.every(size => 
       parseInt(size.Exis) > 0 || parseInt(size.PorRecibir) > 0
     );
@@ -359,6 +392,7 @@ const ProductPreview = () => {
   const preorderStock = getPreorderStock();
   const individualPrice = getIndividualPrice();
   const packagePrice = getPackagePrice();
+  const finalPrice = getFinalPrice();
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -368,14 +402,81 @@ const ProductPreview = () => {
           altText={product.Descrip} 
         />
         
-        <ProductInfo 
-          product={product} 
-          selectedSizeData={selectedSizeData}
-          individualPrice={individualPrice}
-          packagePrice={packagePrice}
-          canSellByPackage={canSellByPackage}
-        />
-        
+        {/* Componente ProductInfo modificado para manejar precio editable */}
+        <div className="p-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{product.Descrip}</h2>
+          
+          {/* Precio editable para modelos PAQ */}
+          {isPAQModel ? (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Precio {isEditingPrice ? '(Editable)' : ''}
+              </label>
+              <div className="flex items-center gap-2">
+                {isEditingPrice ? (
+                  <input
+                    type="text"
+                    value={customPrice}
+                    onChange={handleCustomPriceChange}
+                    onBlur={togglePriceEdit}
+                    className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                ) : (
+                  <span 
+                    className="text-3xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                    onClick={togglePriceEdit}
+                    title="Haz clic para editar el precio"
+                  >
+                    ${finalPrice.toFixed(2)}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={togglePriceEdit}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  {isEditingPrice ? 'Cancelar' : 'Editar'}
+                </button>
+              </div>
+              {!isEditingPrice && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Precio original: ${individualPrice.toFixed(2)} - Haz clic en el precio para editarlo
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="mb-4">
+              <span className="text-3xl font-bold text-gray-900">
+                ${individualPrice.toFixed(2)}
+              </span>
+              {packagePrice > 0 && canSellByPackage && (
+                <p className="text-lg text-green-600 font-semibold">
+                  Precio por paquete: ${packagePrice.toFixed(2)}
+                </p>
+              )}
+            </div>
+          )}
+          
+          <p className="text-gray-600 mb-4">{product.Descrip}</p>
+          
+          {selectedSizeData && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-600">
+                <span className="font-semibold">Artículo:</span> {selectedSizeData.Articulo}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-semibold">Stock disponible:</span> {availableStock}
+              </p>
+              {preorderStock > 0 && (
+                <p className="text-sm text-orange-600">
+                  <span className="font-semibold">Por recibir:</span> {preorderStock}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
         {variations.length > 0 && (
           <div className="mb-4 px-8">
             <h4 className="text-lg font-semibold mb-3">Colores disponibles:</h4>
@@ -433,7 +534,7 @@ const ProductPreview = () => {
             onAddPackage={handleAddPackage}
             allSizesHaveStock={allSizesHaveStock()}
             addingToCart={addingToCart}
-            individualPrice={individualPrice}
+            individualPrice={finalPrice} // Usar el precio final
             packagePrice={packagePrice}
             canSellByPackage={canSellByPackage}
           />
