@@ -11,7 +11,7 @@ const CartSection = ({
   removeItem,
   loading = false,
   onImageClick,
-  showProcessButton = true // Nuevo prop para controlar si mostrar el botón de proceso
+  showProcessButton// Nuevo prop para controlar si mostrar el botón de proceso
 }) => {
 
   console.log(items);
