@@ -150,6 +150,9 @@ const Cart = () => {
   const totalNoStock = itemsNoStock.reduce((sum, item) => sum + item.importe, 0);
   const totalGeneral = totalStock + totalNoStock;
 
+  // Determinar si mostrar el botón de confirmación parcial
+  const showPartialConfirmButton = itemsStock.length > 0 && itemsNoStock.length > 0;
+
   // Función para abrir el modal de imagen
   const openImageModal = (imageUrl) => {
     setSelectedImage(imageUrl);
@@ -486,7 +489,8 @@ const Cart = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
-                  {itemsStock.length > 0 && itemsNoStock.length > 0 && (
+                  {/* Solo mostrar el botón de confirmación parcial cuando hay ambos tipos de artículos */}
+                  {showPartialConfirmButton && (
                     <button
                       onClick={confirmStockOnly}
                       disabled={processingOrder || loading}
