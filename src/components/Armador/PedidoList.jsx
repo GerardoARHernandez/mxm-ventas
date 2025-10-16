@@ -114,7 +114,11 @@ const PedidoHeader = ({ pedido }) => (
       <div className="text-sm text-gray-600">
         <span className="font-medium">Estado:</span> 
         <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-          {pedido.ESTADO === "CO" ? "Confirmado" : pedido.ESTADO}
+          {pedido.ESTADO === "CO"
+            ? "Confirmado"
+            : pedido.ESTADO === "PA"
+            ? "Parcial"
+            : pedido.ESTADO}
         </span>
       </div>
     </div>
