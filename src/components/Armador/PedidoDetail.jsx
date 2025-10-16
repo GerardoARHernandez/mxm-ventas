@@ -160,7 +160,7 @@ const PedidoDetail = () => {
                   ? "bg-green-100 text-green-800" 
                   : "bg-yellow-100 text-yellow-800"
               }`}>
-                {pedido.ESTADO === "CO" ? "Confirmado" : pedido.ESTADO}
+                {pedido.ESTADO === "CO" ? "Confirmado" : pedido.ESTADO === "PA" ? "Parcial" : pedido.ESTADO}
               </span>
             </div>
             <div>
