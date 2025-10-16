@@ -142,7 +142,7 @@ const PedidoDetail = () => {
   const getImageUrl = (imageName) => {
     if (!imageName) return null;
     if (imageName.startsWith('http')) return imageName;
-    return `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName}`;
+    return `https://systemweb.ddns.net/CarritoWeb/${imageName}`;
   };
 
   const openImageModal = (imageUrl) => {

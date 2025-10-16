@@ -150,6 +150,9 @@ const Cart = () => {
   const totalNoStock = itemsNoStock.reduce((sum, item) => sum + item.importe, 0);
   const totalGeneral = totalStock + totalNoStock;
 
+  // Determinar si hay artículos sin stock (stock = 2)
+  const hasNoStockItems = itemsNoStock.length > 0;
+
   // Función para abrir el modal de imagen
   const openImageModal = (imageUrl) => {
     setSelectedImage(imageUrl);
@@ -426,7 +429,7 @@ const Cart = () => {
                 removeItem={(index) => removeItem(index, false)}
                 loading={loading}
                 onImageClick={openImageModal}
-                showProcessButton={true}
+                showProcessButton={hasNoStockItems}
                 onProcess={confirmStockOnly}
                 processButtonText="Confirmar Solo Stock"
                 processButtonColor="yellow"
@@ -444,7 +447,7 @@ const Cart = () => {
                   removeItem={(index) => removeItem(index, true)}
                   loading={loading}
                   onImageClick={openImageModal}
-                  showProcessButton={false} // Cambiado a false para quitar el botón "Completar"
+                  showProcessButton={false}
                   onClean={clearCart}
                 />
               </div>
@@ -486,7 +489,8 @@ const Cart = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
-                  {itemsStock.length > 0 && itemsNoStock.length > 0 && (
+                  {/* Mostrar botón "Confirmar Solo Stock" solo cuando hay artículos sin stock */}
+                  {hasNoStockItems && itemsStock.length > 0 && (
                     <button
                       onClick={confirmStockOnly}
                       disabled={processingOrder || loading}
@@ -511,7 +515,7 @@ const Cart = () => {
             <div className="mt-6 p-4 bg-blue-50 rounded-md">
               <p className="text-sm text-blue-800">
                 <strong>Nota:</strong> 
-                {itemsNoStock.length > 0 
+                {hasNoStockItems 
                   ? ' Los artículos marcados como "Sin Stock" requieren confirmación especial. Puede confirmar solo los disponibles o todo el pedido.'
                   : ' Todos los artículos están disponibles en stock.'}
               </p>
