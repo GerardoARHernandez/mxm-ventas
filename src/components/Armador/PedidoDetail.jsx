@@ -8,6 +8,7 @@ const PedidoDetail = () => {
   const navigate = useNavigate();
   const [pedido, setPedido] = useState(null);
   const [detalle, setDetalle] = useState(null);
+  const [detalleStock, setDetalleStock] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImage, setCurrentImage] = useState('');
@@ -19,6 +20,7 @@ const PedidoDetail = () => {
       try {
         setLoading(true);
         
+        // Obtener lista de pedidos
         const pedidosResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaPedidosConfirmados?t=${Date.now()}`);
         if (!pedidosResponse.ok) throw new Error('Error al obtener los pedidos');
         
@@ -28,11 +30,19 @@ const PedidoDetail = () => {
         
         setPedido(pedidoEncontrado);
         
+        // Obtener detalle del pedido con ubicación e imagen
         const detalleResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/PedidoConfirmado/${id}?t=${Date.now()}`);
         if (!detalleResponse.ok) throw new Error('Error al obtener el detalle del pedido');
         
         const detalleData = await detalleResponse.json();
         setDetalle(detalleData);
+        
+        // Obtener detalle del pedido con información de stock
+        const stockResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/Pedido/${id}?t=${Date.now()}`);
+        if (!stockResponse.ok) throw new Error('Error al obtener la información de stock');
+        
+        const stockData = await stockResponse.json();
+        setDetalleStock(stockData);
         
       } catch (err) {
         setError(err.message);
@@ -43,6 +53,29 @@ const PedidoDetail = () => {
     
     fetchData();
   }, [id]);
+
+  // Combinar la información de ambas APIs
+  const obtenerPartesCombinadas = () => {
+    if (!detalle || !detalleStock || !detalle.Part || !detalleStock.Part) return [];
+    
+    return detalle.Part.map(part => {
+      // Buscar la información de stock correspondiente
+      const stockInfo = detalleStock.Part.find(
+        stockPart => stockPart.PartId === part.PartId || stockPart.Articulo === part.Articulo
+      );
+      
+      return {
+        ...part,
+        Stock: stockInfo ? stockInfo.Stock : 1 // Por defecto mostrar si no se encuentra
+      };
+    });
+  };
+
+  // Filtrar partes: mostrar solo las que tienen Stock = 1
+  const partesFiltradas = () => {
+    const partesCombinadas = obtenerPartesCombinadas();
+    return partesCombinadas.filter(part => part.Stock === 1);
+  };
 
   const cambiarEstadoPrenda = (partId) => {
     setDetalle(prev => ({
@@ -57,19 +90,22 @@ const PedidoDetail = () => {
 
   // Función para verificar si todos los artículos están surtidos
   const todosSurtidos = () => {
-    if (!detalle || !detalle.Part) return false;
-    return detalle.Part.every(part => part.Status.trim() === "1");
+    const partes = partesFiltradas();
+    if (partes.length === 0) return false;
+    return partes.every(part => part.Status.trim() === "1");
   };
 
   const guardarCambios = async () => {
     try {
       setSaving(true);
       
-      // Preparar los datos para la API
+      // Preparar los datos para la API usando las partes filtradas
+      const partesParaGuardar = partesFiltradas();
+      
       const requestData = {
         SDTPedidoAR: {
           VENTA: parseInt(id),
-          Part: detalle.Part.map(part => ({
+          Part: partesParaGuardar.map(part => ({
             PartId: part.PartId,
             Status: part.Status.trim()
           }))
@@ -89,10 +125,9 @@ const PedidoDetail = () => {
 
       const result = await response.json();
       
-      // Cambiamos la verificación de result.success a !result.error
       if (!result.error) {
         alert(result.Mensaje || "Cambios guardados correctamente");
-        navigate(".."); // Volver a la lista después de guardar
+        navigate("..");
       } else {
         throw new Error(result.Mensaje || 'Error al guardar los cambios');
       }
@@ -119,11 +154,13 @@ const PedidoDetail = () => {
     setModalOpen(false);
     setCurrentImage('');
   };
-  
 
   if (loading) return <LoadingScreen />;
   if (error) return <ErrorScreen error={error} />;
-  if (!pedido || !detalle) return <ErrorScreen error="No se pudo cargar la información del pedido" />;
+  if (!pedido || !detalle || !detalleStock) return <ErrorScreen error="No se pudo cargar la información del pedido" />;
+
+  const partesMostrar = partesFiltradas();
+  const partesOcultadas = obtenerPartesCombinadas().filter(part => part.Stock !== 1).length;
 
   return (
     <div className="min-h-screen bg-blue-50">
@@ -169,94 +206,107 @@ const PedidoDetail = () => {
               <p className="text-sm text-gray-600">{detalle.TotPzas} piezas</p>
             </div>
           </div>
+          {partesOcultadas > 0 && (
+            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                <strong>Nota:</strong> {partesOcultadas} artículo(s) oculto(s) por falta de stock
+              </p>
+            </div>
+          )}
         </header>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
             <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Partes del pedido
+              Partes del pedido {partesOcultadas > 0 && `(${partesMostrar.length} de ${detalle.Part.length} artículos en stock)`}
             </h3>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Artículo
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Descripción
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cantidad
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Ubicación
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Imagen
-                  </th>                  
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {detalle.Part.map((part) => (
-                  <tr key={part.PartId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {part.Articulo}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
-                      {part.Descrip}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {part.Cant}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {part.Ubicacion}
-                    </td>                    
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => cambiarEstadoPrenda(part.PartId)}
-                          className={`px-3 py-2 rounded-md flex items-center space-x-2 transition-colors hover:cursor-pointer ${
-                            part.Status.trim() === "1" 
-                              ? "bg-green-100 text-green-800 hover:bg-green-200" 
-                              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                          }`}
-                        >
-                          {part.Status.trim() === "1" ? (
-                            <FiCheck className="flex-shrink-0" />
-                          ) : (
-                            <FiRotateCcw className="flex-shrink-0" />
-                          )}
-                          <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${
-                            part.Status.trim() === "1" 
-                              ? "bg-green-200 text-green-800" 
-                              : "bg-yellow-200 text-yellow-800"
-                          }`}>
-                            {part.Status.trim() === "1" ? "Surtido" : "Pendiente"}
-                          </span>
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {getImageUrl(part.Imagen) && (
-                        <img 
-                          src={getImageUrl(part.Imagen)} 
-                          alt='No disponible' 
-                          className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
-                          onClick={() => openImageModal(getImageUrl(part.Imagen))}
-                        />
-                      ) || 'No Disponible'} 
-                    </td>
+          {partesMostrar.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500">No hay artículos disponibles para mostrar (todos están sin stock)</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Artículo
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Descripción
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Cantidad
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ubicación
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Imagen
+                    </th>                  
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {partesMostrar.map((part) => (
+                    <tr key={part.PartId} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {part.Articulo}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                        {part.Descrip}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {part.Cant}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {part.Ubicacion}
+                      </td>                    
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => cambiarEstadoPrenda(part.PartId)}
+                            className={`px-3 py-2 rounded-md flex items-center space-x-2 transition-colors hover:cursor-pointer ${
+                              part.Status.trim() === "1" 
+                                ? "bg-green-100 text-green-800 hover:bg-green-200" 
+                                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                            }`}
+                          >
+                            {part.Status.trim() === "1" ? (
+                              <FiCheck className="flex-shrink-0" />
+                            ) : (
+                              <FiRotateCcw className="flex-shrink-0" />
+                            )}
+                            <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${
+                              part.Status.trim() === "1" 
+                                ? "bg-green-200 text-green-800" 
+                                : "bg-yellow-200 text-yellow-800"
+                            }`}>
+                              {part.Status.trim() === "1" ? "Surtido" : "Pendiente"}
+                            </span>
+                          </button>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {getImageUrl(part.Imagen) && (
+                          <img 
+                            src={getImageUrl(part.Imagen)} 
+                            alt={part.Descrip} 
+                            className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
+                            onClick={() => openImageModal(getImageUrl(part.Imagen))}
+                          />
+                        ) || 'No Disponible'} 
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Resumen y acciones */}
@@ -265,7 +315,8 @@ const PedidoDetail = () => {
             <div>
               <h3 className="text-lg font-medium text-gray-900">Resumen del pedido</h3>
               <p className="text-sm text-gray-500">
-                {detalle.Part.filter(p => p.Status.trim() === "1").length} de {detalle.Part.length} piezas surtidas
+                {partesMostrar.filter(p => p.Status.trim() === "1").length} de {partesMostrar.length} piezas surtidas
+                {partesOcultadas > 0 && ` (${partesOcultadas} ocultas por stock)`}
               </p>
               {todosSurtidos() && (
                 <p className="text-base bg-green-600 text-white mx-1 px-2 font-bold uppercase mt-1">
@@ -282,9 +333,9 @@ const PedidoDetail = () => {
               </button>
               <button
                 onClick={guardarCambios}
-                disabled={!todosSurtidos() || saving}
+                disabled={!todosSurtidos() || saving || partesMostrar.length === 0}
                 className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 hover:cursor-pointer ${
-                  todosSurtidos() 
+                  todosSurtidos() && partesMostrar.length > 0
                     ? "bg-rose-600 hover:bg-rose-700" 
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
