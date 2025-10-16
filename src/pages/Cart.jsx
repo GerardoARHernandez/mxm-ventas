@@ -120,7 +120,14 @@ const Cart = () => {
     const stockItems = [];
     const noStockItems = [];
     
+    console.log("=== DEBUG CART ITEMS ===");
     cartData.Part.forEach((item, index) => {
+      console.log(`Artículo ${item.Articulo}:`, {
+        Descrip: item.Descrip,
+        Stock: item.Stock,
+        StockType: typeof item.Stock
+      });
+
       const cartItem = {
         id: index,
         name: item.Descrip || `Artículo ${item.Articulo}`,
@@ -135,12 +142,20 @@ const Cart = () => {
         Stock: item.Stock
       };
       
+      // Stock = 2 significa sin stock, cualquier otro valor es con stock
       if (item.Stock === 2) {
         noStockItems.push(cartItem);
+        console.log(`→ Agregado a NO STOCK: ${item.Articulo}`);
       } else {
         stockItems.push(cartItem);
+        console.log(`→ Agregado a STOCK: ${item.Articulo} (Stock: ${item.Stock})`);
       }
     });
+    
+    console.log("Resultado final:");
+    console.log("- Items con stock:", stockItems.length);
+    console.log("- Items sin stock:", noStockItems.length);
+    console.log("=== FIN DEBUG ===");
     
     return { itemsStock: stockItems, itemsNoStock: noStockItems };
   }, [cartData, imagesData]);
@@ -152,6 +167,12 @@ const Cart = () => {
 
   // Determinar si mostrar el botón de confirmación parcial
   const showPartialConfirmButton = itemsStock.length > 0 && itemsNoStock.length > 0;
+
+  console.log("=== BOTÓN CONFIRMACIÓN PARCIAL ===");
+  console.log("Items con stock:", itemsStock.length);
+  console.log("Items sin stock:", itemsNoStock.length);
+  console.log("Mostrar botón parcial:", showPartialConfirmButton);
+  console.log("=== FIN BOTÓN ===");
 
   // Función para abrir el modal de imagen
   const openImageModal = (imageUrl) => {
@@ -447,7 +468,7 @@ const Cart = () => {
                   removeItem={(index) => removeItem(index, true)}
                   loading={loading}
                   onImageClick={openImageModal}
-                  showProcessButton={false} // Cambiado a false para quitar el botón "Completar"
+                  showProcessButton={false}
                   onClean={clearCart}
                 />
               </div>
@@ -489,7 +510,7 @@ const Cart = () => {
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
-                  {/* Solo mostrar el botón de confirmación parcial cuando hay ambos tipos de artículos */}
+                  {/* SOLO mostrar cuando hay ambos tipos de artículos */}
                   {showPartialConfirmButton && (
                     <button
                       onClick={confirmStockOnly}
