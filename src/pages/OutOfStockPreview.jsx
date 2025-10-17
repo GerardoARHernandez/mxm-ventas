@@ -63,7 +63,7 @@ const OutOfStockPreview = () => {
                   variacion.Tallas.forEach(talla => {
                     const stock = parseInt(talla.Exis) || 0;
                     
-                    if (stock <= 3) { // Solo nos interesan los bajos stocks
+                    if (stock <= 9) { // Solo nos interesan los bajos stocks
                       modelAlerts.push({
                         productId: modelo,
                         productName: producto.descrip,
