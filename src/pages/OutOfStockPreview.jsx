@@ -115,17 +115,42 @@ const OutOfStockPreview = () => {
     fetchStockData();
   }, []);
 
+  // Navegación con flechas
+  const goToNextAlert = () => {
+    setCurrentAlertIndex(prev => 
+      prev === stockAlerts.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const goToPrevAlert = () => {
+    setCurrentAlertIndex(prev => 
+      prev === 0 ? stockAlerts.length - 1 : prev - 1
+    );
+  };
+
   // Rotar alertas cada 5 segundos
   useEffect(() => {
     if (stockAlerts.length === 0) return;
 
     const interval = setInterval(() => {
-      setCurrentAlertIndex(prev => 
-        prev === stockAlerts.length - 1 ? 0 : prev + 1
-      );
+      goToNextAlert();
     }, 5000);
 
     return () => clearInterval(interval);
+  }, [stockAlerts]);
+
+  // Manejar navegación con teclado
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.key === 'ArrowRight') {
+        goToNextAlert();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrevAlert();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
   }, [stockAlerts]);
 
   if (loading) {
@@ -175,9 +200,31 @@ const OutOfStockPreview = () => {
   const horaFormateada = fecha.toLocaleTimeString();
 
   return (
-    <div className="bg-gray-900 text-white h-screen overflow-hidden flex py-auto">
+    <div className="bg-gray-900 text-white h-screen overflow-hidden flex py-auto relative">
+      {/* Flecha izquierda */}
+      <button
+        onClick={goToPrevAlert}
+        className="absolute left-4 top-2/3 transform -translate-y-1/2 z-10 bg-gray-800/70 hover:bg-gray-700/90 text-white p-4 rounded-full transition-all duration-200 hover:scale-110"
+        aria-label="Producto anterior"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      {/* Flecha derecha */}
+      <button
+        onClick={goToNextAlert}
+        className="absolute right-4 top-2/3 transform -translate-y-1/2 z-10 bg-gray-800/70 hover:bg-gray-700/90 text-white p-4 rounded-full transition-all duration-200 hover:scale-110"
+        aria-label="Siguiente producto"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
       {/* Imagen del producto (50% izquierdo) */}
-      <div className="w-2/5 bg-gray-950 flex items-center justify-center">
+      <div className="w-2/5 bg-gray-950 flex items-center justify-center relative">
         {currentAlert.variant.imageUrl ? (
           <img 
             src={currentAlert.variant.imageUrl} 
@@ -193,6 +240,19 @@ const OutOfStockPreview = () => {
             <p className="text-3xl">Imagen no disponible</p>
           </div>
         )}
+        
+        {/* Indicador de progreso del timer */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+          <div className="w-32 bg-gray-700 rounded-full h-2">
+            <div 
+              className="bg-white h-2 rounded-full transition-all duration-100 ease-linear"
+              style={{ 
+                width: '100%',
+                animation: `countdown 5s linear infinite`
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Información del producto (50% derecho) */}
@@ -258,13 +318,39 @@ const OutOfStockPreview = () => {
             </div>
           </div>
 
-          <div className="bg-gray-800 p-2 rounded-lg">
-            <p className="text-lg">
-              {currentAlertIndex + 1}/{stockAlerts.length}
-            </p>
+          <div className="flex items-center gap-4">
+            {/* Indicadores de navegación (puntos) */}
+            <div className="flex gap-2">
+              {stockAlerts.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentAlertIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    index === currentAlertIndex 
+                      ? 'bg-white scale-125' 
+                      : 'bg-gray-500 hover:bg-gray-300'
+                  }`}
+                  aria-label={`Ir al producto ${index + 1}`}
+                />
+              ))}
+            </div>
+
+            <div className="bg-gray-800 p-3 rounded-lg">
+              <p className="text-lg font-medium">
+                {currentAlertIndex + 1} / {stockAlerts.length}
+              </p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Estilos para la animación del timer */}
+      <style jsx>{`
+        @keyframes countdown {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+      `}</style>
     </div>
   );
 };
