@@ -11,7 +11,8 @@ const CartSection = ({
   removeItem,
   loading = false,
   onImageClick,
-  showProcessButton = true // Nuevo prop para controlar si mostrar el botón de proceso
+  showProcessButton = true,
+  hasPaqueteria = true // Nuevo prop con valor por defecto true
 }) => {
 
   console.log(items);
@@ -67,7 +68,7 @@ const CartSection = ({
               {showProcessButton && onProcess && (
                 <button 
                   onClick={onProcess}
-                  disabled={loading}
+                  disabled={loading || !hasPaqueteria} // Deshabilitar si no hay paquetería
                   className={`bg-${processButtonColor}-600 hover:bg-${processButtonColor}-700 text-white py-2 px-6 rounded-md hover:cursor-pointer transition-colors disabled:opacity-50`}
                 >
                   {loading ? 'Procesando...' : processButtonText}

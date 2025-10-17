@@ -113,6 +113,12 @@ const Cart = () => {
     }
   }, [pedidoId, user]);
 
+  // Verificar si hay servicios de paquetería en el carrito
+  const hasPaqueteria = useMemo(() => {
+    if (!cartData?.Part) return false;
+    return cartData.Part.some(item => item.Articulo.startsWith('99PAQ'));
+  }, [cartData]);
+
   // Separar artículos por Stock
   const { itemsStock, itemsNoStock } = useMemo(() => {
     if (!cartData?.Part) return { itemsStock: [], itemsNoStock: [] };
@@ -285,6 +291,12 @@ const Cart = () => {
   const confirmStockOnly = async () => {
     if (!pedidoId) return;
     
+    // Validar que haya servicio de paquetería
+    if (!hasPaqueteria) {
+      alert('Error: Debe agregar al menos un servicio de paquetería antes de confirmar el pedido.');
+      return;
+    }
+    
     if (!window.confirm('¿Estás seguro que deseas confirmar SOLO los artículos en stock? Los artículos sin stock permanecerán en el pedido.')) {
       return;
     }
@@ -322,6 +334,12 @@ const Cart = () => {
   // Confirmar todos los artículos (Parcial = false)
   const confirmAll = async () => {
     if (!pedidoId) return;
+    
+    // Validar que haya servicio de paquetería
+    if (!hasPaqueteria) {
+      alert('Error: Debe agregar al menos un servicio de paquetería antes de confirmar el pedido.');
+      return;
+    }
     
     if (!window.confirm('¿Estás seguro que deseas confirmar TODOS los artículos del pedido (stock y sin stock)?')) {
       return;
@@ -434,6 +452,7 @@ const Cart = () => {
                 processButtonText="Confirmar Solo Stock"
                 processButtonColor="yellow"
                 onClean={clearCart}
+                hasPaqueteria={hasPaqueteria} // Nuevo prop
               />
             )}
 
@@ -449,6 +468,7 @@ const Cart = () => {
                   onImageClick={openImageModal}
                   showProcessButton={false}
                   onClean={clearCart}
+                  hasPaqueteria={hasPaqueteria} // Nuevo prop
                 />
               </div>
             )}
@@ -493,7 +513,7 @@ const Cart = () => {
                   {hasNoStockItems && itemsStock.length > 0 && (
                     <button
                       onClick={confirmStockOnly}
-                      disabled={processingOrder || loading}
+                      disabled={processingOrder || loading || !hasPaqueteria}
                       className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
                     >
                       {processingOrder ? 'Procesando...' : 'Confirmar Solo Stock'}
@@ -502,7 +522,7 @@ const Cart = () => {
                   
                   <button
                     onClick={confirmAll}
-                    disabled={processingOrder || loading}
+                    disabled={processingOrder || loading || !hasPaqueteria}
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
                   >
                     {processingOrder ? 'Procesando...' : 'Confirmar Todos'}
@@ -512,13 +532,26 @@ const Cart = () => {
             )}
 
             {/* Información adicional */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-md">
-              <p className="text-sm text-blue-800">
-                <strong>Nota:</strong> 
-                {hasNoStockItems 
-                  ? ' Los artículos marcados como "Sin Stock" requieren confirmación especial. Puede confirmar solo los disponibles o todo el pedido.'
-                  : ' Todos los artículos están disponibles en stock.'}
-              </p>
+            <div className="mt-6 space-y-4">
+              {!hasPaqueteria && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-800 font-semibold">
+                    ⚠️ Para confirmar el pedido, debe agregar al menos un servicio de paquetería.
+                  </p>
+                  <p className="text-sm text-red-700 mt-1">
+                    Vaya a "Agregar más productos" y seleccione un servicio de paquetería (FedEx o Estafeta).
+                  </p>
+                </div>
+              )}
+              
+              <div className="p-4 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>Nota:</strong> 
+                  {hasNoStockItems 
+                    ? ' Los artículos marcados como "Sin Stock" requieren confirmación especial. Puede confirmar solo los disponibles o todo el pedido.'
+                    : ' Todos los artículos están disponibles en stock.'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
