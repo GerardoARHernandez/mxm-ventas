@@ -539,7 +539,7 @@ const Cart = () => {
                     ⚠️ Para confirmar el pedido, debe agregar al menos un servicio de paquetería.
                   </p>
                   <p className="text-sm text-red-700 mt-1">
-                    Vaya a "Agregar más productos" y seleccione un servicio de paquetería (FedEx o Estafeta).
+                    Vaya a "Agregar más productos" y seleccione un servicio de paquetería.
                   </p>
                 </div>
               )}
