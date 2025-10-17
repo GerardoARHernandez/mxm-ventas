@@ -8,7 +8,6 @@ const PedidoDetail = () => {
   const navigate = useNavigate();
   const [pedido, setPedido] = useState(null);
   const [detalle, setDetalle] = useState(null);
-  const [detalleStock, setDetalleStock] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImage, setCurrentImage] = useState('');
@@ -30,19 +29,12 @@ const PedidoDetail = () => {
         
         setPedido(pedidoEncontrado);
         
-        // Obtener detalle del pedido con ubicación e imagen
+        // Obtener detalle del pedido con ubicación, imagen y stock
         const detalleResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/PedidoConfirmado/${id}?t=${Date.now()}`);
         if (!detalleResponse.ok) throw new Error('Error al obtener el detalle del pedido');
         
         const detalleData = await detalleResponse.json();
         setDetalle(detalleData);
-        
-        // Obtener detalle del pedido con información de stock
-        const stockResponse = await fetch(`https://systemweb.ddns.net/CarritoWeb/APICarrito/Pedido/${id}?t=${Date.now()}`);
-        if (!stockResponse.ok) throw new Error('Error al obtener la información de stock');
-        
-        const stockData = await stockResponse.json();
-        setDetalleStock(stockData);
         
       } catch (err) {
         setError(err.message);
@@ -54,27 +46,10 @@ const PedidoDetail = () => {
     fetchData();
   }, [id]);
 
-  // Combinar la información de ambas APIs
-  const obtenerPartesCombinadas = () => {
-    if (!detalle || !detalleStock || !detalle.Part || !detalleStock.Part) return [];
-    
-    return detalle.Part.map(part => {
-      // Buscar la información de stock correspondiente
-      const stockInfo = detalleStock.Part.find(
-        stockPart => stockPart.PartId === part.PartId || stockPart.Articulo === part.Articulo
-      );
-      
-      return {
-        ...part,
-        Stock: stockInfo ? stockInfo.Stock : 1 // Por defecto mostrar si no se encuentra
-      };
-    });
-  };
-
   // Filtrar partes: mostrar solo las que tienen Stock = 1
   const partesFiltradas = () => {
-    const partesCombinadas = obtenerPartesCombinadas();
-    return partesCombinadas.filter(part => part.Stock === 1);
+    if (!detalle || !detalle.Part) return [];
+    return detalle.Part.filter(part => part.Stock === 1);
   };
 
   const cambiarEstadoPrenda = (partId) => {
@@ -157,10 +132,10 @@ const PedidoDetail = () => {
 
   if (loading) return <LoadingScreen />;
   if (error) return <ErrorScreen error={error} />;
-  if (!pedido || !detalle || !detalleStock) return <ErrorScreen error="No se pudo cargar la información del pedido" />;
+  if (!pedido || !detalle) return <ErrorScreen error="No se pudo cargar la información del pedido" />;
 
   const partesMostrar = partesFiltradas();
-  const partesOcultadas = obtenerPartesCombinadas().filter(part => part.Stock !== 1).length;
+  const partesOcultadas = detalle.Part ? detalle.Part.filter(part => part.Stock !== 1).length : 0;
 
   return (
     <div className="min-h-screen bg-blue-50">

@@ -19,7 +19,8 @@ const ProductActions = ({
   addingToCart,
   individualPrice,
   packagePrice,
-  canSellByPackage
+  canSellByPackage,
+  packageDetails
 }) => (
   <div className="space-y-6">
     {/* Selector de cantidad para stock disponible */}
@@ -62,9 +63,12 @@ const ProductActions = ({
     {canSellByPackage && (
       <div className="flex flex-col items-center gap-4 mt-6">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg font-semibold text-gray-700">Paquete completo:</span>
+          <span className="text-lg font-semibold text-gray-700">Precio por color:</span>
           <span className="text-lg font-bold text-purple-600">
-            ${packagePrice ? packagePrice.toFixed(2) : '0.00'}
+            ${packagePrice ? (packagePrice*packageDetails.pzasPaq).toFixed(2) : '0.00'}
+          </span>
+          <span className="text-sm text-purple-500">
+            ({packageDetails.pzasPaq} piezas por color/talla)
           </span>
         </div>
         
@@ -77,11 +81,11 @@ const ProductActions = ({
               : 'bg-gray-200 text-gray-500 cursor-not-allowed'
           }`}
         >
-          <FiPackage className='text-3xl'/>
+          <FiPackage className='text-5xl'/>
           {addingToCart 
             ? 'Agregando paquete...'
             : allSizesHaveStock
-              ? 'Agregar por paquete (1 de cada talla)'
+              ? `Agregar por paquete (${packageDetails.pzasPaq} piezas por color/talla)`
               : 'No hay stock completo para agregar paquete'}
         </button>
       </div>
@@ -116,11 +120,9 @@ const ProductActions = ({
         }`}
       >
         <FiCalendar />
-        {addingToCart
-          ? 'Agregando...'
-          : preorderStock > 0
-            ? `Reservar preventa (${preorderStock} por recibir)`
-            : 'No hay próximos ingresos'}
+        {addingToCart 
+          ? 'Agregando preventa...'
+          : `Agregar preventa (${preorderStock} disponibles)`}
       </button>
     </div>
   </div>

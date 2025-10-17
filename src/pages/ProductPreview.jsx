@@ -29,6 +29,7 @@ const ProductPreview = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [canSellByPackage, setCanSellByPackage] = useState(false);
+  const [packageDetails, setPackageDetails] = useState({ pzasPaq: 0, hasPackageStock: false });
   
   // Nuevo estado para el precio personalizado
   const [customPrice, setCustomPrice] = useState('');
@@ -63,12 +64,20 @@ const ProductPreview = () => {
 
         if (!variationsResponse.ok) throw new Error("Error al obtener las variaciones");
         const variationsData = await variationsResponse.json();
-        
         setVariations(variationsData || []);
         
         // Verificar si se puede vender por paquete
-        const canPackage = variationsData.some(variation => variation.pzasPaq === 1);
+        const packageVariation = variationsData.find(variation => variation.pzasPaq > 0);
+        const canPackage = !!packageVariation;
         setCanSellByPackage(canPackage);
+        
+        if (packageVariation) {
+          const hasPackageStock = checkPackageStock(packageVariation.pzasPaq, variationsData);
+          setPackageDetails({
+            pzasPaq: packageVariation.pzasPaq,
+            hasPackageStock
+          });
+        }
         
         if (variationsData.length > 0) {
           setSelectedColor(variationsData[0].Codigo);
@@ -86,6 +95,16 @@ const ProductPreview = () => {
     fetchProductData();
   }, [modelCode]);
 
+  // Función para verificar stock para paquete
+  const checkPackageStock = (pzasPaq, variationsData) => {
+    return variationsData.every(variation => {
+      return variation.Tallas?.every(size => {
+        const availableStock = parseInt(size.Exis) || 0;
+        return availableStock >= pzasPaq;
+      });
+    });
+  };
+
   // Actualizar el precio personalizado cuando cambia la variación seleccionada
   useEffect(() => {
     if (isPAQModel && variations.length > 0 && selectedColor && selectedSize) {
@@ -93,6 +112,20 @@ const ProductPreview = () => {
       setCustomPrice(price.toString());
     }
   }, [selectedColor, selectedSize, variations, isPAQModel]);
+
+  // Actualizar estado del paquete cuando cambian las variaciones
+  useEffect(() => {
+    if (variations.length > 0 && canSellByPackage) {
+      const packageVariation = variations.find(variation => variation.pzasPaq > 0);
+      if (packageVariation) {
+        const hasPackageStock = checkPackageStock(packageVariation.pzasPaq, variations);
+        setPackageDetails({
+          pzasPaq: packageVariation.pzasPaq,
+          hasPackageStock
+        });
+      }
+    }
+  }, [variations, canSellByPackage]);
 
   const handleSizeChange = (sizeId) => {
     setSelectedSize(sizeId);
@@ -317,39 +350,43 @@ const ProductPreview = () => {
   };
 
   const handleAddPackage = async () => {
-    if (!selectedColor || !allSizesHaveStock()) return;
+    if (!packageDetails.hasPackageStock) return;
     
     setAddingToCart(true);
     try {
-      const selectedVariation = variations.find(v => v.Codigo === selectedColor);
       const ventaId = pedidoId || 'NUEVO';
       let lastResponse = null;
+      let successCount = 0;
       
-      for (const size of selectedVariation.Tallas) {
-        const finalPrice = isPAQModel && customPrice ? parseFloat(customPrice) : (parseFloat(size.precio3) || 0);
-        const desdeInventario = parseInt(size.Exis) > 0;
+      // Agregar pzasPaq cantidad de cada color/talla
+      for (const variation of variations) {
+        for (const size of variation.Tallas) {
+          const finalPrice = isPAQModel && customPrice ? parseFloat(customPrice) : (parseFloat(size.precio3) || 0);
+          const desdeInventario = parseInt(size.Exis) > 0;
 
-        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Origin': import.meta.env.VITE_API_ORIGIN
-          },
-          body: JSON.stringify({
-            Usuario: user.username,
-            articulo: size.Articulo,
-            cantidad: 1,
-            precio: finalPrice, // Usar precio final (personalizado o precio3)
-            venta: ventaId,
-            desdeInventario: desdeInventario
-          })
-        });
+          const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Origin': import.meta.env.VITE_API_ORIGIN
+            },
+            body: JSON.stringify({
+              Usuario: user.username,
+              articulo: size.Articulo,
+              cantidad: packageDetails.pzasPaq, // Agregar la cantidad especificada en pzasPaq
+              precio: finalPrice,
+              venta: ventaId,
+              desdeInventario: desdeInventario
+            })
+          });
 
-        if (!response.ok) {
-          throw new Error(`Error al agregar el artículo ${size.Articulo} al pedido`);
+          if (!response.ok) {
+            throw new Error(`Error al agregar el artículo ${size.Articulo} al pedido`);
+          }
+          
+          lastResponse = response;
+          successCount++;
         }
-        
-        lastResponse = response;
       }
 
       const result = await lastResponse.json();
@@ -368,17 +405,6 @@ const ProductPreview = () => {
     } finally {
       setAddingToCart(false);
     }
-  };
-
-  const allSizesHaveStock = () => {
-    const selectedVariation = variations.find(v => v.Codigo === selectedColor);
-    if (!selectedVariation || !selectedVariation.Tallas) return false;
-    
-    const hasStockForAllSizes = selectedVariation.Tallas.every(size => 
-      parseInt(size.Exis) > 0 || parseInt(size.PorRecibir) > 0
-    );
-    
-    return hasStockForAllSizes && selectedVariation.pzasPaq === 1;
   };
 
   if (loading) return <div className="mt-5 mx-2 sm:mx-0 text-center py-8"><p>Cargando producto...</p></div>;
@@ -475,6 +501,21 @@ const ProductPreview = () => {
               )}
             </div>
           )}
+
+          {/* Información del paquete */}
+          {canSellByPackage && (
+            <div className="bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Venta por paquete disponible:</strong> {packageDetails.pzasPaq} piezas por color/talla
+              </p>
+              <p className="text-sm text-blue-600">
+                {packageDetails.hasPackageStock 
+                  ? `✓ Stock suficiente para paquete (${packageDetails.pzasPaq} piezas de cada color/talla)`
+                  : `✗ Stock insuficiente para paquete (se necesitan ${packageDetails.pzasPaq} piezas de cada color/talla)`
+                }
+              </p>
+            </div>
+          )}
         </div>
 
         {variations.length > 0 && (
@@ -532,11 +573,12 @@ const ProductPreview = () => {
             onAddToCart={handleAddToCart}
             onPreorder={handlePreorder}
             onAddPackage={handleAddPackage}
-            allSizesHaveStock={allSizesHaveStock()}
+            allSizesHaveStock={packageDetails.hasPackageStock}
             addingToCart={addingToCart}
-            individualPrice={finalPrice} // Usar el precio final
+            individualPrice={finalPrice}
             packagePrice={packagePrice}
             canSellByPackage={canSellByPackage}
+            packageDetails={packageDetails}
           />
         </div>
       </div>
