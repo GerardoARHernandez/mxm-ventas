@@ -15,8 +15,6 @@ const CartSection = ({
   showProcessButton = true,
   hasPaqueteria = true
 }) => {
-
-  console.log(items);
   return (
     <div className="bg-white shadow border border-gray-400 rounded-lg overflow-hidden mb-8">
       <div className="px-6 py-4 border-b border-gray-300">
@@ -36,7 +34,7 @@ const CartSection = ({
             
             {items.map((item, index) => (
               <CartItem 
-                key={item.code}
+                key={`${item.code}-${item.partId}-${index}`}
                 item={item} 
                 removeItem={() => removeItem(index)} 
                 loading={loading}

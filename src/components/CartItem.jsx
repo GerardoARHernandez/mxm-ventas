@@ -8,7 +8,7 @@ const CartItem = ({ item, removeItem, loading, onImageClick }) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      await removeItem(item.id);
+      await removeItem();
     } finally {
       setIsDeleting(false);
     }
@@ -24,14 +24,14 @@ const CartItem = ({ item, removeItem, loading, onImageClick }) => {
     <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 px-6 py-4">
       {/* Columna de Imagen */}
       <div className="sm:col-span-1 flex items-center justify-center">
-        {item.image ? (
+        {item.image && !imageError ? (
           <div 
             className="relative group cursor-pointer"
             onClick={handleImageClick}
           >
             <img 
               src={item.image} 
-              alt="Imagen No Disponible"
+              alt={item.name}
               className="w-12 h-12 object-cover rounded border border-gray-300 group-hover:opacity-80 transition-opacity"
               onError={() => setImageError(true)}
             />
@@ -56,33 +56,43 @@ const CartItem = ({ item, removeItem, loading, onImageClick }) => {
         <p className="text-sm text-gray-500 mt-1">
           Código: {item.code} | {item.status === 'preventa' ? 'Preventa' : 'En stock'}
         </p>
+        {item.quantity > 1 && (
+          <p className="text-xs text-blue-600 mt-1">
+            {item.quantity} unidades
+          </p>
+        )}
       </div>
 
       {/* Columna de Precio */}
       <div className="sm:col-span-2 text-right">
         <p className="text-gray-900">$ {item.price.toFixed(2)}</p>
+        <p className="text-xs text-gray-500">c/u</p>
       </div>
 
       {/* Columna de Cantidad */}
       <div className="sm:col-span-2 flex items-center justify-center">
-        <div className="border rounded-md px-4 py-2 text-center">
-          {item.quantity}
+        <div className="border rounded-md px-4 py-2 text-center bg-gray-50">
+          <span className="font-semibold">{item.quantity}</span>
+          <span className="text-xs text-gray-500 block">unidades</span>
         </div>
       </div>
 
       {/* Columna de Importe y Eliminar */}
       <div className="sm:col-span-3 flex items-center justify-between gap-4">
-        <p className="text-gray-900">$ {item.importe.toFixed(2)}</p>
+        <div className="text-right">
+          <p className="text-gray-900 font-semibold">$ {item.importe.toFixed(2)}</p>
+          <p className="text-xs text-gray-500">total</p>
+        </div>
         <button 
           onClick={handleDelete}
           disabled={loading || isDeleting}
-          className={`text-rose-600 hover:text-rose-800 ${
+          className={`text-rose-600 hover:text-rose-800 p-2 rounded-full hover:bg-rose-50 ${
             (loading || isDeleting) ? 'opacity-50 cursor-not-allowed' : 'hover:cursor-pointer'
           }`}
           aria-label="Eliminar artículo"
         >
           {isDeleting ? (
-            <span className="animate-pulse">Eliminando...</span>
+            <span className="animate-pulse text-xs">Eliminando...</span>
           ) : (
             <FiTrash2 />
           )}

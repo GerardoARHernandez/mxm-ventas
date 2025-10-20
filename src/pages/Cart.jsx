@@ -156,7 +156,7 @@ const Cart = () => {
   const totalNoStock = itemsNoStock.reduce((sum, item) => sum + item.importe, 0);
   const totalGeneral = totalStock + totalNoStock;
 
-  // Calcular total de productos (cantidad de piezas)
+  // Calcular total de productos (cantidad de piezas) - ¡ESTAS SON LAS QUE IMPORTAN!
   const totalPiezasStock = itemsStock.reduce((sum, item) => sum + item.quantity, 0);
   const totalPiezasNoStock = itemsNoStock.reduce((sum, item) => sum + item.quantity, 0);
   const totalPiezasGeneral = totalPiezasStock + totalPiezasNoStock;
