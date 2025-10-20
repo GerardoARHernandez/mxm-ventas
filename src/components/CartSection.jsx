@@ -4,6 +4,7 @@ const CartSection = ({
   title, 
   items, 
   subtotal, 
+  totalPiezas, 
   onProcess,
   onClean,
   processButtonText = "Completar", 
@@ -12,7 +13,7 @@ const CartSection = ({
   loading = false,
   onImageClick,
   showProcessButton = true,
-  hasPaqueteria = true // Nuevo prop con valor por defecto true
+  hasPaqueteria = true
 }) => {
 
   console.log(items);
@@ -56,6 +57,7 @@ const CartSection = ({
             <div>
               <span className="font-medium">Total: </span>
               <span className="font-bold">$ {subtotal.toFixed(2)}</span>
+              <span className="text-sm text-gray-500 ml-2">({totalPiezas} piezas)</span>
             </div>
             <div className="flex gap-2 font-semibold">
               <button 
@@ -68,7 +70,7 @@ const CartSection = ({
               {showProcessButton && onProcess && (
                 <button 
                   onClick={onProcess}
-                  disabled={loading || !hasPaqueteria} // Deshabilitar si no hay paquetería
+                  disabled={loading || !hasPaqueteria}
                   className={`bg-${processButtonColor}-600 hover:bg-${processButtonColor}-700 text-white py-2 px-6 rounded-md hover:cursor-pointer transition-colors disabled:opacity-50`}
                 >
                   {loading ? 'Procesando...' : processButtonText}

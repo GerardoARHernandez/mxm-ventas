@@ -151,10 +151,15 @@ const Cart = () => {
     return { itemsStock: stockItems, itemsNoStock: noStockItems };
   }, [cartData, imagesData]);
 
-  // Calcular totales
+  // Calcular totales monetarios
   const totalStock = itemsStock.reduce((sum, item) => sum + item.importe, 0);
   const totalNoStock = itemsNoStock.reduce((sum, item) => sum + item.importe, 0);
   const totalGeneral = totalStock + totalNoStock;
+
+  // Calcular total de productos (cantidad de piezas)
+  const totalPiezasStock = itemsStock.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPiezasNoStock = itemsNoStock.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPiezasGeneral = totalPiezasStock + totalPiezasNoStock;
 
   // Determinar si hay artículos sin stock (stock = 2)
   const hasNoStockItems = itemsNoStock.length > 0;
@@ -444,6 +449,7 @@ const Cart = () => {
                 title="🟢 Artículos en Stock" 
                 items={itemsStock} 
                 subtotal={totalStock}
+                totalPiezas={totalPiezasStock}
                 removeItem={(index) => removeItem(index, false)}
                 loading={loading}
                 onImageClick={openImageModal}
@@ -452,7 +458,7 @@ const Cart = () => {
                 processButtonText="Confirmar Solo Stock"
                 processButtonColor="yellow"
                 onClean={clearCart}
-                hasPaqueteria={hasPaqueteria} // Nuevo prop
+                hasPaqueteria={hasPaqueteria}
               />
             )}
 
@@ -463,12 +469,13 @@ const Cart = () => {
                   title="🟡 Artículos Sin Stock" 
                   items={itemsNoStock} 
                   subtotal={totalNoStock}
+                  totalPiezas={totalPiezasNoStock}
                   removeItem={(index) => removeItem(index, true)}
                   loading={loading}
                   onImageClick={openImageModal}
                   showProcessButton={false}
                   onClean={clearCart}
-                  hasPaqueteria={hasPaqueteria} // Nuevo prop
+                  hasPaqueteria={hasPaqueteria}
                 />
               </div>
             )}
@@ -478,20 +485,29 @@ const Cart = () => {
               {itemsStock.length > 0 && (
                 <div className="flex justify-between items-center text-green-600">
                   <span className="font-semibold">Total Artículos en Stock:</span>
-                  <span className="font-bold">${totalStock.toFixed(2)}</span>
+                  <div className="text-right">
+                    <span className="font-bold">${totalStock.toFixed(2)}</span>
+                    <span className="text-sm text-gray-500 ml-2">({totalPiezasStock} piezas)</span>
+                  </div>
                 </div>
               )}
               
               {itemsNoStock.length > 0 && (
                 <div className="flex justify-between items-center text-yellow-600">
                   <span className="font-semibold">Total Artículos Sin Stock:</span>
-                  <span className="font-bold">${totalNoStock.toFixed(2)}</span>
+                  <div className="text-right">
+                    <span className="font-bold">${totalNoStock.toFixed(2)}</span>
+                    <span className="text-sm text-gray-500 ml-2">({totalPiezasNoStock} piezas)</span>
+                  </div>
                 </div>
               )}
               
               <div className="flex justify-between items-center text-lg border-t border-gray-300 pt-3">
                 <span className="font-semibold">Total General:</span>
-                <span className="font-bold">${totalGeneral.toFixed(2)}</span>
+                <div className="text-right">
+                  <span className="font-bold">${totalGeneral.toFixed(2)}</span>
+                  <span className="text-sm text-gray-500 ml-2">({totalPiezasGeneral} piezas)</span>
+                </div>
               </div>
             </div>
 
