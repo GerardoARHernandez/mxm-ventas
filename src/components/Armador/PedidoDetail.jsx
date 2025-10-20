@@ -46,10 +46,28 @@ const PedidoDetail = () => {
     fetchData();
   }, [id]);
 
-  // Filtrar partes: mostrar solo las que tienen Stock = 1
+  // Filtrar partes: mostrar solo las que tienen Stock = 1 y NO empiezan con 99PAQ
   const partesFiltradas = () => {
     if (!detalle || !detalle.Part) return [];
-    return detalle.Part.filter(part => part.Stock === 1);
+    return detalle.Part.filter(part => 
+      part.Stock === 1 && !part.Articulo?.startsWith('99PAQ')
+    );
+  };
+
+  // Función para contar artículos ocultos (sin stock + 99PAQ)
+  const contarArticulosOcultos = () => {
+    if (!detalle || !detalle.Part) return 0;
+    return detalle.Part.filter(part => 
+      part.Stock !== 1 || part.Articulo?.startsWith('99PAQ')
+    ).length;
+  };
+
+  // Función para contar artículos 99PAQ específicamente
+  const contarArticulos99PAQ = () => {
+    if (!detalle || !detalle.Part) return 0;
+    return detalle.Part.filter(part => 
+      part.Articulo?.startsWith('99PAQ')
+    ).length;
   };
 
   const cambiarEstadoPrenda = (partId) => {
@@ -115,14 +133,33 @@ const PedidoDetail = () => {
   };
 
   const getImageUrl = (imageName) => {
-    if (!imageName) return null;
+    if (!imageName || imageName === 'imgMXM\\Catalogo\\') return null;
+    
     if (imageName.startsWith('http')) return imageName;
-    return `https://systemweb.ddns.net/CarritoWeb/${imageName}`;
+    
+    // Convertir backslashes a forward slashes y codificar espacios
+    let processedImageName = imageName.replace(/\\/g, '/');
+    
+    // Codificar caracteres especiales en la URL
+    const baseUrl = 'https://systemweb.ddns.net/CarritoWeb/';
+    const encodedPath = processedImageName.split('/').map(part => 
+      encodeURIComponent(part)
+    ).join('/');
+    
+    return baseUrl + encodedPath;
+  };
+
+  // Función para verificar si una imagen existe
+  const [imageErrors, setImageErrors] = useState({});
+  const handleImageError = (partId) => {
+    setImageErrors(prev => ({ ...prev, [partId]: true }));
   };
 
   const openImageModal = (imageUrl) => {
-    setCurrentImage(imageUrl);
-    setModalOpen(true);
+    if (imageUrl) {
+      setCurrentImage(imageUrl);
+      setModalOpen(true);
+    }
   };
 
   const closeModal = () => {
@@ -135,7 +172,8 @@ const PedidoDetail = () => {
   if (!pedido || !detalle) return <ErrorScreen error="No se pudo cargar la información del pedido" />;
 
   const partesMostrar = partesFiltradas();
-  const partesOcultadas = detalle.Part ? detalle.Part.filter(part => part.Stock !== 1).length : 0;
+  const partesOcultadas = contarArticulosOcultos();
+  const partes99PAQ = contarArticulos99PAQ();
 
   return (
     <div className="min-h-screen bg-blue-50">
@@ -180,26 +218,28 @@ const PedidoDetail = () => {
               <p className="text-xl font-bold text-gray-800">${detalle.TotVenta}</p>
               <p className="text-sm text-gray-600">{detalle.TotPzas} piezas</p>
             </div>
-          </div>
-          {partesOcultadas > 0 && (
-            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <p className="text-sm text-yellow-800">
-                <strong>Nota:</strong> {partesOcultadas} artículo(s) oculto(s) por falta de stock
-              </p>
-            </div>
-          )}
+          </div>          
         </header>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
             <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Partes del pedido {partesOcultadas > 0 && `(${partesMostrar.length} de ${detalle.Part.length} artículos en stock)`}
+              Partes del pedido 
+              {partesOcultadas > 0 && ` (${partesMostrar.length} de ${detalle.Part.length} artículos visibles)`}
             </h3>
+            {partes99PAQ > 0 && (
+              <p className="text-sm text-gray-500 mt-1">
+                Los artículos PAQ (99PAQ) están excluidos del proceso de armado
+              </p>
+            )}
           </div>
           
           {partesMostrar.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500">No hay artículos disponibles para mostrar (todos están sin stock)</p>
+              <p className="text-gray-500">
+                No hay artículos disponibles para mostrar 
+                {(detalle.Part?.length > 0) && " (todos están sin stock o son artículos PAQ)"}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -227,57 +267,65 @@ const PedidoDetail = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {partesMostrar.map((part) => (
-                    <tr key={part.PartId} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {part.Articulo}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
-                        {part.Descrip}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {part.Cant}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {part.Ubicacion}
-                      </td>                    
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => cambiarEstadoPrenda(part.PartId)}
-                            className={`px-3 py-2 rounded-md flex items-center space-x-2 transition-colors hover:cursor-pointer ${
-                              part.Status.trim() === "1" 
-                                ? "bg-green-100 text-green-800 hover:bg-green-200" 
-                                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
-                            }`}
-                          >
-                            {part.Status.trim() === "1" ? (
-                              <FiCheck className="flex-shrink-0" />
-                            ) : (
-                              <FiRotateCcw className="flex-shrink-0" />
-                            )}
-                            <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${
-                              part.Status.trim() === "1" 
-                                ? "bg-green-200 text-green-800" 
-                                : "bg-yellow-200 text-yellow-800"
-                            }`}>
-                              {part.Status.trim() === "1" ? "Surtido" : "Pendiente"}
-                            </span>
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {getImageUrl(part.Imagen) && (
-                          <img 
-                            src={getImageUrl(part.Imagen)} 
-                            alt={part.Descrip} 
-                            className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
-                            onClick={() => openImageModal(getImageUrl(part.Imagen))}
-                          />
-                        ) || 'No Disponible'} 
-                      </td>
-                    </tr>
-                  ))}
+                  {partesMostrar.map((part) => {
+                    const imageUrl = getImageUrl(part.Imagen);
+                    const hasImageError = imageErrors[part.PartId];
+                    
+                    return (
+                      <tr key={part.PartId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {part.Articulo}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                          {part.Descrip}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {part.Cant}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {part.Ubicacion}
+                        </td>                    
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => cambiarEstadoPrenda(part.PartId)}
+                              className={`px-3 py-2 rounded-md flex items-center space-x-2 transition-colors hover:cursor-pointer ${
+                                part.Status.trim() === "1" 
+                                  ? "bg-green-100 text-green-800 hover:bg-green-200" 
+                                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                              }`}
+                            >
+                              {part.Status.trim() === "1" ? (
+                                <FiCheck className="flex-shrink-0" />
+                              ) : (
+                                <FiRotateCcw className="flex-shrink-0" />
+                              )}
+                              <span className={`text-xs font-normal px-2 py-0.5 rounded-full ${
+                                part.Status.trim() === "1" 
+                                  ? "bg-green-200 text-green-800" 
+                                  : "bg-yellow-200 text-yellow-800"
+                              }`}>
+                                {part.Status.trim() === "1" ? "Surtido" : "Pendiente"}
+                              </span>
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {imageUrl && !hasImageError ? (
+                            <img 
+                              src={imageUrl} 
+                              alt={part.Descrip} 
+                              className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
+                              onClick={() => openImageModal(imageUrl)}
+                              onError={() => handleImageError(part.PartId)}
+                            />
+                          ) : (
+                            'No Disponible'
+                          )} 
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -291,8 +339,13 @@ const PedidoDetail = () => {
               <h3 className="text-lg font-medium text-gray-900">Resumen del pedido</h3>
               <p className="text-sm text-gray-500">
                 {partesMostrar.filter(p => p.Status.trim() === "1").length} de {partesMostrar.length} piezas surtidas
-                {partesOcultadas > 0 && ` (${partesOcultadas} ocultas por stock)`}
+                {partesOcultadas > 0 && ` (${partesOcultadas} ocultas)`}
               </p>
+              {partes99PAQ > 0 && (
+                <p className="text-sm text-blue-600 mt-1">
+                  {partes99PAQ} artículo(s) PAQ excluido(s) del proceso
+                </p>
+              )}
               {todosSurtidos() && (
                 <p className="text-base bg-green-600 text-white mx-1 px-2 font-bold uppercase mt-1">
                   ¡Todos los artículos han sido surtidos!
