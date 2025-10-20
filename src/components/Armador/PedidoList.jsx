@@ -16,7 +16,15 @@ const PedidoList = () => {
         if (!response.ok) throw new Error('Error al obtener los pedidos');
         
         const data = await response.json();
-        setPedidos(data.ListPedidos || []);
+        
+        // Ordenar pedidos alfabéticamente por nombre del cliente
+        const pedidosOrdenados = (data.ListPedidos || []).sort((a, b) => {
+          const nombreA = a.NombreCLIENTE?.toLowerCase() || '';
+          const nombreB = b.NombreCLIENTE?.toLowerCase() || '';
+          return nombreA.localeCompare(nombreB);
+        });
+        
+        setPedidos(pedidosOrdenados);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -44,6 +52,9 @@ const PedidoList = () => {
         </h1>
         <div className="text-center text-sm text-gray-500 mt-2">
           Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, pedidos.length)} de {pedidos.length} pedidos
+        </div>
+        <div className="text-center text-xs text-blue-600 mt-1">
+          (Ordenados alfabéticamente por nombre del cliente)
         </div>
       </header>
 
