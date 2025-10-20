@@ -35,9 +35,6 @@ const ProductPreview = () => {
   const [customPrice, setCustomPrice] = useState('');
   const [isEditingPrice, setIsEditingPrice] = useState(false);
 
-  // Verificar si es un modelo PAQ
-  const isPAQModel = modelCode === 'PAQ';
-
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -107,11 +104,11 @@ const ProductPreview = () => {
 
   // Actualizar el precio personalizado cuando cambia la variación seleccionada
   useEffect(() => {
-    if (isPAQModel && variations.length > 0 && selectedColor && selectedSize) {
+    if (variations.length > 0 && selectedColor && selectedSize) {
       const price = getIndividualPrice();
       setCustomPrice(price.toString());
     }
-  }, [selectedColor, selectedSize, variations, isPAQModel]);
+  }, [selectedColor, selectedSize, variations]);
 
   // Actualizar estado del paquete cuando cambian las variaciones
   useEffect(() => {
@@ -161,7 +158,7 @@ const ProductPreview = () => {
 
   // Obtener el precio final a usar (personalizado o normal)
   const getFinalPrice = () => {
-    if (isPAQModel && customPrice) {
+    if (customPrice) {
       return parseFloat(customPrice);
     }
     return getIndividualPrice();
@@ -235,6 +232,7 @@ const ProductPreview = () => {
       }
 
       const finalPrice = getFinalPrice();
+      const availableStock = getAvailableStock();
       const desdeInventario = availableStock > 0;
 
       // Actualizar stock localmente
@@ -361,7 +359,7 @@ const ProductPreview = () => {
       // Agregar pzasPaq cantidad de cada color/talla
       for (const variation of variations) {
         for (const size of variation.Tallas) {
-          const finalPrice = isPAQModel && customPrice ? parseFloat(customPrice) : (parseFloat(size.precio3) || 0);
+          const finalPrice = customPrice ? parseFloat(customPrice) : (parseFloat(size.precio3) || 0);
           const desdeInventario = parseInt(size.Exis) > 0;
 
           const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
@@ -428,61 +426,52 @@ const ProductPreview = () => {
           altText={product.Descrip} 
         />
         
-        {/* Componente ProductInfo modificado para manejar precio editable */}
         <div className="p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">{product.Descrip}</h2>
           
-          {/* Precio editable para modelos PAQ */}
-          {isPAQModel ? (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Precio {isEditingPrice ? '(Editable)' : ''}
-              </label>
-              <div className="flex items-center gap-2">
-                {isEditingPrice ? (
-                  <input
-                    type="text"
-                    value={customPrice}
-                    onChange={handleCustomPriceChange}
-                    onBlur={togglePriceEdit}
-                    className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    autoFocus
-                  />
-                ) : (
-                  <span 
-                    className="text-3xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-                    onClick={togglePriceEdit}
-                    title="Haz clic para editar el precio"
-                  >
-                    ${finalPrice.toFixed(2)}
-                  </span>
-                )}
-                <button
-                  type="button"
+          {/* Precio editable para todos los productos */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Precio {isEditingPrice ? '(Editable)' : ''}
+            </label>
+            <div className="flex items-center gap-2">
+              {isEditingPrice ? (
+                <input
+                  type="text"
+                  value={customPrice}
+                  onChange={handleCustomPriceChange}
+                  onBlur={togglePriceEdit}
+                  className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              ) : (
+                <span 
+                  className="text-3xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
                   onClick={togglePriceEdit}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  title="Haz clic para editar el precio"
                 >
-                  {isEditingPrice ? 'Cancelar' : 'Editar'}
-                </button>
-              </div>
-              {!isEditingPrice && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Precio original: ${individualPrice.toFixed(2)} - Haz clic en el precio para editarlo
-                </p>
+                  ${finalPrice.toFixed(2)}
+                </span>
               )}
+              <button
+                type="button"
+                onClick={togglePriceEdit}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                {isEditingPrice ? 'Cancelar' : 'Editar'}
+              </button>
             </div>
-          ) : (
-            <div className="mb-4">
-              <span className="text-3xl font-bold text-gray-900">
-                ${individualPrice.toFixed(2)}
-              </span>
-              {packagePrice > 0 && canSellByPackage && (
-                <p className="text-lg text-green-600 font-semibold">
-                  Precio por paquete: ${packagePrice.toFixed(2)}
-                </p>
-              )}
-            </div>
-          )}
+            {!isEditingPrice && individualPrice !== finalPrice && (
+              <p className="text-sm text-gray-500 mt-1">
+                Precio original: ${individualPrice.toFixed(2)}
+              </p>
+            )}
+            {packagePrice > 0 && canSellByPackage && (
+              <p className="text-lg text-green-600 font-semibold">
+                Precio por paquete: ${packagePrice.toFixed(2)}
+              </p>
+            )}
+          </div>
           
           <p className="text-gray-600 mb-4">{product.Descrip}</p>
           
@@ -504,7 +493,7 @@ const ProductPreview = () => {
 
           {/* Información del paquete */}
           {canSellByPackage && (
-            <div className="bg-blue-50 rounded-lg">
+            <div className="bg-blue-50 rounded-lg p-3 mb-4">
               <p className="text-sm text-blue-700">
                 <strong>Venta por paquete disponible:</strong> {packageDetails.pzasPaq} piezas por color/talla
               </p>
