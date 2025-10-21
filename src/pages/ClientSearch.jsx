@@ -30,8 +30,14 @@ const ClientSearch = () => {
           throw new Error("Error al obtener los clientes");
         }
         const data = await response.json();
-        setClients(data.ListClientes || []);
-        setFilteredClients(data.ListClientes || []);
+        
+        // Filtrar clientes por el vendedor que inició sesión
+        const userClients = (data.ListClientes || []).filter(client => 
+          client.VENDEDOR === user?.username
+        );
+        
+        setClients(userClients);
+        setFilteredClients(userClients);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -39,8 +45,10 @@ const ClientSearch = () => {
       }
     };
 
-    fetchClients();
-  }, []);
+    if (user) {
+      fetchClients();
+    }
+  }, [user]);
 
   // Debounce para el buscador
   const debouncedFilter = useCallback(
@@ -126,6 +134,16 @@ const ClientSearch = () => {
 
   return (
     <div className="mt-5 mx-2 sm:mx-0">
+      {/* Información del vendedor */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-700">
+          <strong>Vendedor:</strong> {user?.name} ({user?.username})
+        </p>
+        <p className="text-sm text-blue-600">
+          Mostrando {filteredClients.length} cliente(s) asignado(s)
+        </p>
+      </div>
+
       {/* Barra de búsqueda */}
       <div className="mb-6">
         <div className="relative max-w-3xl">

@@ -194,9 +194,14 @@ const PedidoDetail = () => {
         </div>
         
         <header className="mb-6 bg-white p-4 rounded-lg shadow-sm">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-            Pedido #{pedido.VENTA}
-          </h1>
+          <div className="grid grid-cols-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+              Pedido #{pedido.VENTA}
+            </h1>            
+            <p className="text-sm font-medium text-gray-500">Vendedor:{' '}
+              <span className="text-base font-semibold text-gray-800">{detalle.Vendedor}</span>
+            </p>
+          </div>
           <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <h2 className="text-sm font-medium text-gray-500">Cliente</h2>
@@ -218,7 +223,7 @@ const PedidoDetail = () => {
               <p className="text-xl font-bold text-gray-800">${detalle.TotVenta}</p>
               <p className="text-sm text-gray-600">{detalle.TotPzas} piezas</p>
             </div>
-          </div>          
+          </div>
         </header>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
