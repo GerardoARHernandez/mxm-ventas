@@ -71,7 +71,7 @@ const CartItem = ({ item, removeItem, loading, onImageClick }) => {
 
       {/* Columna de Cantidad */}
       <div className="sm:col-span-2 flex items-center justify-center">
-        <div className="border rounded-md px-4 py-2 text-center bg-gray-50">
+        <div className="border rounded-md px-1 py-1 text-center bg-gray-50">
           <span className="font-semibold">{item.quantity}</span>
           <span className="text-xs text-gray-500 block">unidades</span>
         </div>

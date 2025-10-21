@@ -3,12 +3,16 @@ import { Link } from "react-router-dom";
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { MdOutlineShoppingCart } from "react-icons/md";
-
+import { FaArrowsAltV, FaArrowUp, FaArrowDown } from "react-icons/fa";
 const Home = () => {
     const { user } = useAuth();
     const [salesData, setSalesData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [sortConfig, setSortConfig] = useState({
+        key: 'venta', // campo por defecto para ordenar
+        direction: 'asc' // dirección por defecto
+    });
 
     useEffect(() => {
         const fetchSalesData = async () => {
@@ -61,6 +65,55 @@ const Home = () => {
         fetchSalesData();
     }, [user]);
 
+    // Función para manejar el ordenamiento
+    const handleSort = (key) => {
+        let direction = 'asc';
+        
+        // Si ya estamos ordenando por esta clave, invertir la dirección
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        
+        setSortConfig({ key, direction });
+    };
+
+    // Función para ordenar los datos
+    const getSortedData = () => {
+        if (!sortConfig.key) return salesData;
+
+        const sortedData = [...salesData].sort((a, b) => {
+            // Manejar diferentes tipos de datos
+            let aValue = a[sortConfig.key];
+            let bValue = b[sortConfig.key];
+
+            // Si es string, convertir a minúsculas para ordenamiento case-insensitive
+            if (typeof aValue === 'string') {
+                aValue = aValue.toLowerCase();
+                bValue = bValue.toLowerCase();
+            }
+
+            if (aValue < bValue) {
+                return sortConfig.direction === 'asc' ? -1 : 1;
+            }
+            if (aValue > bValue) {
+                return sortConfig.direction === 'asc' ? 1 : -1;
+            }
+            return 0;
+        });
+
+        return sortedData;
+    };
+
+    // Función para obtener el ícono de ordenamiento
+    const getSortIcon = (key) => {
+        if (sortConfig.key !== key) {
+            return <FaArrowsAltV />; // Icono neutral
+        }
+        return sortConfig.direction === 'asc' ? <FaArrowUp /> : <FaArrowDown />;
+    };
+
+    const sortedSalesData = getSortedData();
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -95,14 +148,35 @@ const Home = () => {
                     <table className="min-w-full table-auto border-collapse border border-blue-100">
                         <thead>
                             <tr className="bg-white">
-                                <th className="border border-blue-400 px-4 py-2 text-left">Venta</th>
-                                <th className="border border-blue-400 px-4 py-2 text-left">Nombre</th>
-                                <th className="border border-blue-400 px-4 py-2 text-left">Importe</th>
+                                <th 
+                                    className="border border-blue-400 px-4 py-2 text-left cursor-pointer hover:bg-blue-50 transition-colors"
+                                    onClick={() => handleSort('venta')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Venta {getSortIcon('venta')}
+                                    </div>
+                                </th>
+                                <th 
+                                    className="border border-blue-400 px-4 py-2 text-left cursor-pointer hover:bg-blue-50 transition-colors"
+                                    onClick={() => handleSort('nombre')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Nombre {getSortIcon('nombre')}
+                                    </div>
+                                </th>
+                                <th 
+                                    className="border border-blue-400 px-4 py-2 text-left cursor-pointer hover:bg-blue-50 transition-colors"
+                                    onClick={() => handleSort('importe')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Importe {getSortIcon('importe')}
+                                    </div>
+                                </th>
                                 <th className="border border-blue-400 px-3 py-2 text-left">Tipo</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {salesData.map((item) => (
+                            {sortedSalesData.map((item) => (
                                 <tr key={item.venta} className="even:bg-white odd:bg-blue-100 hover:bg-blue-50">
                                     <td className="border border-blue-400 px-4 py-2">{item.venta}</td>
                                     <td className="border border-blue-400 px-4 py-2">

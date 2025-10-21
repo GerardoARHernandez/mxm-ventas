@@ -24,8 +24,8 @@ const CartSection = ({
       <div className="divide-y divide-gray-200">
         {items.length > 0 ? (
           <>
-            <div className="hidden sm:grid grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-sm font-medium text-gray-500 uppercase tracking-wider">
-              <div className="col-span-1">Imagen</div>
+            <div className="hidden sm:grid grid-cols-13 lg:grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-sm font-medium text-gray-500 uppercase tracking-wider">
+              <div className="col-span-2 lg:col-span-1">Imagen</div>
               <div className="col-span-4">Artículo</div>
               <div className="col-span-2 text-right">Precio Unit.</div>
               <div className="col-span-2 text-center">Cantidad</div>
