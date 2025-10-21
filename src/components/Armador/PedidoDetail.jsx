@@ -221,20 +221,16 @@ const PedidoDetail = () => {
             <div>
               <h2 className="text-sm font-medium text-gray-500">Total</h2>
               <p className="text-xl font-bold text-gray-800">${detalle.TotVenta}</p>
-              <p className="text-sm text-gray-600">{detalle.TotPzas} piezas</p>
+              <p className="text-sm text-gray-600">{detalle.TotPzas - 1} piezas</p>
             </div>
           </div>
         </header>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
           <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Partes del pedido 
-              {partesOcultadas > 0 && ` (${partesMostrar.length} de ${detalle.Part.length} artículos visibles)`}
-            </h3>
             {partes99PAQ > 0 && (
               <p className="text-sm text-gray-500 mt-1">
-                Los artículos PAQ (99PAQ) están excluidos del proceso de armado
+                Los artículos PAQ(Envio) están excluidos del proceso de armado
               </p>
             )}
           </div>
@@ -344,13 +340,7 @@ const PedidoDetail = () => {
               <h3 className="text-lg font-medium text-gray-900">Resumen del pedido</h3>
               <p className="text-sm text-gray-500">
                 {partesMostrar.filter(p => p.Status.trim() === "1").length} de {partesMostrar.length} piezas surtidas
-                {partesOcultadas > 0 && ` (${partesOcultadas} ocultas)`}
               </p>
-              {partes99PAQ > 0 && (
-                <p className="text-sm text-blue-600 mt-1">
-                  {partes99PAQ} artículo(s) PAQ excluido(s) del proceso
-                </p>
-              )}
               {todosSurtidos() && (
                 <p className="text-base bg-green-600 text-white mx-1 px-2 font-bold uppercase mt-1">
                   ¡Todos los artículos han sido surtidos!
