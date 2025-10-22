@@ -175,6 +175,12 @@ const PedidoDetail = () => {
   const partesOcultadas = contarArticulosOcultos();
   const partes99PAQ = contarArticulos99PAQ();
 
+  // Calcular total de piezas y piezas surtidas
+  const totalPiezas = partesMostrar.reduce((total, part) => total + parseInt(part.Cant), 0);
+  const piezasSurtidas = partesMostrar.reduce((total, part) => 
+    total + (part.Status.trim() === "1" ? parseInt(part.Cant) : 0), 0
+  );
+
   return (
     <div className="min-h-screen bg-blue-50">
       <ImageModal 
@@ -221,7 +227,7 @@ const PedidoDetail = () => {
             <div>
               <h2 className="text-sm font-medium text-gray-500">Total</h2>
               <p className="text-xl font-bold text-gray-800">${detalle.TotVenta}</p>
-              <p className="text-sm text-gray-600">{detalle.TotPzas - 1} piezas</p>
+              <p className="text-sm text-gray-600">{totalPiezas} piezas</p>
             </div>
           </div>
         </header>
@@ -339,7 +345,7 @@ const PedidoDetail = () => {
             <div>
               <h3 className="text-lg font-medium text-gray-900">Resumen del pedido</h3>
               <p className="text-sm text-gray-500">
-                {partesMostrar.filter(p => p.Status.trim() === "1").length} de {partesMostrar.length} piezas surtidas
+                {piezasSurtidas} de {totalPiezas} piezas surtidas
               </p>
               {todosSurtidos() && (
                 <p className="text-base bg-green-600 text-white mx-1 px-2 font-bold uppercase mt-1">
