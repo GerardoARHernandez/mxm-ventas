@@ -65,7 +65,7 @@ const ProductActions = ({
         <div className="flex items-center gap-2 mb-2">
           <span className="text-lg font-semibold text-gray-700">Precio por color:</span>
           <span className="text-lg font-bold text-purple-600">
-            ${packagePrice ? (packagePrice*packageDetails.pzasPaq).toFixed(2) : '0.00'}
+            ${packagePrice ? (packagePrice * packageDetails.pzasPaq).toFixed(2) : '0.00'}
           </span>
           <span className="text-sm text-purple-500">
             ({packageDetails.pzasPaq} piezas por color/talla)
@@ -92,39 +92,42 @@ const ProductActions = ({
     )}
 
     {/* Selector de cantidad para preventa */}
-    <div className="flex flex-col items-center gap-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg font-semibold text-gray-700">Preventa:</span>
-        <span className="text-lg font-bold text-blue-600">
-          ${individualPrice ? (individualPrice * preorderQuantity).toFixed(2) : '0.00'}
-        </span>
+    { preorderStock > 0 && (
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg font-semibold text-gray-700">Preventa:</span>
+          <span className="text-lg font-bold text-blue-600">
+            ${individualPrice ? (individualPrice * preorderQuantity).toFixed(2) : '0.00'}
+          </span>
+        </div>
+      
+        
+        <QuantitySelector
+          value={preorderQuantity}
+          max={preorderStock}
+          onChange={onPreorderQuantityChange}
+          onIncrement={onIncrementPreorderQuantity}
+          onDecrement={onDecrementPreorderQuantity}
+          disabled={preorderStock === 0}
+          theme="blue"
+        />
+        
+        <button
+          onClick={onPreorder}
+          disabled={preorderStock === 0 || addingToCart}
+          className={`w-full max-w-xs py-3 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
+            preorderStock > 0 && !addingToCart
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-blue-100 text-blue-400 cursor-not-allowed'
+          }`}
+        >
+          <FiCalendar />
+          {addingToCart 
+            ? 'Agregando preventa...'
+            : `Agregar preventa (${preorderStock} disponibles)`}
+        </button>
       </div>
-      
-      <QuantitySelector
-        value={preorderQuantity}
-        max={preorderStock}
-        onChange={onPreorderQuantityChange}
-        onIncrement={onIncrementPreorderQuantity}
-        onDecrement={onDecrementPreorderQuantity}
-        disabled={preorderStock === 0}
-        theme="blue"
-      />
-      
-      <button
-        onClick={onPreorder}
-        disabled={preorderStock === 0 || addingToCart}
-        className={`w-full max-w-xs py-3 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
-          preorderStock > 0 && !addingToCart
-            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-            : 'bg-blue-100 text-blue-400 cursor-not-allowed'
-        }`}
-      >
-        <FiCalendar />
-        {addingToCart 
-          ? 'Agregando preventa...'
-          : `Agregar preventa (${preorderStock} disponibles)`}
-      </button>
-    </div>
+    )}
   </div>
 );
 

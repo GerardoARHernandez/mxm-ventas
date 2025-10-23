@@ -31,9 +31,10 @@ const ProductPreview = () => {
   const [canSellByPackage, setCanSellByPackage] = useState(false);
   const [packageDetails, setPackageDetails] = useState({ pzasPaq: 0, hasPackageStock: false });
   
-  // Nuevo estado para el precio personalizado
+  // Nuevo estado para el precio personalizado - solo para productos 99PAQ
   const [customPrice, setCustomPrice] = useState('');
   const [isEditingPrice, setIsEditingPrice] = useState(false);
+  const [is99PAQProduct, setIs99PAQProduct] = useState(false);
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -51,6 +52,10 @@ const ProductPreview = () => {
         if (!foundProduct) throw new Error("Producto no encontrado");
         
         setProduct(foundProduct);
+        
+        // Verificar si es producto 99PAQ
+        const is99PAQ = foundProduct.modelo.includes('PAQ');
+        setIs99PAQProduct(is99PAQ);
         
         const variationsResponse = await fetch(
           `https://systemweb.ddns.net/CarritoWeb/APICarrito/ConsultaVariacionModelo?Modelo=${modelCode}&t=${Date.now()}`,
@@ -92,6 +97,9 @@ const ProductPreview = () => {
     fetchProductData();
   }, [modelCode]);
 
+  console.log('paq:', is99PAQProduct)
+  console.log('Prod:', product)
+
   // Función para verificar stock para paquete
   const checkPackageStock = (pzasPaq, variationsData) => {
     return variationsData.every(variation => {
@@ -102,13 +110,13 @@ const ProductPreview = () => {
     });
   };
 
-  // Actualizar el precio personalizado cuando cambia la variación seleccionada
+  // Actualizar el precio personalizado cuando cambia la variación seleccionada - solo para 99PAQ
   useEffect(() => {
-    if (variations.length > 0 && selectedColor && selectedSize) {
+    if (variations.length > 0 && selectedColor && selectedSize && is99PAQProduct) {
       const price = getIndividualPrice();
       setCustomPrice(price.toString());
     }
-  }, [selectedColor, selectedSize, variations]);
+  }, [selectedColor, selectedSize, variations, is99PAQProduct]);
 
   // Actualizar estado del paquete cuando cambian las variaciones
   useEffect(() => {
@@ -142,7 +150,7 @@ const ProductPreview = () => {
     setPreorderQuantity(1);
   };
 
-  // Manejar cambio del precio personalizado
+  // Manejar cambio del precio personalizado - solo para 99PAQ
   const handleCustomPriceChange = (e) => {
     const value = e.target.value;
     // Permitir solo números y punto decimal
@@ -151,14 +159,16 @@ const ProductPreview = () => {
     }
   };
 
-  // Activar/desactivar edición del precio
+  // Activar/desactivar edición del precio - solo para 99PAQ
   const togglePriceEdit = () => {
-    setIsEditingPrice(!isEditingPrice);
+    if (is99PAQProduct) {
+      setIsEditingPrice(!isEditingPrice);
+    }
   };
 
   // Obtener el precio final a usar (personalizado o normal)
   const getFinalPrice = () => {
-    if (customPrice) {
+    if (is99PAQProduct && customPrice) {
       return parseFloat(customPrice);
     }
     return getIndividualPrice();
@@ -359,7 +369,8 @@ const ProductPreview = () => {
       // Agregar pzasPaq cantidad de cada color/talla
       for (const variation of variations) {
         for (const size of variation.Tallas) {
-          const finalPrice = customPrice ? parseFloat(customPrice) : (parseFloat(size.precio3) || 0);
+          // CORRECCIÓN: Usar precio3 (precio por paquete) en lugar del precio individual
+          const packagePrice = parseFloat(size.precio3) || 0;
           const desdeInventario = parseInt(size.Exis) > 0;
 
           const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
@@ -372,7 +383,7 @@ const ProductPreview = () => {
               Usuario: user.username,
               articulo: size.Articulo,
               cantidad: packageDetails.pzasPaq, // Agregar la cantidad especificada en pzasPaq
-              precio: finalPrice,
+              precio: packagePrice, // CORRECCIÓN: Usar precio por paquete
               venta: ventaId,
               desdeInventario: desdeInventario
             })
@@ -429,13 +440,13 @@ const ProductPreview = () => {
         <div className="p-8">
           <h2 className="text-2xl font-bold text-gray-800 mb-2">{product.Descrip}</h2>
           
-          {/* Precio editable para todos los productos */}
+          {/* Precio editable solo para productos 99PAQ */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Precio {isEditingPrice ? '(Editable)' : ''}
+              Precio {is99PAQProduct && isEditingPrice ? '(Editable)' : ''}
             </label>
             <div className="flex items-center gap-2">
-              {isEditingPrice ? (
+              {is99PAQProduct && isEditingPrice ? (
                 <input
                   type="text"
                   value={customPrice}
@@ -446,22 +457,26 @@ const ProductPreview = () => {
                 />
               ) : (
                 <span 
-                  className="text-3xl font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
-                  onClick={togglePriceEdit}
-                  title="Haz clic para editar el precio"
+                  className={`text-3xl font-bold text-gray-900 ${
+                    is99PAQProduct ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''
+                  }`}
+                  onClick={is99PAQProduct ? togglePriceEdit : undefined}
+                  title={is99PAQProduct ? "Haz clic para editar el precio" : ""}
                 >
                   ${finalPrice.toFixed(2)}
                 </span>
               )}
-              <button
-                type="button"
-                onClick={togglePriceEdit}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                {isEditingPrice ? 'Cancelar' : 'Editar'}
-              </button>
+              {is99PAQProduct && (
+                <button
+                  type="button"
+                  onClick={togglePriceEdit}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  {isEditingPrice ? 'Cancelar' : 'Editar'}
+                </button>
+              )}
             </div>
-            {!isEditingPrice && individualPrice !== finalPrice && (
+            {is99PAQProduct && !isEditingPrice && individualPrice !== finalPrice && (
               <p className="text-sm text-gray-500 mt-1">
                 Precio original: ${individualPrice.toFixed(2)}
               </p>
