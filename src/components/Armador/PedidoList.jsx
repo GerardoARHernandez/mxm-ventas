@@ -44,6 +44,8 @@ const PedidoList = () => {
   const currentItems = pedidos.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(pedidos.length / itemsPerPage);
 
+  console.log(pedidos)
+
   return (
     <div className="mx-auto p-4 md:p-6">
       <header className="mb-6 md:mb-8">
@@ -127,6 +129,9 @@ const PedidoHeader = ({ pedido }) => (
         <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
           {pedido.ESTADO === "CO" ? "Confirmado" : pedido.ESTADO === "PA" ? "Parcial" : pedido.ESTADO}
         </span>
+      </div>
+      <div className="text-sm text-gray-600">
+        <span className="font-medium">Vendedor:</span> {pedido.VENDEDOR}
       </div>
     </div>
   </div>
