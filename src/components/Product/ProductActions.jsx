@@ -15,7 +15,9 @@ const ProductActions = ({
   onAddToCart,
   onPreorder,
   onAddPackage,
+  onPreorderPackage, // Nueva prop
   allSizesHaveStock,
+  allSizesHavePreorderStock, // Nueva prop
   addingToCart,
   individualPrice,
   packagePrice,
@@ -61,47 +63,79 @@ const ProductActions = ({
 
     {/* Botón para agregar por paquete - Solo mostrar si se puede vender por paquete */}
     {canSellByPackage && (
-      <div className="flex flex-col items-center gap-4 mt-6">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg font-semibold text-gray-700">Precio por color:</span>
-          <span className="text-lg font-bold text-purple-600">
-            ${packagePrice ? (packagePrice * packageDetails.pzasPaq).toFixed(2) : '0.00'}
-          </span>
-          <span className="text-sm text-purple-500">
-            ({packageDetails.pzasPaq} piezas por color/talla)
-          </span>
+      <div className="space-y-4">
+        {/* Paquete desde inventario */}
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg font-semibold text-gray-700">Paquete desde inventario:</span>
+            <span className="text-lg font-bold text-purple-600">
+              ${packagePrice ? (packagePrice * packageDetails.pzasPaq).toFixed(2) : '0.00'}
+            </span>
+            <span className="text-sm text-purple-500">
+              ({packageDetails.pzasPaq} piezas por color/talla)
+            </span>
+          </div>
+          
+          <button
+            onClick={onAddPackage}
+            disabled={!allSizesHaveStock || addingToCart}
+            className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
+              allSizesHaveStock && !addingToCart
+                ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            <FiPackage className='text-2xl'/>
+            {addingToCart 
+              ? 'Agregando paquete...'
+              : allSizesHaveStock
+                ? `Agregar paquete completo`
+                : 'No hay stock completo para paquete'}
+          </button>
         </div>
-        
-        <button
-          onClick={onAddPackage}
-          disabled={!allSizesHaveStock || addingToCart}
-          className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
-            allSizesHaveStock && !addingToCart
-              ? 'bg-purple-600 hover:bg-purple-700 text-white'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          <FiPackage className='text-5xl'/>
-          {addingToCart 
-            ? 'Agregando paquete...'
-            : allSizesHaveStock
-              ? `Agregar por paquete (${packageDetails.pzasPaq} piezas por color/talla)`
-              : 'No hay stock completo para agregar paquete'}
-        </button>
+
+        {/* Paquete en preventa */}
+        {allSizesHavePreorderStock && (
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg font-semibold text-gray-700">Paquete en preventa:</span>
+              <span className="text-lg font-bold text-orange-600">
+                ${packagePrice ? (packagePrice * packageDetails.pzasPaq).toFixed(2) : '0.00'}
+              </span>
+              <span className="text-sm text-orange-500">
+                ({packageDetails.pzasPaq} piezas por color/talla)
+              </span>
+            </div>
+            
+            <button
+              onClick={onPreorderPackage}
+              disabled={!allSizesHavePreorderStock || addingToCart}
+              className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
+                allSizesHavePreorderStock && !addingToCart
+                  ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <FiCalendar className='text-2xl'/>
+              {addingToCart 
+                ? 'Agregando paquete preventa...'
+                : `Agregar paquete en preventa`}
+            </button>
+          </div>
+        )}
       </div>
     )}
 
-    {/* Selector de cantidad para preventa */}
-    { preorderStock > 0 && (
+    {/* Selector de cantidad para preventa individual */}
+    {preorderStock > 0 && (
       <div className="flex flex-col items-center gap-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg font-semibold text-gray-700">Preventa:</span>
+          <span className="text-lg font-semibold text-gray-700">Preventa individual:</span>
           <span className="text-lg font-bold text-blue-600">
             ${individualPrice ? (individualPrice * preorderQuantity).toFixed(2) : '0.00'}
           </span>
         </div>
       
-        
         <QuantitySelector
           value={preorderQuantity}
           max={preorderStock}
@@ -115,13 +149,13 @@ const ProductActions = ({
         <button
           onClick={onPreorder}
           disabled={preorderStock === 0 || addingToCart}
-          className={`w-full max-w-xs py-3 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
+          className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
             preorderStock > 0 && !addingToCart
               ? 'bg-blue-600 hover:bg-blue-700 text-white'
               : 'bg-blue-100 text-blue-400 cursor-not-allowed'
           }`}
         >
-          <FiCalendar />
+          <FiCalendar className='text-2xl'/>
           {addingToCart 
             ? 'Agregando preventa...'
             : `Agregar preventa (${preorderStock} disponibles)`}

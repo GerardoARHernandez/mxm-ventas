@@ -29,7 +29,11 @@ const ProductPreview = () => {
   const [addingToCart, setAddingToCart] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [canSellByPackage, setCanSellByPackage] = useState(false);
-  const [packageDetails, setPackageDetails] = useState({ pzasPaq: 0, hasPackageStock: false });
+  const [packageDetails, setPackageDetails] = useState({ 
+    pzasPaq: 0, 
+    hasPackageStock: false,
+    hasPackagePreorderStock: false 
+  });
   
   // Nuevo estado para el precio personalizado - solo para productos 99PAQ
   const [customPrice, setCustomPrice] = useState('');
@@ -74,10 +78,13 @@ const ProductPreview = () => {
         setCanSellByPackage(canPackage);
         
         if (packageVariation) {
-          const hasPackageStock = checkPackageStock(packageVariation.pzasPaq, variationsData);
+          const hasPackageStock = checkPackageStock(packageVariation.pzasPaq, variationsData, 'Exis');
+          const hasPackagePreorderStock = checkPackageStock(packageVariation.pzasPaq, variationsData, 'PorRecibir');
+          
           setPackageDetails({
             pzasPaq: packageVariation.pzasPaq,
-            hasPackageStock
+            hasPackageStock,
+            hasPackagePreorderStock
           });
         }
         
@@ -97,14 +104,11 @@ const ProductPreview = () => {
     fetchProductData();
   }, [modelCode]);
 
-  console.log('paq:', is99PAQProduct)
-  console.log('Prod:', product)
-
-  // Función para verificar stock para paquete
-  const checkPackageStock = (pzasPaq, variationsData) => {
+  // Función para verificar stock para paquete (inventario o preventa)
+  const checkPackageStock = (pzasPaq, variationsData, stockType = 'Exis') => {
     return variationsData.every(variation => {
       return variation.Tallas?.every(size => {
-        const availableStock = parseInt(size.Exis) || 0;
+        const availableStock = parseInt(size[stockType]) || 0;
         return availableStock >= pzasPaq;
       });
     });
@@ -123,10 +127,13 @@ const ProductPreview = () => {
     if (variations.length > 0 && canSellByPackage) {
       const packageVariation = variations.find(variation => variation.pzasPaq > 0);
       if (packageVariation) {
-        const hasPackageStock = checkPackageStock(packageVariation.pzasPaq, variations);
+        const hasPackageStock = checkPackageStock(packageVariation.pzasPaq, variations, 'Exis');
+        const hasPackagePreorderStock = checkPackageStock(packageVariation.pzasPaq, variations, 'PorRecibir');
+        
         setPackageDetails({
           pzasPaq: packageVariation.pzasPaq,
-          hasPackageStock
+          hasPackageStock,
+          hasPackagePreorderStock
         });
       }
     }
@@ -357,6 +364,66 @@ const ProductPreview = () => {
     }
   };
 
+  // Nueva función para manejar preventa por paquete
+  const handlePreorderPackage = async () => {
+    if (!packageDetails.hasPackagePreorderStock) return;
+    
+    setAddingToCart(true);
+    try {
+      const ventaId = pedidoId || 'NUEVO';
+      let lastResponse = null;
+      let successCount = 0;
+      
+      // Agregar pzasPaq cantidad de cada color/talla como preventa
+      for (const variation of variations) {
+        for (const size of variation.Tallas) {
+          // Usar precio3 (precio por paquete) para preventa también
+          const packagePrice = parseFloat(size.precio3) || 0;
+          const desdeInventario = false; // Siempre false para preventa
+
+          const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Origin': import.meta.env.VITE_API_ORIGIN
+            },
+            body: JSON.stringify({
+              Usuario: user.username,
+              articulo: size.Articulo,
+              cantidad: packageDetails.pzasPaq, // Agregar la cantidad especificada en pzasPaq
+              precio: packagePrice, // Usar precio por paquete
+              venta: ventaId,
+              desdeInventario: desdeInventario
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Error al agregar el artículo ${size.Articulo} a la preventa`);
+          }
+          
+          lastResponse = response;
+          successCount++;
+        }
+      }
+
+      const result = await lastResponse.json();
+      
+      // Actualizar contador del carrito
+      updateCartCount(true);
+      
+      if (pedidoId) {
+        navigate(`/carrito?pedido=${pedidoId}`);
+      } else {
+        navigate(`/carrito?pedido=${result.Folio}`);
+      }
+    } catch (err) {
+      console.error("Error al agregar paquete en preventa:", err);
+      alert(err.message || "Ocurrió un error al agregar el paquete en preventa. Por favor intenta nuevamente.");
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
   const handleAddPackage = async () => {
     if (!packageDetails.hasPackageStock) return;
     
@@ -369,7 +436,7 @@ const ProductPreview = () => {
       // Agregar pzasPaq cantidad de cada color/talla
       for (const variation of variations) {
         for (const size of variation.Tallas) {
-          // CORRECCIÓN: Usar precio3 (precio por paquete) en lugar del precio individual
+          // Usar precio3 (precio por paquete) en lugar del precio individual
           const packagePrice = parseFloat(size.precio3) || 0;
           const desdeInventario = parseInt(size.Exis) > 0;
 
@@ -383,7 +450,7 @@ const ProductPreview = () => {
               Usuario: user.username,
               articulo: size.Articulo,
               cantidad: packageDetails.pzasPaq, // Agregar la cantidad especificada en pzasPaq
-              precio: packagePrice, // CORRECCIÓN: Usar precio por paquete
+              precio: packagePrice, // Usar precio por paquete
               venta: ventaId,
               desdeInventario: desdeInventario
             })
@@ -518,6 +585,12 @@ const ProductPreview = () => {
                   : `✗ Stock insuficiente para paquete (se necesitan ${packageDetails.pzasPaq} piezas de cada color/talla)`
                 }
               </p>
+              <p className="text-sm text-orange-600">
+                {packageDetails.hasPackagePreorderStock 
+                  ? `✓ Stock suficiente para preventa por paquete (${packageDetails.pzasPaq} piezas de cada color/talla)`
+                  : `✗ Stock insuficiente para preventa por paquete`
+                }
+              </p>
             </div>
           )}
         </div>
@@ -577,7 +650,9 @@ const ProductPreview = () => {
             onAddToCart={handleAddToCart}
             onPreorder={handlePreorder}
             onAddPackage={handleAddPackage}
+            onPreorderPackage={handlePreorderPackage} 
             allSizesHaveStock={packageDetails.hasPackageStock}
+            allSizesHavePreorderStock={packageDetails.hasPackagePreorderStock} 
             addingToCart={addingToCart}
             individualPrice={finalPrice}
             packagePrice={packagePrice}
