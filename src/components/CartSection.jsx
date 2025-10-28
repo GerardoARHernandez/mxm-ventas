@@ -58,13 +58,13 @@ const CartSection = ({
               <span className="text-sm text-gray-500 ml-2">({totalPiezas} piezas)</span>
             </div>
             <div className="flex gap-2 font-semibold">
-              <button 
+              {/* <button 
                 onClick={onClean}
                 disabled={loading}
                 className="bg-red-800 hover:bg-red-900 hover:cursor-pointer text-white py-2 px-4 rounded-md transition-colors disabled:opacity-50"
               >
                 Vaciar Carrito
-              </button>
+              </button> */}
               {showProcessButton && onProcess && (
                 <button 
                   onClick={onProcess}

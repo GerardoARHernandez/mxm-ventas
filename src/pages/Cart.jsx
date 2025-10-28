@@ -514,7 +514,7 @@ const Cart = () => {
             {/* Botones de Acción Globales */}
             {(itemsStock.length > 0 || itemsNoStock.length > 0) && (
               <div className="mt-8 flex flex-wrap gap-4 justify-between items-center">
-                <div className="flex gap-2">
+                {/* <div className="flex gap-2">
                   <button
                     onClick={clearCart}
                     disabled={loading}
@@ -522,7 +522,7 @@ const Cart = () => {
                   >
                     Vaciar Carrito
                   </button>
-                </div>
+                </div> */}
                 
                 <div className="flex flex-wrap gap-2">
                   {/* Mostrar botón "Confirmar Solo Stock" solo cuando hay artículos sin stock */}
