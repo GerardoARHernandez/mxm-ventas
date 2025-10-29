@@ -7,6 +7,7 @@ import ColorButton from '../components/Product/ColorButton';
 import ProductImage from '../components/Product/ProductImage';
 import ProductInfo from '../components/Product/ProductInfo';
 import ProductActions from '../components/Product/ProductActions';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 const ProductPreview = () => {
   const { modelCode } = useParams();
@@ -39,6 +40,7 @@ const ProductPreview = () => {
   const [customPrice, setCustomPrice] = useState('');
   const [isEditingPrice, setIsEditingPrice] = useState(false);
   const [is99PAQProduct, setIs99PAQProduct] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState('');
 
   useEffect(() => {
     const fetchProductData = async () => {
@@ -235,252 +237,261 @@ const ProductPreview = () => {
     return selectedSizeData ? parseFloat(selectedSizeData.precio3) : 0;
   };
 
+  // Función auxiliar para manejar el proceso de agregar al carrito
+  const handleApiProcess = async (apiCall, errorMessage) => {
+    setAddingToCart(true);
+    
+    try {
+      await apiCall();
+    } catch (error) {
+      console.error("Error en el proceso:", error);
+      alert(error.message || errorMessage);
+      throw error; // Re-lanzar el error para manejo adicional si es necesario
+    } finally {
+      setAddingToCart(false);
+      setProcessingMessage('');
+    }
+  };
+
   const handleAddToCart = async () => {
     if (!selectedColor || !selectedSize) return;
     
-    setAddingToCart(true);
-    setSuccessMessage('');
-    try {
-      const selectedVariation = variations.find(v => v.Codigo === selectedColor);
-      const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
-      
-      if (!selectedSizeData || !selectedSizeData.Articulo) {
-        throw new Error("No se pudo determinar el código de artículo");
-      }
-
-      const finalPrice = getFinalPrice();
-      const availableStock = getAvailableStock();
-      const desdeInventario = availableStock > 0;
-
-      // Actualizar stock localmente
-      const updatedVariations = variations.map(variation => {
-        if (variation.Codigo === selectedColor) {
-          return {
-            ...variation,
-            Tallas: variation.Tallas.map(size => {
-              if (size.id === selectedSize) {
-                return {
-                  ...size,
-                  Exis: (parseInt(size.Exis) - quantity).toString()
-                };
-              }
-              return size;
-            })
-          };
+    await handleApiProcess(
+      async () => {
+        setProcessingMessage('Agregando producto al carrito...');
+        
+        const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+        const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+        
+        if (!selectedSizeData || !selectedSizeData.Articulo) {
+          throw new Error("No se pudo determinar el código de artículo");
         }
-        return variation;
-      });
-      setVariations(updatedVariations);
 
-      const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Origin': import.meta.env.VITE_API_ORIGIN
-        },
-        body: JSON.stringify({
-          Usuario: user.username,
-          articulo: selectedSizeData.Articulo,
-          cantidad: quantity,
-          precio: finalPrice, // Usar el precio final (personalizado o normal)
-          venta: pedidoId || 'NUEVO',
-          desdeInventario: desdeInventario
-        })
-      });
+        const finalPrice = getFinalPrice();
+        const availableStock = getAvailableStock();
+        const desdeInventario = availableStock > 0;
 
-      if (!response.ok) {
-        // Revertir cambios locales si hay error
-        setVariations(variations);
-        throw new Error("Error al agregar el artículo al pedido");
-      }
+        // Actualizar stock localmente
+        const updatedVariations = variations.map(variation => {
+          if (variation.Codigo === selectedColor) {
+            return {
+              ...variation,
+              Tallas: variation.Tallas.map(size => {
+                if (size.id === selectedSize) {
+                  return {
+                    ...size,
+                    Exis: (parseInt(size.Exis) - quantity).toString()
+                  };
+                }
+                return size;
+              })
+            };
+          }
+          return variation;
+        });
+        setVariations(updatedVariations);
 
-      const result = await response.json();
-      
-      // Actualizar contador del carrito
-      updateCartCount(true);
-      
-      setSuccessMessage('Pedido agregado correctamente');
-      setTimeout(() => setSuccessMessage(''), 3000);
-      
-    } catch (err) {
-      console.error("Error al agregar al carrito:", err);
-      alert(err.message || "Ocurrió un error al agregar el artículo. Por favor intenta nuevamente.");
-    } finally {
-      setAddingToCart(false);
-    }
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          },
+          body: JSON.stringify({
+            Usuario: user.username,
+            articulo: selectedSizeData.Articulo,
+            cantidad: quantity,
+            precio: finalPrice,
+            venta: pedidoId || 'NUEVO',
+            desdeInventario: desdeInventario
+          })
+        });
+
+        if (!response.ok) {
+          // Revertir cambios locales si hay error
+          setVariations(variations);
+          throw new Error("Error al agregar el artículo al pedido");
+        }
+
+        const result = await response.json();
+        
+        // Actualizar contador del carrito
+        updateCartCount(true);
+        
+        setSuccessMessage('Pedido agregado correctamente');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      },
+      'Ocurrió un error al agregar el artículo. Por favor intenta nuevamente.'
+    );
   };
 
   const handlePreorder = async () => {
     if (!selectedColor || !selectedSize) return;
     
-    setAddingToCart(true);
-    try {
-      const selectedVariation = variations.find(v => v.Codigo === selectedColor);
-      const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
-      
-      if (!selectedSizeData || !selectedSizeData.Articulo) {
-        throw new Error("No se pudo determinar el código de artículo");
-      }
+    await handleApiProcess(
+      async () => {
+        setProcessingMessage('Agregando preventa al carrito...');
+        
+        const selectedVariation = variations.find(v => v.Codigo === selectedColor);
+        const selectedSizeData = selectedVariation?.Tallas?.find(s => s.id === selectedSize);
+        
+        if (!selectedSizeData || !selectedSizeData.Articulo) {
+          throw new Error("No se pudo determinar el código de artículo");
+        }
 
-      const finalPrice = getFinalPrice();
-      const ventaId = pedidoId || 'NUEVO';
-      const desdeInventario = false;
-      
-      const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Origin': import.meta.env.VITE_API_ORIGIN
-        },
-        body: JSON.stringify({
-          Usuario: user.username,
-          articulo: selectedSizeData.Articulo,
-          cantidad: preorderQuantity,
-          precio: finalPrice, // Usar el precio final (personalizado o normal)
-          venta: ventaId,
-          desdeInventario: desdeInventario
-        })
-      });
+        const finalPrice = getFinalPrice();
+        const ventaId = pedidoId || 'NUEVO';
+        const desdeInventario = false;
+        
+        const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': import.meta.env.VITE_API_ORIGIN
+          },
+          body: JSON.stringify({
+            Usuario: user.username,
+            articulo: selectedSizeData.Articulo,
+            cantidad: preorderQuantity,
+            precio: finalPrice,
+            venta: ventaId,
+            desdeInventario: desdeInventario
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error("Error al agregar la preventa al pedido");
-      }
+        if (!response.ok) {
+          throw new Error("Error al agregar la preventa al pedido");
+        }
 
-      const result = await response.json();
-      
-      // Actualizar contador del carrito
-      updateCartCount(true);
-      
-      if (pedidoId) {
-        navigate(`/carrito?pedido=${pedidoId}`);
-      } else {
-        navigate(`/carrito?pedido=${result.Folio}`);
-      }
-    } catch (err) {
-      console.error("Error al agregar preventa:", err);
-      alert(err.message || "Ocurrió un error al agregar la preventa. Por favor intenta nuevamente.");
-    } finally {
-      setAddingToCart(false);
-    }
+        const result = await response.json();
+        
+        // Actualizar contador del carrito
+        updateCartCount(true);
+        
+        if (pedidoId) {
+          navigate(`/carrito?pedido=${pedidoId}`);
+        } else {
+          navigate(`/carrito?pedido=${result.Folio}`);
+        }
+      },
+      'Ocurrió un error al agregar la preventa. Por favor intenta nuevamente.'
+    );
   };
 
-  // Nueva función para manejar preventa por paquete
   const handlePreorderPackage = async () => {
     if (!packageDetails.hasPackagePreorderStock) return;
     
-    setAddingToCart(true);
-    try {
-      const ventaId = pedidoId || 'NUEVO';
-      let lastResponse = null;
-      let successCount = 0;
-      
-      // Agregar pzasPaq cantidad de cada color/talla como preventa
-      for (const variation of variations) {
-        for (const size of variation.Tallas) {
-          // Usar precio3 (precio por paquete) para preventa también
-          const packagePrice = parseFloat(size.precio3) || 0;
-          const desdeInventario = false; // Siempre false para preventa
+    await handleApiProcess(
+      async () => {
+        setProcessingMessage('Procesando paquete en preventa... Esto puede tomar unos segundos.');
+        
+        const ventaId = pedidoId || 'NUEVO';
+        let lastResponse = null;
+        let successCount = 0;
+        
+        // Agregar pzasPaq cantidad de cada color/talla como preventa
+        for (const variation of variations) {
+          for (const size of variation.Tallas) {
+            // Usar precio3 (precio por paquete) para preventa también
+            const packagePrice = parseFloat(size.precio3) || 0;
+            const desdeInventario = false; // Siempre false para preventa
 
-          const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Origin': import.meta.env.VITE_API_ORIGIN
-            },
-            body: JSON.stringify({
-              Usuario: user.username,
-              articulo: size.Articulo,
-              cantidad: packageDetails.pzasPaq, // Agregar la cantidad especificada en pzasPaq
-              precio: packagePrice, // Usar precio por paquete
-              venta: ventaId,
-              desdeInventario: desdeInventario
-            })
-          });
+            const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Origin': import.meta.env.VITE_API_ORIGIN
+              },
+              body: JSON.stringify({
+                Usuario: user.username,
+                articulo: size.Articulo,
+                cantidad: packageDetails.pzasPaq,
+                precio: packagePrice,
+                venta: ventaId,
+                desdeInventario: desdeInventario
+              })
+            });
 
-          if (!response.ok) {
-            throw new Error(`Error al agregar el artículo ${size.Articulo} a la preventa`);
+            if (!response.ok) {
+              throw new Error(`Error al agregar el artículo ${size.Articulo} a la preventa`);
+            }
+            
+            lastResponse = response;
+            successCount++;
           }
-          
-          lastResponse = response;
-          successCount++;
         }
-      }
 
-      const result = await lastResponse.json();
-      
-      // Actualizar contador del carrito
-      updateCartCount(true);
-      
-      if (pedidoId) {
-        navigate(`/carrito?pedido=${pedidoId}`);
-      } else {
-        navigate(`/carrito?pedido=${result.Folio}`);
-      }
-    } catch (err) {
-      console.error("Error al agregar paquete en preventa:", err);
-      alert(err.message || "Ocurrió un error al agregar el paquete en preventa. Por favor intenta nuevamente.");
-    } finally {
-      setAddingToCart(false);
-    }
+        const result = await lastResponse.json();
+        
+        // Actualizar contador del carrito
+        updateCartCount(true);
+        
+        if (pedidoId) {
+          navigate(`/carrito?pedido=${pedidoId}`);
+        } else {
+          navigate(`/carrito?pedido=${result.Folio}`);
+        }
+      },
+      'Ocurrió un error al agregar el paquete en preventa. Por favor intenta nuevamente.'
+    );
   };
 
   const handleAddPackage = async () => {
     if (!packageDetails.hasPackageStock) return;
     
-    setAddingToCart(true);
-    try {
-      const ventaId = pedidoId || 'NUEVO';
-      let lastResponse = null;
-      let successCount = 0;
-      
-      // Agregar pzasPaq cantidad de cada color/talla
-      for (const variation of variations) {
-        for (const size of variation.Tallas) {
-          // Usar precio3 (precio por paquete) en lugar del precio individual
-          const packagePrice = parseFloat(size.precio3) || 0;
-          const desdeInventario = parseInt(size.Exis) > 0;
+    await handleApiProcess(
+      async () => {
+        setProcessingMessage('Procesando paquete completo... Esto puede tomar unos segundos.');
+        
+        const ventaId = pedidoId || 'NUEVO';
+        let lastResponse = null;
+        let successCount = 0;
+        
+        // Agregar pzasPaq cantidad de cada color/talla
+        for (const variation of variations) {
+          for (const size of variation.Tallas) {
+            // Usar precio3 (precio por paquete) en lugar del precio individual
+            const packagePrice = parseFloat(size.precio3) || 0;
+            const desdeInventario = parseInt(size.Exis) > 0;
 
-          const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Origin': import.meta.env.VITE_API_ORIGIN
-            },
-            body: JSON.stringify({
-              Usuario: user.username,
-              articulo: size.Articulo,
-              cantidad: packageDetails.pzasPaq, // Agregar la cantidad especificada en pzasPaq
-              precio: packagePrice, // Usar precio por paquete
-              venta: ventaId,
-              desdeInventario: desdeInventario
-            })
-          });
+            const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Origin': import.meta.env.VITE_API_ORIGIN
+              },
+              body: JSON.stringify({
+                Usuario: user.username,
+                articulo: size.Articulo,
+                cantidad: packageDetails.pzasPaq,
+                precio: packagePrice,
+                venta: ventaId,
+                desdeInventario: desdeInventario
+              })
+            });
 
-          if (!response.ok) {
-            throw new Error(`Error al agregar el artículo ${size.Articulo} al pedido`);
+            if (!response.ok) {
+              throw new Error(`Error al agregar el artículo ${size.Articulo} al pedido`);
+            }
+            
+            lastResponse = response;
+            successCount++;
           }
-          
-          lastResponse = response;
-          successCount++;
         }
-      }
 
-      const result = await lastResponse.json();
-      
-      // Actualizar contador del carrito
-      updateCartCount(true);
-      
-      if (pedidoId) {
-        navigate(`/carrito?pedido=${pedidoId}`);
-      } else {
-        navigate(`/carrito?pedido=${result.Folio}`);
-      }
-    } catch (err) {
-      console.error("Error al agregar paquete:", err);
-      alert(err.message || "Ocurrió un error al agregar el paquete. Por favor intenta nuevamente.");
-    } finally {
-      setAddingToCart(false);
-    }
+        const result = await lastResponse.json();
+        
+        // Actualizar contador del carrito
+        updateCartCount(true);
+        
+        if (pedidoId) {
+          navigate(`/carrito?pedido=${pedidoId}`);
+        } else {
+          navigate(`/carrito?pedido=${result.Folio}`);
+        }
+      },
+      'Ocurrió un error al agregar el paquete. Por favor intenta nuevamente.'
+    );
   };
 
   if (loading) return <div className="mt-5 mx-2 sm:mx-0 text-center py-8"><p>Cargando producto...</p></div>;
@@ -497,171 +508,179 @@ const ProductPreview = () => {
   const finalPrice = getFinalPrice();
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-        <ProductImage 
-          imageUrl={selectedVariation.Imagen} 
-          altText={product.Descrip} 
-        />
-        
-        <div className="p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">{product.Descrip}</h2>
+    <>
+      {/* Overlay de carga */}
+      <LoadingOverlay 
+        isLoading={addingToCart} 
+        message={processingMessage} 
+      />
+      
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+          <ProductImage 
+            imageUrl={selectedVariation.Imagen} 
+            altText={product.Descrip} 
+          />
           
-          {/* Precio editable solo para productos 99PAQ */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Precio {is99PAQProduct && isEditingPrice ? '(Editable)' : ''}
-            </label>
-            <div className="flex items-center gap-2">
-              {is99PAQProduct && isEditingPrice ? (
-                <input
-                  type="text"
-                  value={customPrice}
-                  onChange={handleCustomPriceChange}
-                  onBlur={togglePriceEdit}
-                  className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autoFocus
-                />
-              ) : (
-                <span 
-                  className={`text-3xl font-bold text-gray-900 ${
-                    is99PAQProduct ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''
-                  }`}
-                  onClick={is99PAQProduct ? togglePriceEdit : undefined}
-                  title={is99PAQProduct ? "Haz clic para editar el precio" : ""}
-                >
-                  ${finalPrice.toFixed(2)}
-                </span>
-              )}
-              {is99PAQProduct && (
-                <button
-                  type="button"
-                  onClick={togglePriceEdit}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                  {isEditingPrice ? 'Cancelar' : 'Editar'}
-                </button>
-              )}
-            </div>
-            {is99PAQProduct && !isEditingPrice && individualPrice !== finalPrice && (
-              <p className="text-sm text-gray-500 mt-1">
-                Precio original: ${individualPrice.toFixed(2)}
-              </p>
-            )}
-            {packagePrice > 0 && canSellByPackage && (
-              <p className="text-lg text-green-600 font-semibold">
-                Precio por paquete: ${packagePrice.toFixed(2)}
-              </p>
-            )}
-          </div>
-          
-          <p className="text-gray-600 mb-4">{product.Descrip}</p>
-          
-          {selectedSizeData && (
+          <div className="p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{product.Descrip}</h2>
+            
+            {/* Precio editable solo para productos 99PAQ */}
             <div className="mb-4">
-              <p className="text-sm text-gray-600">
-                <span className="font-semibold">Artículo:</span> {selectedSizeData.Articulo}
-              </p>
-              <p className="text-sm text-gray-600">
-                <span className="font-semibold">Stock disponible:</span> {availableStock}
-              </p>
-              {preorderStock > 0 && (
-                <p className="text-sm text-orange-600">
-                  <span className="font-semibold">Por recibir:</span> {preorderStock}
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Precio {is99PAQProduct && isEditingPrice ? '(Editable)' : ''}
+              </label>
+              <div className="flex items-center gap-2">
+                {is99PAQProduct && isEditingPrice ? (
+                  <input
+                    type="text"
+                    value={customPrice}
+                    onChange={handleCustomPriceChange}
+                    onBlur={togglePriceEdit}
+                    className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    autoFocus
+                  />
+                ) : (
+                  <span 
+                    className={`text-3xl font-bold text-gray-900 ${
+                      is99PAQProduct ? 'cursor-pointer hover:text-blue-600 transition-colors' : ''
+                    }`}
+                    onClick={is99PAQProduct ? togglePriceEdit : undefined}
+                    title={is99PAQProduct ? "Haz clic para editar el precio" : ""}
+                  >
+                    ${finalPrice.toFixed(2)}
+                  </span>
+                )}
+                {is99PAQProduct && (
+                  <button
+                    type="button"
+                    onClick={togglePriceEdit}
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  >
+                    {isEditingPrice ? 'Cancelar' : 'Editar'}
+                  </button>
+                )}
+              </div>
+              {is99PAQProduct && !isEditingPrice && individualPrice !== finalPrice && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Precio original: ${individualPrice.toFixed(2)}
+                </p>
+              )}
+              {packagePrice > 0 && canSellByPackage && (
+                <p className="text-lg text-green-600 font-semibold">
+                  Precio por paquete: ${packagePrice.toFixed(2)}
                 </p>
               )}
             </div>
+            
+            <p className="text-gray-600 mb-4">{product.Descrip}</p>
+            
+            {selectedSizeData && (
+              <div className="mb-4">
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold">Artículo:</span> {selectedSizeData.Articulo}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-semibold">Stock disponible:</span> {availableStock}
+                </p>
+                {preorderStock > 0 && (
+                  <p className="text-sm text-orange-600">
+                    <span className="font-semibold">Por recibir:</span> {preorderStock}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Información del paquete */}
+            {canSellByPackage && (
+              <div className="bg-blue-50 rounded-lg p-3 mb-4">
+                <p className="text-sm text-blue-700">
+                  <strong>Venta por paquete disponible:</strong> {packageDetails.pzasPaq} piezas por color/talla
+                </p>
+                <p className="text-sm text-blue-600">
+                  {packageDetails.hasPackageStock 
+                    ? `✓ Stock suficiente para paquete (${packageDetails.pzasPaq} piezas de cada color/talla)`
+                    : `✗ Stock insuficiente para paquete (se necesitan ${packageDetails.pzasPaq} piezas de cada color/talla)`
+                  }
+                </p>
+                <p className="text-sm text-orange-600">
+                  {packageDetails.hasPackagePreorderStock 
+                    ? `✓ Stock suficiente para preventa por paquete (${packageDetails.pzasPaq} piezas de cada color/talla)`
+                    : `✗ Stock insuficiente para preventa por paquete`
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+
+          {variations.length > 0 && (
+            <div className="mb-4 px-8">
+              <h4 className="text-lg font-semibold mb-3">Colores disponibles:</h4>
+              <div className="flex flex-wrap gap-5 md:gap-3">
+                {variations.map(variation => (
+                  <ColorButton
+                    key={variation.Codigo}
+                    color={variation}
+                    isSelected={selectedColor === variation.Codigo}
+                    onSelect={handleColorChange}
+                  />
+                ))}
+              </div>
+            </div>
           )}
 
-          {/* Información del paquete */}
-          {canSellByPackage && (
-            <div className="bg-blue-50 rounded-lg p-3 mb-4">
-              <p className="text-sm text-blue-700">
-                <strong>Venta por paquete disponible:</strong> {packageDetails.pzasPaq} piezas por color/talla
-              </p>
-              <p className="text-sm text-blue-600">
-                {packageDetails.hasPackageStock 
-                  ? `✓ Stock suficiente para paquete (${packageDetails.pzasPaq} piezas de cada color/talla)`
-                  : `✗ Stock insuficiente para paquete (se necesitan ${packageDetails.pzasPaq} piezas de cada color/talla)`
-                }
-              </p>
-              <p className="text-sm text-orange-600">
-                {packageDetails.hasPackagePreorderStock 
-                  ? `✓ Stock suficiente para preventa por paquete (${packageDetails.pzasPaq} piezas de cada color/talla)`
-                  : `✗ Stock insuficiente para preventa por paquete`
-                }
-              </p>
+          {sizes.length > 0 && (
+            <div className="mb-4 px-8">
+              <h4 className="text-lg font-semibold mb-3">Tallas disponibles:</h4>
+              <div className="flex flex-wrap gap-3">
+                {sizes.map(size => (
+                  <SizeButton
+                    key={size.id}
+                    size={size}
+                    isSelected={selectedSize === size.id}
+                    onSelect={handleSizeChange}
+                  />
+                ))}
+              </div>
             </div>
           )}
-        </div>
 
-        {variations.length > 0 && (
-          <div className="mb-4 px-8">
-            <h4 className="text-lg font-semibold mb-3">Colores disponibles:</h4>
-            <div className="flex flex-wrap gap-5 md:gap-3">
-              {variations.map(variation => (
-                <ColorButton
-                  key={variation.Codigo}
-                  color={variation}
-                  isSelected={selectedColor === variation.Codigo}
-                  onSelect={handleColorChange}
-                />
-              ))}
+          {successMessage && (
+            <div className="px-8">
+              <div className="bg-green-600 uppercase font-semibold text-white text-center py-2 rounded-md mb-4">
+                {successMessage}
+              </div>
             </div>
+          )}
+          
+          <div className="px-8 pb-8">
+            <ProductActions
+              availableStock={availableStock}
+              preorderStock={preorderStock}
+              quantity={quantity}
+              preorderQuantity={preorderQuantity}
+              onQuantityChange={handleQuantityChange}
+              onPreorderQuantityChange={handlePreorderQuantityChange}
+              onIncrementQuantity={incrementQuantity}
+              onDecrementQuantity={decrementQuantity}
+              onIncrementPreorderQuantity={incrementPreorderQuantity}
+              onDecrementPreorderQuantity={decrementPreorderQuantity}
+              onAddToCart={handleAddToCart}
+              onPreorder={handlePreorder}
+              onAddPackage={handleAddPackage}
+              onPreorderPackage={handlePreorderPackage} 
+              allSizesHaveStock={packageDetails.hasPackageStock}
+              allSizesHavePreorderStock={packageDetails.hasPackagePreorderStock} 
+              addingToCart={addingToCart}
+              individualPrice={finalPrice}
+              packagePrice={packagePrice}
+              canSellByPackage={canSellByPackage}
+              packageDetails={packageDetails}
+            />
           </div>
-        )}
-
-        {sizes.length > 0 && (
-          <div className="mb-4 px-8">
-            <h4 className="text-lg font-semibold mb-3">Tallas disponibles:</h4>
-            <div className="flex flex-wrap gap-3">
-              {sizes.map(size => (
-                <SizeButton
-                  key={size.id}
-                  size={size}
-                  isSelected={selectedSize === size.id}
-                  onSelect={handleSizeChange}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="px-8">
-            <div className="bg-green-600 uppercase font-semibold text-white text-center py-2 rounded-md mb-4">
-              {successMessage}
-            </div>
-          </div>
-        )}
-        
-        <div className="px-8 pb-8">
-          <ProductActions
-            availableStock={availableStock}
-            preorderStock={preorderStock}
-            quantity={quantity}
-            preorderQuantity={preorderQuantity}
-            onQuantityChange={handleQuantityChange}
-            onPreorderQuantityChange={handlePreorderQuantityChange}
-            onIncrementQuantity={incrementQuantity}
-            onDecrementQuantity={decrementQuantity}
-            onIncrementPreorderQuantity={incrementPreorderQuantity}
-            onDecrementPreorderQuantity={decrementPreorderQuantity}
-            onAddToCart={handleAddToCart}
-            onPreorder={handlePreorder}
-            onAddPackage={handleAddPackage}
-            onPreorderPackage={handlePreorderPackage} 
-            allSizesHaveStock={packageDetails.hasPackageStock}
-            allSizesHavePreorderStock={packageDetails.hasPackagePreorderStock} 
-            addingToCart={addingToCart}
-            individualPrice={finalPrice}
-            packagePrice={packagePrice}
-            canSellByPackage={canSellByPackage}
-            packageDetails={packageDetails}
-          />
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

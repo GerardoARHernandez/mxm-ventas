@@ -1,5 +1,5 @@
 import { FiShoppingCart, FiCalendar, FiPackage } from 'react-icons/fi';
-import QuantitySelector from './QuantitySelector'; 
+import QuantitySelector from './QuantitySelector';
 
 const ProductActions = ({
   availableStock,
@@ -15,9 +15,9 @@ const ProductActions = ({
   onAddToCart,
   onPreorder,
   onAddPackage,
-  onPreorderPackage, // Nueva prop
+  onPreorderPackage,
   allSizesHaveStock,
-  allSizesHavePreorderStock, // Nueva prop
+  allSizesHavePreorderStock,
   addingToCart,
   individualPrice,
   packagePrice,
@@ -40,7 +40,7 @@ const ProductActions = ({
         onChange={onQuantityChange}
         onIncrement={onIncrementQuantity}
         onDecrement={onDecrementQuantity}
-        disabled={availableStock === 0}
+        disabled={availableStock === 0 || addingToCart}
       />
       
       <button
@@ -81,7 +81,7 @@ const ProductActions = ({
             disabled={!allSizesHaveStock || addingToCart}
             className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
               allSizesHaveStock && !addingToCart
-                ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                ? 'bg-purple-600 hover:bg-purple-700 text-white hover:cursor-pointer'
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed'
             }`}
           >
@@ -112,7 +112,7 @@ const ProductActions = ({
               disabled={!allSizesHavePreorderStock || addingToCart}
               className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
                 allSizesHavePreorderStock && !addingToCart
-                  ? 'bg-orange-600 hover:bg-orange-700 text-white'
+                  ? 'bg-orange-600 hover:bg-orange-700 text-white hover:cursor-pointer'
                   : 'bg-gray-200 text-gray-500 cursor-not-allowed'
               }`}
             >
@@ -142,7 +142,7 @@ const ProductActions = ({
           onChange={onPreorderQuantityChange}
           onIncrement={onIncrementPreorderQuantity}
           onDecrement={onDecrementPreorderQuantity}
-          disabled={preorderStock === 0}
+          disabled={preorderStock === 0 || addingToCart}
           theme="blue"
         />
         
@@ -151,7 +151,7 @@ const ProductActions = ({
           disabled={preorderStock === 0 || addingToCart}
           className={`w-full max-w-xs py-3 px-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center gap-2 ${
             preorderStock > 0 && !addingToCart
-              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              ? 'bg-blue-600 hover:bg-blue-700 text-white hover:cursor-pointer'
               : 'bg-blue-100 text-blue-400 cursor-not-allowed'
           }`}
         >
@@ -160,6 +160,15 @@ const ProductActions = ({
             ? 'Agregando preventa...'
             : `Agregar preventa (${preorderStock} disponibles)`}
         </button>
+      </div>
+    )}
+
+    {/* Mensaje informativo cuando se está procesando */}
+    {addingToCart && (
+      <div className="text-center">
+        <p className="text-sm text-gray-500 animate-pulse">
+          Procesando... Por favor espere, esto puede tomar unos segundos.
+        </p>
       </div>
     )}
   </div>
