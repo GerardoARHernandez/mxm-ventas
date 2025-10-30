@@ -380,7 +380,7 @@ const PedidoDetail = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Artículo
+                      Imagen
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Descripción
@@ -395,7 +395,7 @@ const PedidoDetail = () => {
                       Estado
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Imagen
+                      Artículo
                     </th>                  
                   </tr>
                 </thead>
@@ -406,9 +406,19 @@ const PedidoDetail = () => {
                     
                     return (
                       <tr key={part.PartId} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {part.Articulo}
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {imageUrl && !hasImageError ? (
+                            <img 
+                              src={imageUrl} 
+                              alt={part.Descrip} 
+                              className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
+                              onClick={() => openImageModal(imageUrl)}
+                              onError={() => handleImageError(part.PartId)}
+                            />
+                          ) : (
+                            'No Disponible'
+                          )} 
+                        </td>                        
                         <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
                           {part.Descrip}
                         </td>
@@ -443,18 +453,8 @@ const PedidoDetail = () => {
                             </button>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {imageUrl && !hasImageError ? (
-                            <img 
-                              src={imageUrl} 
-                              alt={part.Descrip} 
-                              className="w-12 h-12 object-cover rounded cursor-pointer hover:opacity-75 transition-opacity"
-                              onClick={() => openImageModal(imageUrl)}
-                              onError={() => handleImageError(part.PartId)}
-                            />
-                          ) : (
-                            'No Disponible'
-                          )} 
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {part.Articulo}
                         </td>
                       </tr>
                     );
