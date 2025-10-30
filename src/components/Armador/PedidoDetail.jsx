@@ -14,6 +14,45 @@ const PedidoDetail = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Clave para el localStorage
+  const storageKey = `pedido_${id}_surtido`;
+
+  // Cargar datos guardados del localStorage al iniciar
+  const cargarDatosGuardados = () => {
+    try {
+      const datosGuardados = localStorage.getItem(storageKey);
+      if (datosGuardados) {
+        return JSON.parse(datosGuardados);
+      }
+    } catch (error) {
+      console.error("Error al cargar datos del localStorage:", error);
+    }
+    return null;
+  };
+
+  // Guardar datos en el localStorage
+  const guardarEnLocalStorage = (partesActualizadas) => {
+    try {
+      const datosAGuardar = {
+        pedidoId: id,
+        fechaGuardado: new Date().toISOString(),
+        partes: partesActualizadas
+      };
+      localStorage.setItem(storageKey, JSON.stringify(datosAGuardar));
+    } catch (error) {
+      console.error("Error al guardar en localStorage:", error);
+    }
+  };
+
+  // Limpiar datos del localStorage
+  const limpiarLocalStorage = () => {
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (error) {
+      console.error("Error al limpiar localStorage:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -34,7 +73,31 @@ const PedidoDetail = () => {
         if (!detalleResponse.ok) throw new Error('Error al obtener el detalle del pedido');
         
         const detalleData = await detalleResponse.json();
-        setDetalle(detalleData);
+        
+        // Cargar datos guardados del localStorage
+        const datosGuardados = cargarDatosGuardados();
+        
+        if (datosGuardados && detalleData.Part) {
+          // Combinar datos de la API con los datos guardados en localStorage
+          const partesCombinadas = detalleData.Part.map(part => {
+            const parteGuardada = datosGuardados.partes.find(p => p.PartId === part.PartId);
+            if (parteGuardada) {
+              return {
+                ...part,
+                Status: parteGuardada.Status
+              };
+            }
+            return part;
+          });
+          
+          setDetalle({
+            ...detalleData,
+            Part: partesCombinadas
+          });
+          
+        } else {
+          setDetalle(detalleData);
+        }
         
       } catch (err) {
         setError(err.message);
@@ -71,14 +134,27 @@ const PedidoDetail = () => {
   };
 
   const cambiarEstadoPrenda = (partId) => {
-    setDetalle(prev => ({
-      ...prev,
-      Part: prev.Part.map(part => 
+    setDetalle(prev => {
+      if (!prev || !prev.Part) return prev;
+      
+      const partesActualizadas = prev.Part.map(part => 
         part.PartId === partId 
           ? { ...part, Status: part.Status.trim() === "0" ? "1" : "0" } 
           : part
-      )
-    }));
+      );
+      
+      // Guardar en localStorage después de actualizar
+      const partesFiltradasParaGuardar = partesActualizadas.filter(part => 
+        part.Stock === 1 && !part.Articulo?.startsWith('99PAQ')
+      );
+      
+      guardarEnLocalStorage(partesFiltradasParaGuardar);
+      
+      return {
+        ...prev,
+        Part: partesActualizadas
+      };
+    });
   };
 
   // Función para verificar si todos los artículos están surtidos
@@ -119,6 +195,9 @@ const PedidoDetail = () => {
       const result = await response.json();
       
       if (!result.error) {
+        // Limpiar localStorage después de guardar exitosamente en la API
+        limpiarLocalStorage();
+        
         alert(result.Mensaje || "Cambios guardados correctamente");
         navigate("..");
       } else {
@@ -129,6 +208,30 @@ const PedidoDetail = () => {
       alert(err.message || "Error al guardar los cambios");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Función para limpiar el progreso manualmente
+  const limpiarProgreso = () => {
+    if (window.confirm("¿Estás seguro de que quieres limpiar todo el progreso de surtido? Esta acción no se puede deshacer.")) {
+      limpiarLocalStorage();
+      
+      // Resetear todos los status a "0"
+      setDetalle(prev => {
+        if (!prev || !prev.Part) return prev;
+        
+        const partesReseteadas = prev.Part.map(part => ({
+          ...part,
+          Status: "0"
+        }));
+        
+        return {
+          ...prev,
+          Part: partesReseteadas
+        };
+      });
+      
+      alert("Progreso limpiado correctamente");
     }
   };
 
@@ -181,6 +284,9 @@ const PedidoDetail = () => {
     total + (part.Status.trim() === "1" ? parseInt(part.Cant) : 0), 0
   );
 
+  // Verificar si hay datos guardados en localStorage
+  const hayDatosGuardados = !!localStorage.getItem(storageKey);
+
   return (
     <div className="min-h-screen bg-blue-50">
       <ImageModal 
@@ -190,13 +296,23 @@ const PedidoDetail = () => {
       />
 
       <div className="mx-auto p-4 md:p-6">
-        <div className="mb-4">
+        <div className="mb-4 flex justify-between items-center">
           <Link 
             to=".." 
             className="inline-flex items-center text-rose-600 hover:text-rose-800 font-medium"
           >
             <FiArrowLeft className="mr-2" /> Volver a la lista de pedidos
           </Link>
+          
+          {hayDatosGuardados && (
+            <button
+              onClick={limpiarProgreso}
+              className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:cursor-pointer"
+              title="Limpiar todo el progreso guardado"
+            >
+              <FiX className="mr-1" /> Limpiar progreso
+            </button>
+          )}
         </div>
         
         <header className="mb-6 bg-white p-4 rounded-lg shadow-sm">
@@ -230,6 +346,16 @@ const PedidoDetail = () => {
               <p className="text-sm text-gray-600">{totalPiezas} piezas</p>
             </div>
           </div>
+          
+          {hayDatosGuardados && (
+            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-700 flex items-center">
+                <FiCheck className="mr-2" />
+                <strong>Progreso guardado:</strong> Tienes {piezasSurtidas} de {totalPiezas} piezas surtidas. 
+                Tu progreso se guarda automáticamente.
+              </p>
+            </div>
+          )}
         </header>
 
         <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
@@ -350,6 +476,11 @@ const PedidoDetail = () => {
               {todosSurtidos() && (
                 <p className="text-base bg-green-600 text-white mx-1 px-2 font-bold uppercase mt-1">
                   ¡Todos los artículos han sido surtidos!
+                </p>
+              )}
+              {hayDatosGuardados && (
+                <p className="text-xs text-blue-600 mt-1">
+                  ✓ Tu progreso está guardado automáticamente
                 </p>
               )}
             </div>
