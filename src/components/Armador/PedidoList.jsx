@@ -189,7 +189,7 @@ const PedidoListItem = ({ pedido }) => (
         </div>
         <div className="col-span-2">
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-            {pedido.ESTADO === "CO" ? "Confirmado" : pedido.ESTADO === "PA" ? "Parcial" : pedido.ESTADO}
+            {pedido.ESTADO === "CO" ? "Confirmado" : pedido.ESTADO === "PA" ? "Parcial" : pedido.ESTADO === "EA" ? "En Armado" : pedido.ESTADO}
           </span>
         </div>
         <div className="col-span-2 text-sm text-gray-600">
