@@ -1,4 +1,3 @@
-// AuthContext.js
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -75,7 +74,6 @@ export const AuthProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Origin': import.meta.env.VITE_API_ORIGIN
         },
         body: JSON.stringify({
           Usuario: username,
@@ -92,7 +90,7 @@ export const AuthProvider = ({ children }) => {
       if (data.Acceso) {
         const userData = {
           username: username,
-          name: data.nombre || username,
+          name: data.nombre || username, // Usar el nombre que viene de la API
           role: data.UsuRol
         };
         
@@ -136,4 +134,10 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  return context;
+};

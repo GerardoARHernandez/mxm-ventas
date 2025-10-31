@@ -188,8 +188,8 @@ const PedidoListItem = ({ pedido }) => (
           {pedido.IDCLIENTE}
         </div>
         <div className="col-span-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-            {pedido.ESTADO === "CO" ? "Confirmado" : pedido.ESTADO === "PA" ? "Parcial" : pedido.ESTADO === "EA" ? "En Armado" : pedido.ESTADO}
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${pedido.ESTADO === "CO" ? "bg-blue-100 text-blue-800" : pedido.ESTADO === "PA" ? "bg-orange-100 text-orange-800" : pedido.ESTADO === "EA" ? "bg-yellow-100 text-yellow-800" : "bg-gray-100 text-gray-800"}`}>
+              {pedido.ESTADO === "CO" ? "Confirmado" : pedido.ESTADO === "PA" ? "Parcial" : pedido.ESTADO === "EA" ? "En Armado" : pedido.ESTADO}
           </span>
         </div>
         <div className="col-span-2 text-sm text-gray-600">
