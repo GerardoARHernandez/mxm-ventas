@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "./AuthContext"; // Importar el contexto de autenticación
+import { useAuth } from "../context/AuthContext";
 
 export const usePedidoDetail = () => {
   const { id } = useParams();
