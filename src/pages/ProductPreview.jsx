@@ -31,7 +31,7 @@ const ProductPreview = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [canSellByPackage, setCanSellByPackage] = useState(false);
   const [packageDetails, setPackageDetails] = useState({ 
-    pzasPaq: 0, 
+    piecesPerPackage: 0, 
     hasPackageStock: false,
     hasPackagePreorderStock: false 
   });
@@ -74,20 +74,27 @@ const ProductPreview = () => {
         const variationsData = await variationsResponse.json();
         setVariations(variationsData || []);
         
-        // Verificar si se puede vender por paquete
-        const packageVariation = variationsData.find(variation => variation.pzasPaq > 0);
-        const canPackage = !!packageVariation;
-        setCanSellByPackage(canPackage);
+        // PRIMERO: Verificar si se puede vender por paquete (pzasPaq > 0)
+        const hasPackageVariation = variationsData.some(variation => parseInt(variation.pzasPaq) > 0);
         
-        if (packageVariation) {
-          const hasPackageStock = checkPackageStock(packageVariation.pzasPaq, variationsData, 'Exis');
-          const hasPackagePreorderStock = checkPackageStock(packageVariation.pzasPaq, variationsData, 'PorRecibir');
+        if (hasPackageVariation) {
+          // SEGUNDO: Si pzasPaq > 0, entonces verificar si hay tallas con minimo > 0
+          const canPackage = checkIfCanSellByPackage(variationsData);
+          setCanSellByPackage(canPackage);
           
-          setPackageDetails({
-            pzasPaq: packageVariation.pzasPaq,
-            hasPackageStock,
-            hasPackagePreorderStock
-          });
+          if (canPackage) {
+            const piecesPerPackage = getPiecesPerPackage(variationsData);
+            const hasPackageStock = checkPackageStock(piecesPerPackage, variationsData, 'Exis');
+            const hasPackagePreorderStock = checkPackageStock(piecesPerPackage, variationsData, 'PorRecibir');
+            
+            setPackageDetails({
+              piecesPerPackage,
+              hasPackageStock,
+              hasPackagePreorderStock
+            });
+          }
+        } else {
+          setCanSellByPackage(false);
         }
         
         if (variationsData.length > 0) {
@@ -106,12 +113,42 @@ const ProductPreview = () => {
     fetchProductData();
   }, [modelCode]);
 
+  // Función para verificar si se puede vender por paquete (basado en minimo)
+  const checkIfCanSellByPackage = (variationsData) => {
+    // Verificar si al menos una talla tiene minimo > 0
+    return variationsData.some(variation => 
+      variation.Tallas?.some(size => parseInt(size.minimo) > 0)
+    );
+  };
+
+  // Función para obtener la cantidad de piezas por paquete
+  const getPiecesPerPackage = (variationsData) => {
+    let maxMinimo = 0;
+    
+    variationsData.forEach(variation => {
+      variation.Tallas?.forEach(size => {
+        const minimo = parseInt(size.minimo) || 0;
+        if (minimo > maxMinimo) {
+          maxMinimo = minimo;
+        }
+      });
+    });
+    
+    return maxMinimo;
+  };
+
   // Función para verificar stock para paquete (inventario o preventa)
-  const checkPackageStock = (pzasPaq, variationsData, stockType = 'Exis') => {
+  const checkPackageStock = (piecesPerPackage, variationsData, stockType = 'Exis') => {
     return variationsData.every(variation => {
       return variation.Tallas?.every(size => {
+        const minimo = parseInt(size.minimo) || 0;
         const availableStock = parseInt(size[stockType]) || 0;
-        return availableStock >= pzasPaq;
+        
+        // Si minimo es 0, no es requerido para el paquete
+        if (minimo === 0) return true;
+        
+        // Si minimo > 0, verificar que haya stock suficiente
+        return availableStock >= minimo;
       });
     });
   };
@@ -127,17 +164,15 @@ const ProductPreview = () => {
   // Actualizar estado del paquete cuando cambian las variaciones
   useEffect(() => {
     if (variations.length > 0 && canSellByPackage) {
-      const packageVariation = variations.find(variation => variation.pzasPaq > 0);
-      if (packageVariation) {
-        const hasPackageStock = checkPackageStock(packageVariation.pzasPaq, variations, 'Exis');
-        const hasPackagePreorderStock = checkPackageStock(packageVariation.pzasPaq, variations, 'PorRecibir');
-        
-        setPackageDetails({
-          pzasPaq: packageVariation.pzasPaq,
-          hasPackageStock,
-          hasPackagePreorderStock
-        });
-      }
+      const piecesPerPackage = getPiecesPerPackage(variations);
+      const hasPackageStock = checkPackageStock(piecesPerPackage, variations, 'Exis');
+      const hasPackagePreorderStock = checkPackageStock(piecesPerPackage, variations, 'PorRecibir');
+      
+      setPackageDetails({
+        piecesPerPackage,
+        hasPackageStock,
+        hasPackagePreorderStock
+      });
     }
   }, [variations, canSellByPackage]);
 
@@ -389,11 +424,15 @@ const ProductPreview = () => {
         let lastResponse = null;
         let successCount = 0;
         
-        // Agregar pzasPaq cantidad de cada color/talla como preventa
+        // Agregar la cantidad especificada por minimo de cada color/talla como preventa
         for (const variation of variations) {
           for (const size of variation.Tallas) {
+            const minimo = parseInt(size.minimo) || 0;
+            // Si minimo es 0, no agregar esta talla al paquete
+            if (minimo === 0) continue;
+            
             // Usar precio3 (precio por paquete) para preventa también
-            const packagePrice = parseFloat(size.precio3) || 0;
+            const packagePrice = parseFloat(size.precio3) || getIndividualPrice();
             const desdeInventario = false; // Siempre false para preventa
 
             const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
@@ -405,7 +444,7 @@ const ProductPreview = () => {
               body: JSON.stringify({
                 Usuario: user.username,
                 articulo: size.Articulo,
-                cantidad: packageDetails.pzasPaq,
+                cantidad: minimo,
                 precio: packagePrice,
                 venta: ventaId,
                 desdeInventario: desdeInventario
@@ -447,11 +486,15 @@ const ProductPreview = () => {
         let lastResponse = null;
         let successCount = 0;
         
-        // Agregar pzasPaq cantidad de cada color/talla
+        // Agregar la cantidad especificada por minimo de cada color/talla
         for (const variation of variations) {
           for (const size of variation.Tallas) {
+            const minimo = parseInt(size.minimo) || 0;
+            // Si minimo es 0, no agregar esta talla al paquete
+            if (minimo === 0) continue;
+            
             // Usar precio3 (precio por paquete) en lugar del precio individual
-            const packagePrice = parseFloat(size.precio3) || 0;
+            const packagePrice = parseFloat(size.precio3) || getIndividualPrice();
             const desdeInventario = parseInt(size.Exis) > 0;
 
             const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
@@ -463,7 +506,7 @@ const ProductPreview = () => {
               body: JSON.stringify({
                 Usuario: user.username,
                 articulo: size.Articulo,
-                cantidad: packageDetails.pzasPaq,
+                cantidad: minimo,
                 precio: packagePrice,
                 venta: ventaId,
                 desdeInventario: desdeInventario
@@ -588,6 +631,11 @@ const ProductPreview = () => {
                     <span className="font-semibold">Por recibir:</span> {preorderStock}
                   </p>
                 )}
+                {canSellByPackage && selectedSizeData.minimo && selectedSizeData.minimo !== "0" && (
+                  <p className="text-sm text-purple-600">
+                    <span className="font-semibold">Mínimo por paquete:</span> {selectedSizeData.minimo}
+                  </p>
+                )}
               </div>
             )}
 
@@ -595,17 +643,17 @@ const ProductPreview = () => {
             {canSellByPackage && (
               <div className="bg-blue-50 rounded-lg p-3 mb-4">
                 <p className="text-sm text-blue-700">
-                  <strong>Venta por paquete disponible:</strong> {packageDetails.pzasPaq} piezas por color/talla
+                  <strong>Venta por paquete disponible:</strong> {packageDetails.piecesPerPackage} piezas por color/talla (según mínimo)
                 </p>
                 <p className="text-sm text-blue-600">
                   {packageDetails.hasPackageStock 
-                    ? `✓ Stock suficiente para paquete (${packageDetails.pzasPaq} piezas de cada color/talla)`
-                    : `✗ Stock insuficiente para paquete (se necesitan ${packageDetails.pzasPaq} piezas de cada color/talla)`
+                    ? `✓ Stock suficiente para paquete (${packageDetails.piecesPerPackage} piezas de cada color/talla requerido)`
+                    : `✗ Stock insuficiente para paquete (se necesitan ${packageDetails.piecesPerPackage} piezas de cada color/talla requerido)`
                   }
                 </p>
                 <p className="text-sm text-orange-600">
                   {packageDetails.hasPackagePreorderStock 
-                    ? `✓ Stock suficiente para preventa por paquete (${packageDetails.pzasPaq} piezas de cada color/talla)`
+                    ? `✓ Stock suficiente para preventa por paquete (${packageDetails.piecesPerPackage} piezas de cada color/talla requerido)`
                     : `✗ Stock insuficiente para preventa por paquete`
                   }
                 </p>

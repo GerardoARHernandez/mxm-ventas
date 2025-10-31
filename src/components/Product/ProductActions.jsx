@@ -69,10 +69,10 @@ const ProductActions = ({
           <div className="flex items-center gap-2 mb-2">
             <span className="text-lg font-semibold text-gray-700">Paquete desde inventario:</span>
             <span className="text-lg font-bold text-purple-600">
-              ${packagePrice ? (packagePrice * packageDetails.pzasPaq).toFixed(2) : '0.00'}
+              ${packagePrice ? (packagePrice * packageDetails.piecesPerPackage).toFixed(2) : '0.00'}
             </span>
             <span className="text-sm text-purple-500">
-              ({packageDetails.pzasPaq} piezas por color/talla)
+              ({packageDetails.piecesPerPackage} piezas por color/talla requerido)
             </span>
           </div>
           
@@ -100,10 +100,10 @@ const ProductActions = ({
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg font-semibold text-gray-700">Paquete en preventa:</span>
               <span className="text-lg font-bold text-orange-600">
-                ${packagePrice ? (packagePrice * packageDetails.pzasPaq).toFixed(2) : '0.00'}
+                ${packagePrice ? (packagePrice * packageDetails.piecesPerPackage).toFixed(2) : '0.00'}
               </span>
               <span className="text-sm text-orange-500">
-                ({packageDetails.pzasPaq} piezas por color/talla)
+                ({packageDetails.piecesPerPackage} piezas por color/talla requerido)
               </span>
             </div>
             
