@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCheck, FiRotateCcw, FiX } from "react-icons/fi";
+import { FiArrowLeft, FiCheck, FiRotateCcw, FiX, FiArrowUp, FiArrowDown } from "react-icons/fi";
 import ImageModal from "./ImageModal";
 
 const PedidoDetail = () => {
@@ -13,6 +13,10 @@ const PedidoDetail = () => {
   const [currentImage, setCurrentImage] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Estados para ordenamiento
+  const [sortField, setSortField] = useState('PartId');
+  const [sortDirection, setSortDirection] = useState('asc');
 
   // Clave para el localStorage
   const storageKey = `pedido_${id}_surtido`;
@@ -115,6 +119,60 @@ const PedidoDetail = () => {
     return detalle.Part.filter(part => 
       part.Stock === 1 && !part.Articulo?.startsWith('99PAQ')
     );
+  };
+
+  // Función para ordenar las partes
+  const partesOrdenadas = () => {
+    const partes = partesFiltradas();
+    
+    return partes.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortField) {
+        case 'Descrip':
+          aValue = a.Descrip || '';
+          bValue = b.Descrip || '';
+          break;
+        case 'Ubicacion':
+          aValue = a.Ubicacion || '';
+          bValue = b.Ubicacion || '';
+          break;
+        case 'PartId':
+        default:
+          aValue = a.PartId || '';
+          bValue = b.PartId || '';
+          break;
+      }
+      
+      // Comparar valores
+      if (aValue < bValue) {
+        return sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
+  // Función para manejar el cambio de ordenamiento
+  const handleSort = (field) => {
+    if (sortField === field) {
+      // Cambiar dirección si es el mismo campo
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Cambiar campo y resetear dirección a ascendente
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  // Función para obtener el icono de ordenamiento
+  const getSortIcon = (field) => {
+    if (sortField !== field) {
+      return null;
+    }
+    return sortDirection === 'asc' ? <FiArrowUp className="inline ml-1" /> : <FiArrowDown className="inline ml-1" />;
   };
 
   // Función para contar artículos ocultos (sin stock + 99PAQ)
@@ -274,13 +332,13 @@ const PedidoDetail = () => {
   if (error) return <ErrorScreen error={error} />;
   if (!pedido || !detalle) return <ErrorScreen error="No se pudo cargar la información del pedido" />;
 
-  const partesMostrar = partesFiltradas();
+  const partesMostrar = partesOrdenadas();
   const partesOcultadas = contarArticulosOcultos();
   const partes99PAQ = contarArticulos99PAQ();
 
   // Calcular total de piezas y piezas surtidas
-  const totalPiezas = partesMostrar.reduce((total, part) => total + parseInt(part.Cant), 0);
-  const piezasSurtidas = partesMostrar.reduce((total, part) => 
+  const totalPiezas = partesFiltradas().reduce((total, part) => total + parseInt(part.Cant), 0);
+  const piezasSurtidas = partesFiltradas().reduce((total, part) => 
     total + (part.Status.trim() === "1" ? parseInt(part.Cant) : 0), 0
   );
 
@@ -382,20 +440,32 @@ const PedidoDetail = () => {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Imagen
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Descripción
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleSort('Descrip')}
+                    >
+                      Descripción {getSortIcon('Descrip')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Cantidad
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Ubicación
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleSort('Ubicacion')}
+                    >
+                      Ubicación {getSortIcon('Ubicacion')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Estado
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Artículo
+                    <th 
+                      scope="col" 
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleSort('PartId')}
+                    >
+                      Artículo {getSortIcon('PartId')}
                     </th>                  
                   </tr>
                 </thead>
@@ -493,9 +563,9 @@ const PedidoDetail = () => {
               </button>
               <button
                 onClick={guardarCambios}
-                disabled={!todosSurtidos() || saving || partesMostrar.length === 0}
+                disabled={!todosSurtidos() || saving || partesFiltradas().length === 0}
                 className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 hover:cursor-pointer ${
-                  todosSurtidos() && partesMostrar.length > 0
+                  todosSurtidos() && partesFiltradas().length > 0
                     ? "bg-rose-600 hover:bg-rose-700" 
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
