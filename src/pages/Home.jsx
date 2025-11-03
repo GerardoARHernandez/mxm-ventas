@@ -172,6 +172,7 @@ const Home = () => {
                                         Importe {getSortIcon('importe')}
                                     </div>
                                 </th>
+                                <th className="border border-blue-400 px-3 py-2 text-left">Piezas</th>
                                 <th className="border border-blue-400 px-3 py-2 text-left">Tipo</th>
                             </tr>
                         </thead>
@@ -201,6 +202,7 @@ const Home = () => {
                                         </div>
                                     </td>
                                     <td className="border border-blue-400 px-3 py-2">${item.importe.toFixed(2)}</td>
+                                    <td className="border border-blue-400 px-3 py-2">{item.pzas}</td>
                                     <td className="border border-blue-400 px-3 py-2">
                                         {item.estado === 'CT' ? 
                                             <span className="bg-blue-500 text-white font-bold px-2 py-1 rounded text-sm uppercase">En Cotización</span> : 

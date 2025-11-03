@@ -17,6 +17,7 @@ const Cart = () => {
   const [imagesData, setImagesData] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [processingOrder, setProcessingOrder] = useState(false);
+  const [addingTicket, setAddingTicket] = useState(false);
 
   // Función para obtener el modelo del artículo (caracteres 3-6)
   const getModeloFromArticulo = (articulo) => {
@@ -70,6 +71,68 @@ const Cart = () => {
     }
     
     return images;
+  };
+
+  // Función para agregar el producto TICKET
+  const agregarTicket = async () => {
+    if (!pedidoId || !user) {
+      alert("No hay pedido activo o usuario no logueado");
+      return;
+    }
+
+    try {
+      setAddingTicket(true);
+      
+      const response = await fetch(
+        "https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            Usuario: user.usuario || "",
+            articulo: "PAQN7",
+            cantidad: 1,
+            precio: 0,
+            venta: pedidoId,
+            desdeInventario: true
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Error al agregar el ticket");
+      }
+
+      const result = await response.json();
+      
+      // Recargar los datos del carrito para reflejar el cambio
+      const cartResponse = await fetch(
+        `https://systemweb.ddns.net/CarritoWeb/APICarrito/Pedido/${pedidoId}?t=${Date.now()}`,
+        {
+          cache: "no-store"
+        }
+      );
+      
+      if (cartResponse.ok) {
+        const updatedCartData = await cartResponse.json();
+        setCartData(updatedCartData);
+        
+        // Cargar imágenes para todos los artículos
+        if (updatedCartData.Part && updatedCartData.Part.length > 0) {
+          const images = await loadCartImages(updatedCartData.Part);
+          setImagesData(images);
+        }
+      }
+      
+      alert("Ticket agregado correctamente al pedido");
+    } catch (err) {
+      console.error("Error al agregar ticket:", err);
+      alert(`Error al agregar ticket: ${err.message}`);
+    } finally {
+      setAddingTicket(false);
+    }
   };
 
   useEffect(() => {
@@ -514,17 +577,37 @@ const Cart = () => {
             {/* Botones de Acción Globales */}
             {(itemsStock.length > 0 || itemsNoStock.length > 0) && (
               <div className="mt-8 flex flex-wrap gap-4 justify-between items-center">
-                {/* <div className="flex gap-2">
-                  <button
-                    onClick={clearCart}
-                    disabled={loading}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md disabled:opacity-50 transition-colors"
-                  >
-                    Vaciar Carrito
-                  </button>
-                </div> */}
-                
                 <div className="flex flex-wrap gap-2">
+                  {/* Botón para agregar ticket */}
+                  <button
+                    onClick={agregarTicket}
+                    disabled={addingTicket || loading}
+                    className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-md disabled:opacity-50 transition-colors"
+                  >
+                    {addingTicket ? (
+                      'Agregando...'
+                    ) : (
+                      <>
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="h-5 w-5" 
+                          viewBox="0 0 20 20" 
+                          fill="currentColor"
+                        >
+                          <path 
+                            fillRule="evenodd" 
+                            d="M5 4a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V5a1 1 0 00-1-1H5zm0-2a3 3 0 00-3 3v10a3 3 0 003 3h10a3 3 0 003-3V5a3 3 0 00-3-3H5z" 
+                            clipRule="evenodd" 
+                          />
+                          <path 
+                            d="M7 7a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zM7 10a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zM7 13a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" 
+                          />
+                        </svg>
+                        Imprimir
+                      </>
+                    )}
+                  </button>
+                  
                   {/* Mostrar botón "Confirmar Solo Stock" solo cuando hay artículos sin stock */}
                   {hasNoStockItems && itemsStock.length > 0 && (
                     <button
