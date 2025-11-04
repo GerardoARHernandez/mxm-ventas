@@ -73,7 +73,7 @@ const Cart = () => {
     return images;
   };
 
-  // Función para agregar el producto TICKET
+  // Función para agregar el producto TICKET (99PAQN700)
   const agregarTicket = async () => {
     if (!pedidoId || !user) {
       alert("No hay pedido activo o usuario no logueado");
@@ -92,7 +92,7 @@ const Cart = () => {
           },
           body: JSON.stringify({
             Usuario: user.usuario || "",
-            articulo: "PAQN7",
+            articulo: "99PAQN700", 
             cantidad: 1,
             precio: 0,
             venta: pedidoId,
@@ -179,6 +179,9 @@ const Cart = () => {
   // Verificar si hay servicios de paquetería en el carrito
   const hasPaqueteria = useMemo(() => {
     if (!cartData?.Part) return false;
+    if (cartData.Part.some(item => item.Articulo.startsWith('99PAQN700'))) {
+      return false;
+    }
     return cartData.Part.some(item => item.Articulo.startsWith('99PAQ'));
   }, [cartData]);
 
