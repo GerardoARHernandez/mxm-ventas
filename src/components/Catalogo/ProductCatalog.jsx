@@ -196,7 +196,7 @@ export const ProductCatalog = ({ product }) => {
                   <div className="flex flex-wrap gap-2 mt-2">
                     {item.isImport && (
                       <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300">
-                        IMPORTACIÓN
+                        EN IMPORTACIÓN NO HAY CAMBIOS
                       </div>
                     )}
                     <div className="inline-block px-2 py-1 lg:px-3 lg:py-1 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full text-xs font-semibold text-purple-300">
