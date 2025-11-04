@@ -2,11 +2,8 @@ import { useState, useRef } from 'react';
 import { DownloadButton } from "./DownloadButton";
 import { useLocation } from 'react-router-dom';
 
-
 export const ProductCatalog = ({ product }) => {
   const location = useLocation().pathname === '/catalogousuario';
-
-
   const [currentImage, setCurrentImage] = useState(0);
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
@@ -46,6 +43,14 @@ export const ProductCatalog = ({ product }) => {
     touchStartX.current = null;
     touchEndX.current = null;
   };
+
+  // Función para obtener el SKU correspondiente a la imagen actual
+  const getCurrentImageSKU = () => {
+    if (product.rectangles.length > currentImage) {
+      return product.rectangles[currentImage]?.sku?.trim() || '';
+    }
+    return '';
+  };
   
   return (
     <div className="group relative max-w-4xl mx-auto w-full overflow-x-hidden">
@@ -76,6 +81,13 @@ export const ProductCatalog = ({ product }) => {
               
               {/* Overlay gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+              {/* Badge de SKU en la esquina superior derecha */}
+              {getCurrentImageSKU() && (
+                <div className="absolute top-3 right-3 bg-black/10 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/10">
+                  SKU: {getCurrentImageSKU()}
+                </div>
+              )}
 
               {/* Navegación de imágenes */}
               {product.images.length > 1 && (
@@ -123,7 +135,7 @@ export const ProductCatalog = ({ product }) => {
             <div className="space-y-4 lg:space-y-8 w-full">
               {product.rectangles.map((item, index) => (
                 <div key={index} className="group/item w-full">
-                  {/* Badge con código */}
+                  {/* Badge con código */}                  
                   <div className="flex items-start space-x-3 mb-3 w-full">
                     <div 
                       className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl font-bold shadow-lg transform transition-all duration-300 group-hover/item:scale-105 group-hover/item:rotate-3 flex-shrink-0"
@@ -143,8 +155,8 @@ export const ProductCatalog = ({ product }) => {
                       >
                         {item.description.replace(/PRECIO ESPECIAL POR PAQUETE/g, '').replace(/TALLA: UT/g, '').trim()}
                       </p>
-                    </div>
-                  </div>                  
+                    </div>                    
+                  </div>                                  
 
                   {/* Separador elegante - solo en desktop */}
                   {index < product.rectangles.length - 1 && (
@@ -166,6 +178,11 @@ export const ProductCatalog = ({ product }) => {
                       PRECIO ESPECIAL POR PAQUETE
                     </div>
                   </div>
+                  {item.isLastPieces && (
+                    <div className="bg-red-500 text-white mt-2 px-2 py-1 rounded text-lg text-center font-bold animate-pulse">
+                      ¡Ultimas Piezas!
+                    </div>
+                  )}  
                 </div>
               ))}              
             </div>
