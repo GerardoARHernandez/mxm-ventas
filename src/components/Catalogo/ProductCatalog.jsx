@@ -44,12 +44,41 @@ export const ProductCatalog = ({ product }) => {
     touchEndX.current = null;
   };
 
-  // Función para obtener el SKU correspondiente a la imagen actual
-  const getCurrentImageSKU = () => {
-    if (product.rectangles.length > currentImage) {
-      return product.rectangles[currentImage]?.sku?.trim() || '';
+  // Función para obtener todos los SKUs disponibles
+  const getAvailableSKUs = () => {
+    return product.rectangles
+      .filter(rectangle => rectangle.sku?.trim() !== '')
+      .map(rectangle => rectangle.sku.trim());
+  };
+
+  // Función para renderizar los badges de SKU
+  const renderSKUBadges = () => {
+    const availableSKUs = getAvailableSKUs();
+    
+    if (availableSKUs.length === 0) return null;
+
+    if (availableSKUs.length === 1) {
+      // Solo un SKU - mostrar en esquina superior derecha
+      return (
+        <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
+          SKU: {availableSKUs[0]}
+        </div>
+      );
+    } else {
+      // Dos SKUs - mostrar ambos en esquinas derechas
+      return (
+        <>
+          {/* SKU1 en esquina superior derecha */}
+          <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
+            SKU: {availableSKUs[0]}
+          </div>
+          {/* SKU2 en esquina inferior derecha */}
+          <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
+            SKU: {availableSKUs[1]}
+          </div>
+        </>
+      );
     }
-    return '';
   };
   
   return (
@@ -82,12 +111,8 @@ export const ProductCatalog = ({ product }) => {
               {/* Overlay gradient */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-              {/* Badge de SKU en la esquina superior derecha */}
-              {getCurrentImageSKU() && (
-                <div className="absolute top-3 right-3 bg-black/10 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/10">
-                  SKU: {getCurrentImageSKU()}
-                </div>
-              )}
+              {/* Badges de SKU */}
+              {renderSKUBadges()}
 
               {/* Navegación de imágenes */}
               {product.images.length > 1 && (
