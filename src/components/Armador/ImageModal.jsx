@@ -1,3 +1,4 @@
+// src/components/Armador/ImageModal.jsx
 import { FiX } from "react-icons/fi";
 
 const ImageModal = ({ isOpen, imageUrl, onClose }) => {

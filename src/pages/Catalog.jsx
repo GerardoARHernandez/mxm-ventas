@@ -55,91 +55,93 @@ const Catalog = () => {
   }, []);
 
   const transformApiData = (apiData) => {
-    const productsByCategory = {};
-    
-    if (!apiData || !Array.isArray(apiData)) {
-      return [];
+  const productsByCategory = {};
+  
+  if (!apiData || !Array.isArray(apiData)) {
+    return [];
+  }
+  
+  apiData.forEach((item) => {
+    // Solo procesar productos activos si estamos en la ruta /catalogo
+    if (!isUsuarioRoute && item.Activo !== 1) {
+      return;
     }
     
-    apiData.forEach((item) => {
-      // Solo procesar productos activos si estamos en la ruta /catalogo
-      if (!isUsuarioRoute && item.Activo !== 1) {
-        return;
-      }
-      
-      const categoryKey = `${item.NombreCat?.trim() || 'Sin categoría'}-${item.Id}`;
-      
-      if (!productsByCategory[categoryKey]) {
-        productsByCategory[categoryKey] = {
-          id: item.Id,
-          category: item.NombreCat?.trim() || 'Sin categoría',
-          clasificacion: item.Clasificacion || item.NombreCat?.trim() || 'Sin clasificación',
-          activo: item.Activo,
-          rectangles: [],
-          images: []
-        };
-      }
-      
-      for (let i = 1; i <= 2; i++) {
-        const cajaKey = `Caja${i}`;
-        if (item[cajaKey]) {
-          const caja = item[cajaKey];
-          const imageName = caja[`Imagen${i}`];
-          const existenciaKey = `existencia${i}`;
-          const existencia = caja[existenciaKey];
-          
-          const hasValidData = (caja[`descrip${i}`]?.trim() !== '' && caja[`descrip${i}`]?.trim() !== undefined) || 
-                              (caja[`SKU${i}`]?.trim() !== '' && caja[`SKU${i}`]?.trim() !== undefined);
-          
-          // Para /catalogo: solo agregar rectangles con existencia diferente de "0"
-          if (!isUsuarioRoute && existencia === "0") {
-            continue;
-          }
-          
-          if (imageName && imageName.trim() !== '') {
-            const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName.trim()}`;
-            if (!productsByCategory[categoryKey].images.includes(imageUrl)) {
-              productsByCategory[categoryKey].images.push(imageUrl);
-            }
-          }
-          
-          if (hasValidData) {
-            // Verificar si es última pieza (stock < 15)
-            const stockNumber = parseInt(existencia, 15);
-            const isLastPieces = stockNumber < 15 && stockNumber > 0;
-            
-            const rectangleData = {
-              id: `${item.Id}-${i}`,
-              code: caja[`LT${i}`]?.trim() || '',
-              description: caja[`descrip${i}`]?.trim() || '',
-              bgColor: `rgb(${caja[`R${i}`] || '0'}, ${caja[`G${i}`] || '0'}, ${caja[`B${i}`] || '0'})`,
-              textColor: '#000000',
-              logoTextColor: '#ffffff',
-              price: caja[`precio1_${i}`],
-              sku: caja[`SKU${i}`]?.trim() || '',
-              stock: existencia,
-              image: imageName,
-              isImport: caja[`LogoImp${i}`] == 1,
-              activo: item.Activo,
-              isLastPieces: isLastPieces // Nueva propiedad para identificar últimas piezas
-            };
-            productsByCategory[categoryKey].rectangles.push(rectangleData);
+    const categoryKey = `${item.NombreCat?.trim() || 'Sin categoría'}-${item.Id}`;
+    
+    if (!productsByCategory[categoryKey]) {
+      productsByCategory[categoryKey] = {
+        id: item.Id,
+        category: item.NombreCat?.trim() || 'Sin categoría',
+        clasificacion: item.Clasificacion || item.NombreCat?.trim() || 'Sin clasificación',
+        activo: item.Activo,
+        rectangles: [],
+        images: []
+      };
+    }
+    
+    for (let i = 1; i <= 2; i++) {
+      const cajaKey = `Caja${i}`;
+      if (item[cajaKey]) {
+        const caja = item[cajaKey];
+        const imageName = caja[`Imagen${i}`];
+        const existenciaKey = `existencia${i}`;
+        const existencia = caja[existenciaKey];
+        const varModKey = `VarMod${i}`; // Nuevo campo para la variación del modelo
+        
+        const hasValidData = (caja[`descrip${i}`]?.trim() !== '' && caja[`descrip${i}`]?.trim() !== undefined) || 
+                            (caja[`SKU${i}`]?.trim() !== '' && caja[`SKU${i}`]?.trim() !== undefined);
+        
+        // Para /catalogo: solo agregar rectangles con existencia diferente de "0"
+        if (!isUsuarioRoute && existencia === "0") {
+          continue;
+        }
+        
+        if (imageName && imageName.trim() !== '') {
+          const imageUrl = `https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${imageName.trim()}`;
+          if (!productsByCategory[categoryKey].images.includes(imageUrl)) {
+            productsByCategory[categoryKey].images.push(imageUrl);
           }
         }
+        
+        if (hasValidData) {
+          // Verificar si es última pieza (stock < 15)
+          const stockNumber = parseInt(existencia, 15);
+          const isLastPieces = stockNumber < 15 && stockNumber > 0;
+          
+          const rectangleData = {
+            id: `${item.Id}-${i}`,
+            code: caja[`LT${i}`]?.trim() || '',
+            description: caja[`descrip${i}`]?.trim() || '',
+            bgColor: `rgb(${caja[`R${i}`] || '0'}, ${caja[`G${i}`] || '0'}, ${caja[`B${i}`] || '0'})`,
+            textColor: '#000000',
+            logoTextColor: '#ffffff',
+            price: caja[`precio1_${i}`],
+            sku: caja[`SKU${i}`]?.trim() || '',
+            stock: existencia,
+            image: imageName,
+            isImport: caja[`LogoImp${i}`] == 1,
+            activo: item.Activo,
+            isLastPieces: isLastPieces,
+            varMod: caja[varModKey]?.trim() || '' // Nuevo campo para la variación del modelo
+          };
+          productsByCategory[categoryKey].rectangles.push(rectangleData);
+        }
       }
-    });
-    
-    const result = Object.values(productsByCategory)
-      .map(product => ({
-        ...product,
-        images: product.images.length > 0 
-          ? product.images 
-          : [`https://placehold.co/400/orange/white?text=Imagen\n+No+Disponible`]
-      }))
-      .filter(product => product.rectangles.length > 0);
-    
-    return result;
-  };
+    }
+  });
+  
+  const result = Object.values(productsByCategory)
+    .map(product => ({
+      ...product,
+      images: product.images.length > 0 
+        ? product.images 
+        : [`https://placehold.co/400/orange/white?text=Imagen\n+No+Disponible`]
+    }))
+    .filter(product => product.rectangles.length > 0);
+  
+  return result;
+};
 
   // Obtener categorías para la ruta /catalogousuario
   const categories = [...new Set(products.map(product => product.category))];

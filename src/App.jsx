@@ -11,6 +11,7 @@ import OutOfStockPreview from './pages/OutOfStockPreview';
 import ProductGrid from './components/ProductGrid';
 import { CartProvider } from './context/CartContext.jsx'
 import Catalog from './pages/Catalog.jsx';
+import ModelDetail from './components/Catalogo/ModelDetail.jsx';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user } = useAuth();
@@ -52,6 +53,7 @@ function AppContent() {
       <Route path="/agotados" element={<OutOfStockPreview />} />
       <Route path="/catalogo" element={<Catalog />} />
       <Route path="/catalogousuario" element={<Catalog />} />
+      <Route path="/modelo/:modelId" element={<ModelDetail />} /> 
 
       {/* Rutas que comparten el Header y el contenedor */}
       <Route path="/" element={<MainLayout />}>
