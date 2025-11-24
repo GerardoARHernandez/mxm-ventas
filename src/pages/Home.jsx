@@ -196,7 +196,7 @@ const Home = () => {
                         <tbody>
                             {sortedSalesData.map((item) => (
                                 <tr key={item.venta} className="even:bg-white odd:bg-blue-100 hover:bg-blue-50">
-                                    <td className="border border-blue-400 px-4 py-2">{item.venta} - {fechaActual(item.fecha)}</td>
+                                    <td className="border border-blue-400 px-4 py-2">ID: {item.venta} - {fechaActual(item.fecha)}</td>
                                     <td className="border border-blue-400 px-4 py-2">
                                         <div className="flex justify-between gap-2">
                                             {item.nombre}
