@@ -40,7 +40,8 @@ const Home = () => {
                         nombre: item.NombreCLIENTE,
                         importe: parseFloat(detalleData.TotVenta) || 0,
                         estado: item.ESTADO,
-                        pzas: parseInt(detalleData.TotPzas) || 0
+                        pzas: parseInt(detalleData.TotPzas) || 0,
+                        fecha: item.Fecha
                       };
                     }
                     return {
@@ -112,6 +113,20 @@ const Home = () => {
         return sortConfig.direction === 'asc' ? <FaArrowUp /> : <FaArrowDown />;
     };
 
+    const fechaActual = (dateInput) => {
+        const dateObject = new Date(dateInput);
+
+        //Validar si la conversión fue exitosa
+        // getTime() devuelve NaN para fechas inválidas, isNaN() comprueba eso.
+        if (isNaN(dateObject.getTime())) {
+            console.error("Error: La fecha de entrada es inválida ->", dateInput);
+            return "Fecha inválida"; // O puedes devolver un string vacío ""
+        }
+        
+        const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
+        return new Intl.DateTimeFormat('es-MX', options).format(dateObject);
+    };
+
     const sortedSalesData = getSortedData();
 
     if (loading) {
@@ -129,6 +144,8 @@ const Home = () => {
             </div>
         );
     }
+
+    
 
     return (
         <div className="mt-5 mx-2 sm:mx-0">
@@ -179,7 +196,7 @@ const Home = () => {
                         <tbody>
                             {sortedSalesData.map((item) => (
                                 <tr key={item.venta} className="even:bg-white odd:bg-blue-100 hover:bg-blue-50">
-                                    <td className="border border-blue-400 px-4 py-2">{item.venta}</td>
+                                    <td className="border border-blue-400 px-4 py-2">{item.venta} - {fechaActual(item.fecha)}</td>
                                     <td className="border border-blue-400 px-4 py-2">
                                         <div className="flex justify-between gap-2">
                                             {item.nombre}
