@@ -342,19 +342,25 @@ const ProductPreview = () => {
           })
         });
 
-        if (!response.ok) {
-          // Revertir cambios locales si hay error
-          setVariations(variations);
-          throw new Error("Error al agregar el artículo al pedido");
-        }
-
         const result = await response.json();
         
-        // Actualizar contador del carrito
-        updateCartCount(true);
-        
-        setSuccessMessage('Pedido agregado correctamente');
-        setTimeout(() => setSuccessMessage(''), 3000);
+        // VERIFICAR EL MENSAJE DE RESPUESTA
+        if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
+          // Revertir cambios locales si hay error
+          setVariations(variations);
+          throw new Error(result.Mensaje || "Error al agregar el artículo al pedido");
+        }
+
+        // Si llegamos aquí, el mensaje fue exitoso
+        if (result.Mensaje === "Artículo agregado correctamente") {
+          // Actualizar contador del carrito
+          updateCartCount(true);
+          
+          setSuccessMessage('Pedido agregado correctamente');
+          setTimeout(() => setSuccessMessage(''), 3000);
+        } else {
+          throw new Error(result.Mensaje || "Respuesta inesperada del servidor");
+        }
       },
       'Ocurrió un error al agregar el artículo. Por favor intenta nuevamente.'
     );
@@ -394,19 +400,25 @@ const ProductPreview = () => {
           })
         });
 
-        if (!response.ok) {
-          throw new Error("Error al agregar la preventa al pedido");
-        }
-
         const result = await response.json();
         
-        // Actualizar contador del carrito
-        updateCartCount(true);
-        
-        if (pedidoId) {
-          navigate(`/carrito?pedido=${pedidoId}`);
+        // VERIFICAR EL MENSAJE DE RESPUESTA
+        if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
+          throw new Error(result.Mensaje || "Error al agregar la preventa al pedido");
+        }
+
+        // Si llegamos aquí, el mensaje fue exitoso
+        if (result.Mensaje === "Artículo agregado correctamente") {
+          // Actualizar contador del carrito
+          updateCartCount(true);
+          
+          if (pedidoId) {
+            navigate(`/carrito?pedido=${pedidoId}`);
+          } else {
+            navigate(`/carrito?pedido=${result.Folio}`);
+          }
         } else {
-          navigate(`/carrito?pedido=${result.Folio}`);
+          throw new Error(result.Mensaje || "Respuesta inesperada del servidor");
         }
       },
       'Ocurrió un error al agregar la preventa. Por favor intenta nuevamente.'
@@ -423,6 +435,8 @@ const ProductPreview = () => {
         const ventaId = pedidoId || 'NUEVO';
         let lastResponse = null;
         let successCount = 0;
+        let hasError = false;
+        let errorMessage = '';
         
         // Agregar la cantidad especificada por minimo de cada color/talla como preventa
         for (const variation of variations) {
@@ -451,13 +465,30 @@ const ProductPreview = () => {
               })
             });
 
-            if (!response.ok) {
-              throw new Error(`Error al agregar el artículo ${size.Articulo} a la preventa`);
+            const result = await response.json();
+            
+            // VERIFICAR EL MENSAJE DE RESPUESTA
+            if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
+              hasError = true;
+              errorMessage = result.Mensaje || `Error al agregar el artículo ${size.Articulo} a la preventa`;
+              break; // Salir del loop si hay error
+            }
+
+            // Verificar que el mensaje sea exitoso
+            if (result.Mensaje !== "Artículo agregado correctamente") {
+              hasError = true;
+              errorMessage = result.Mensaje || "Respuesta inesperada del servidor";
+              break;
             }
             
             lastResponse = response;
             successCount++;
           }
+          if (hasError) break; // Salir del loop exterior si hay error
+        }
+
+        if (hasError) {
+          throw new Error(errorMessage);
         }
 
         const result = await lastResponse.json();
@@ -485,6 +516,8 @@ const ProductPreview = () => {
         const ventaId = pedidoId || 'NUEVO';
         let lastResponse = null;
         let successCount = 0;
+        let hasError = false;
+        let errorMessage = '';
         
         // Agregar la cantidad especificada por minimo de cada color/talla
         for (const variation of variations) {
@@ -513,13 +546,30 @@ const ProductPreview = () => {
               })
             });
 
-            if (!response.ok) {
-              throw new Error(`Error al agregar el artículo ${size.Articulo} al pedido`);
+            const result = await response.json();
+            
+            // VERIFICAR EL MENSAJE DE RESPUESTA
+            if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
+              hasError = true;
+              errorMessage = result.Mensaje || `Error al agregar el artículo ${size.Articulo} al pedido`;
+              break; // Salir del loop si hay error
+            }
+
+            // Verificar que el mensaje sea exitoso
+            if (result.Mensaje !== "Artículo agregado correctamente") {
+              hasError = true;
+              errorMessage = result.Mensaje || "Respuesta inesperada del servidor";
+              break;
             }
             
             lastResponse = response;
             successCount++;
           }
+          if (hasError) break; // Salir del loop exterior si hay error
+        }
+
+        if (hasError) {
+          throw new Error(errorMessage);
         }
 
         const result = await lastResponse.json();
