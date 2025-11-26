@@ -114,13 +114,17 @@ const Home = () => {
     };
 
     const fechaActual = (dateInput) => {
+        // Si la fecha viene en formato YYYY-MM-DD, agregar la zona horaria
+        if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+            // Agregar 'T00:00:00' para especificar que es medianoche en la fecha local
+            dateInput = dateInput + 'T00:00:00';
+        }
         const dateObject = new Date(dateInput);
 
-        //Validar si la conversión fue exitosa
-        // getTime() devuelve NaN para fechas inválidas, isNaN() comprueba eso.
+        // Validar si la conversión fue exitosa
         if (isNaN(dateObject.getTime())) {
             console.error("Error: La fecha de entrada es inválida ->", dateInput);
-            return "Fecha inválida"; // O puedes devolver un string vacío ""
+            return "Fecha inválida";
         }
         
         const options = { year: 'numeric', month: 'numeric', day: 'numeric' };
