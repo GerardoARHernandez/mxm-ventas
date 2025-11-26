@@ -433,21 +433,18 @@ const ProductPreview = () => {
         setProcessingMessage('Procesando paquete en preventa... Esto puede tomar unos segundos.');
         
         const ventaId = pedidoId || 'NUEVO';
-        let lastResponse = null;
+        let lastResult = null; // Cambiar aquí también
         let successCount = 0;
         let hasError = false;
         let errorMessage = '';
         
-        // Agregar la cantidad especificada por minimo de cada color/talla como preventa
         for (const variation of variations) {
           for (const size of variation.Tallas) {
             const minimo = parseInt(size.minimo) || 0;
-            // Si minimo es 0, no agregar esta talla al paquete
             if (minimo === 0) continue;
             
-            // Usar precio3 (precio por paquete) para preventa también
             const packagePrice = parseFloat(size.precio3) || getIndividualPrice();
-            const desdeInventario = false; // Siempre false para preventa
+            const desdeInventario = false;
 
             const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
               method: 'POST',
@@ -467,39 +464,35 @@ const ProductPreview = () => {
 
             const result = await response.json();
             
-            // VERIFICAR EL MENSAJE DE RESPUESTA
+            lastResult = result; // Guardar el resultado
+            
             if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
               hasError = true;
               errorMessage = result.Mensaje || `Error al agregar el artículo ${size.Articulo} a la preventa`;
-              break; // Salir del loop si hay error
+              break;
             }
 
-            // Verificar que el mensaje sea exitoso
             if (result.Mensaje !== "Artículo agregado correctamente") {
               hasError = true;
               errorMessage = result.Mensaje || "Respuesta inesperada del servidor";
               break;
             }
             
-            lastResponse = response;
             successCount++;
           }
-          if (hasError) break; // Salir del loop exterior si hay error
+          if (hasError) break;
         }
 
         if (hasError) {
           throw new Error(errorMessage);
         }
 
-        const result = await lastResponse.json();
-        
-        // Actualizar contador del carrito
         updateCartCount(true);
         
         if (pedidoId) {
           navigate(`/carrito?pedido=${pedidoId}`);
         } else {
-          navigate(`/carrito?pedido=${result.Folio}`);
+          navigate(`/carrito?pedido=${lastResult.Folio}`); // Usar lastResult aquí
         }
       },
       'Ocurrió un error al agregar el paquete en preventa. Por favor intenta nuevamente.'
@@ -514,7 +507,7 @@ const ProductPreview = () => {
         setProcessingMessage('Procesando paquete completo... Esto puede tomar unos segundos.');
         
         const ventaId = pedidoId || 'NUEVO';
-        let lastResponse = null;
+        let lastResult = null; // Cambiar a lastResult en lugar de lastResponse
         let successCount = 0;
         let hasError = false;
         let errorMessage = '';
@@ -548,6 +541,9 @@ const ProductPreview = () => {
 
             const result = await response.json();
             
+            // Guardar el último resultado exitoso
+            lastResult = result;
+            
             // VERIFICAR EL MENSAJE DE RESPUESTA
             if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
               hasError = true;
@@ -562,7 +558,6 @@ const ProductPreview = () => {
               break;
             }
             
-            lastResponse = response;
             successCount++;
           }
           if (hasError) break; // Salir del loop exterior si hay error
@@ -572,15 +567,14 @@ const ProductPreview = () => {
           throw new Error(errorMessage);
         }
 
-        const result = await lastResponse.json();
-        
+        // Usar lastResult en lugar de lastResponse.json()
         // Actualizar contador del carrito
         updateCartCount(true);
         
         if (pedidoId) {
           navigate(`/carrito?pedido=${pedidoId}`);
         } else {
-          navigate(`/carrito?pedido=${result.Folio}`);
+          navigate(`/carrito?pedido=${lastResult.Folio}`);
         }
       },
       'Ocurrió un error al agregar el paquete. Por favor intenta nuevamente.'
