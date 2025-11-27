@@ -42,6 +42,16 @@ const ProductPreview = () => {
   const [is99PAQProduct, setIs99PAQProduct] = useState(false);
   const [processingMessage, setProcessingMessage] = useState('');
 
+  // Función para recargar la página
+  const reloadPage = () => {
+    window.location.reload();
+  };
+
+  // Función auxiliar para verificar si la respuesta indica error de stock
+  const hasStockError = (result) => {
+    return result.Mensaje === "Ya no hay existencia, revisa inventario";
+  };
+
   useEffect(() => {
     const fetchProductData = async () => {
       try {
@@ -280,8 +290,16 @@ const ProductPreview = () => {
       await apiCall();
     } catch (error) {
       console.error("Error en el proceso:", error);
+      
+      // Si el error es de stock, recargar la página
+      if (error.message.includes("Ya no hay existencia")) {
+        alert("Ya no hay existencia, revisa inventario. La página se recargará para actualizar el stock.");
+        reloadPage();
+        return;
+      }
+      
       alert(error.message || errorMessage);
-      throw error; // Re-lanzar el error para manejo adicional si es necesario
+      throw error;
     } finally {
       setAddingToCart(false);
       setProcessingMessage('');
@@ -306,26 +324,6 @@ const ProductPreview = () => {
         const availableStock = getAvailableStock();
         const desdeInventario = availableStock > 0;
 
-        // Actualizar stock localmente
-        const updatedVariations = variations.map(variation => {
-          if (variation.Codigo === selectedColor) {
-            return {
-              ...variation,
-              Tallas: variation.Tallas.map(size => {
-                if (size.id === selectedSize) {
-                  return {
-                    ...size,
-                    Exis: (parseInt(size.Exis) - quantity).toString()
-                  };
-                }
-                return size;
-              })
-            };
-          }
-          return variation;
-        });
-        setVariations(updatedVariations);
-
         const response = await fetch('https://systemweb.ddns.net/CarritoWeb/APICarrito/agregaArtPed', {
           method: 'POST',
           headers: {
@@ -344,15 +342,37 @@ const ProductPreview = () => {
 
         const result = await response.json();
         
-        // VERIFICAR EL MENSAJE DE RESPUESTA
-        if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
-          // Revertir cambios locales si hay error
-          setVariations(variations);
+        // VERIFICAR EL MENSAJE DE RESPUESTA - incluso con status 200
+        if (hasStockError(result)) {
+          throw new Error(result.Mensaje);
+        }
+
+        if (!response.ok) {
           throw new Error(result.Mensaje || "Error al agregar el artículo al pedido");
         }
 
         // Si llegamos aquí, el mensaje fue exitoso
         if (result.Mensaje === "Artículo agregado correctamente") {
+          // Actualizar stock localmente
+          const updatedVariations = variations.map(variation => {
+            if (variation.Codigo === selectedColor) {
+              return {
+                ...variation,
+                Tallas: variation.Tallas.map(size => {
+                  if (size.id === selectedSize) {
+                    return {
+                      ...size,
+                      Exis: (parseInt(size.Exis) - quantity).toString()
+                    };
+                  }
+                  return size;
+                })
+              };
+            }
+            return variation;
+          });
+          setVariations(updatedVariations);
+
           // Actualizar contador del carrito
           updateCartCount(true);
           
@@ -402,8 +422,12 @@ const ProductPreview = () => {
 
         const result = await response.json();
         
-        // VERIFICAR EL MENSAJE DE RESPUESTA
-        if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
+        // VERIFICAR EL MENSAJE DE RESPUESTA - incluso con status 200
+        if (hasStockError(result)) {
+          throw new Error(result.Mensaje);
+        }
+
+        if (!response.ok) {
           throw new Error(result.Mensaje || "Error al agregar la preventa al pedido");
         }
 
@@ -433,7 +457,7 @@ const ProductPreview = () => {
         setProcessingMessage('Procesando paquete en preventa... Esto puede tomar unos segundos.');
         
         const ventaId = pedidoId || 'NUEVO';
-        let lastResult = null; // Cambiar aquí también
+        let lastResult = null;
         let successCount = 0;
         let hasError = false;
         let errorMessage = '';
@@ -464,9 +488,14 @@ const ProductPreview = () => {
 
             const result = await response.json();
             
-            lastResult = result; // Guardar el resultado
-            
-            if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
+            // VERIFICAR EL MENSAJE DE RESPUESTA - incluso con status 200
+            if (hasStockError(result)) {
+              hasError = true;
+              errorMessage = result.Mensaje;
+              break;
+            }
+
+            if (!response.ok) {
               hasError = true;
               errorMessage = result.Mensaje || `Error al agregar el artículo ${size.Articulo} a la preventa`;
               break;
@@ -478,6 +507,7 @@ const ProductPreview = () => {
               break;
             }
             
+            lastResult = result;
             successCount++;
           }
           if (hasError) break;
@@ -492,7 +522,7 @@ const ProductPreview = () => {
         if (pedidoId) {
           navigate(`/carrito?pedido=${pedidoId}`);
         } else {
-          navigate(`/carrito?pedido=${lastResult.Folio}`); // Usar lastResult aquí
+          navigate(`/carrito?pedido=${lastResult.Folio}`);
         }
       },
       'Ocurrió un error al agregar el paquete en preventa. Por favor intenta nuevamente.'
@@ -507,7 +537,7 @@ const ProductPreview = () => {
         setProcessingMessage('Procesando paquete completo... Esto puede tomar unos segundos.');
         
         const ventaId = pedidoId || 'NUEVO';
-        let lastResult = null; // Cambiar a lastResult en lugar de lastResponse
+        let lastResult = null;
         let successCount = 0;
         let hasError = false;
         let errorMessage = '';
@@ -541,14 +571,17 @@ const ProductPreview = () => {
 
             const result = await response.json();
             
-            // Guardar el último resultado exitoso
-            lastResult = result;
-            
-            // VERIFICAR EL MENSAJE DE RESPUESTA
-            if (!response.ok || result.Mensaje === "Ya no hay existencia, revisa inventario") {
+            // VERIFICAR EL MENSAJE DE RESPUESTA - incluso con status 200
+            if (hasStockError(result)) {
+              hasError = true;
+              errorMessage = result.Mensaje;
+              break;
+            }
+
+            if (!response.ok) {
               hasError = true;
               errorMessage = result.Mensaje || `Error al agregar el artículo ${size.Articulo} al pedido`;
-              break; // Salir del loop si hay error
+              break;
             }
 
             // Verificar que el mensaje sea exitoso
@@ -558,16 +591,16 @@ const ProductPreview = () => {
               break;
             }
             
+            lastResult = result;
             successCount++;
           }
-          if (hasError) break; // Salir del loop exterior si hay error
+          if (hasError) break;
         }
 
         if (hasError) {
           throw new Error(errorMessage);
         }
 
-        // Usar lastResult en lugar de lastResponse.json()
         // Actualizar contador del carrito
         updateCartCount(true);
         
