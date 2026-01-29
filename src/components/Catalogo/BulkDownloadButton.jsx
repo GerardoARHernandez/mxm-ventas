@@ -321,7 +321,7 @@ export const BulkDownloadButton = ({ products, category }) => {
 
           const tags = [];
           if (item.isImport) {
-            tags.push('IMPORTACIÓN');
+            tags.push('EN IMPORTACIÓN NO HAY CAMBIOS');
           }
           tags.push('PRECIO ESPECIAL POR PAQUETE');
 
