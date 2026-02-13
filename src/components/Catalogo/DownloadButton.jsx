@@ -4,67 +4,356 @@ import { useState } from 'react';
 export const DownloadButton = ({ product, currentImage }) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // Lista de proxies CORS gratuitos
-  const corsProxies = [
-    'https://corsproxy.io/?',
-    'https://api.allorigins.win/raw?url=',
-    'https://cors-anywhere.herokuapp.com/',
-    'https://yacdn.org/proxy/'
-  ];
-
-  const loadImageWithCORS = async (imageUrl) => {
-    // Intentar con diferentes proxies
-    for (const proxy of corsProxies) {
-      try {
-        const proxyUrl = `${proxy}${encodeURIComponent(imageUrl)}`;
-        const response = await fetch(proxyUrl, {
-          mode: 'cors',
-          headers: {
-            'Origin': window.location.origin
-          }
-        });
-        
-        if (response.ok) {
-          const blob = await response.blob();
-          return URL.createObjectURL(blob);
-        }
-      } catch (error) {
-        console.log(`Proxy ${proxy} falló:`, error);
-      }
-    }
-    
-    throw new Error('No se pudo cargar la imagen con ningún proxy');
-  };
-
   const downloadProductImage = async () => {
     setIsDownloading(true);
 
     try {
+      // Crear canvas y contexto
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
-      // Cargar imagen usando proxies
-      let imageUrl;
+      // Intentar cargar la imagen con diferentes métodos
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+
+      // Función para intentar múltiples métodos de carga de imagen
+      const loadImageWithFallbacks = async (imageUrl) => {
+        // Método 1: Intentar con proxy CORS
+        try {
+          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`;
+          const response = await fetch(proxyUrl);
+          if (response.ok) {
+            const blob = await response.blob();
+            return URL.createObjectURL(blob);
+          }
+        } catch (error) {
+          console.log("Proxy CORS falló, intentando método alternativo");
+        }
+
+        // Método 2: Intentar con otro proxy
+        try {
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+          const response = await fetch(proxyUrl);
+          if (response.ok) {
+            const blob = await response.blob();
+            return URL.createObjectURL(blob);
+          }
+        } catch (error) {
+          console.log("Segundo proxy falló, intentando método directo");
+        }
+
+        // Método 3: Intentar carga directa (puede fallar por CORS)
+        return new Promise((resolve, reject) => {
+          img.onload = () => resolve(imageUrl);
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+      };
+
       try {
-        imageUrl = await loadImageWithCORS(product.images[currentImage]);
+        const imageUrl = await loadImageWithFallbacks(product.images[currentImage]);
+        img.src = imageUrl;
+
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
       } catch (error) {
-        console.error("Todos los proxies fallaron:", error);
-        await generatePlaceholderImage(canvas, ctx);
+        console.error("Todos los métodos de carga fallaron:", error);
+        alert("No se pudo cargar la imagen para descarga. Se usará un marcador de posición.");
+
+        // Crear una imagen de placeholder
+        const placeholderWidth = 600;
+        const placeholderHeight = 400;
+        canvas.width = placeholderWidth;
+        canvas.height = placeholderHeight;
+        
+        ctx.fillStyle = '#1f2937';
+        ctx.fillRect(0, 0, placeholderWidth, placeholderHeight);
+        
+        ctx.fillStyle = '#4B5563';
+        ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Imagen no disponible', placeholderWidth / 2, placeholderHeight / 2);
+
+        // Descargar la imagen de placeholder
+        const link = document.createElement('a');
+        link.download = `producto_${product.category}_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
         throw new Error("Imagen no disponible para descarga");
       }
 
-      // Cargar imagen en elemento Image
-      const img = new Image();
-      img.crossOrigin = "anonymous";
+      // Obtener dimensiones originales de la imagen
+      const originalImgWidth = img.width;
+      const originalImgHeight = img.height;
       
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = imageUrl;
+      // Establecer el ancho del canvas igual al ancho de la imagen
+      const canvasWidth = originalImgWidth;
+      
+      // Calcular la altura proporcional de la imagen para el canvas
+      const imgHeight = originalImgHeight;
+      
+      // Altura inicial del canvas (imagen + espacio estimado para texto)
+      let canvasHeight = imgHeight + 100; // Espacio adicional para texto
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+
+      // Fondo degradado
+      const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+      gradient.addColorStop(0, '#1f2937');
+      gradient.addColorStop(0.5, '#374151');
+      gradient.addColorStop(1, '#111827');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      // Dibujar la imagen a su tamaño original
+      const imgX = 0;
+      const imgY = 0;
+
+      // Sombra para la imagen
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 15;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 8;
+
+      ctx.drawImage(img, imgX, imgY, canvasWidth, imgHeight);
+
+      // Reset shadow
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Definir padding derecho para todo el texto
+      const rightPadding = 60; // Padding derecho consistente
+
+      // Calcular la altura necesaria para el contenido textual
+      let textContentHeight = 0;
+
+      // Altura del título y separadores
+      textContentHeight += 40; // Título + línea decorativa + espacios
+
+      // Calcular altura para cada producto
+      product.rectangles.forEach((item) => {
+        const description = item.description
+          .replace(/PRECIO ESPECIAL POR PAQUETE/g, '')
+          .replace(/TALLA: UT/g, '')
+          .trim();
+
+        // Simular el contexto para medir texto
+        const tempCtx = canvas.getContext('2d');
+        tempCtx.font = '30px Arial, sans-serif';
+
+        const words = description.split(' ');
+        const lines = [];
+        let currentLine = words[0];
+        const maxWidth = canvasWidth - 60 - rightPadding; // Margen izquierdo + padding derecho
+
+        for (let i = 1; i < words.length; i++) {
+          const testLine = currentLine + ' ' + words[i];
+          const testWidth = tempCtx.measureText(testLine).width;
+
+          if (testWidth > maxWidth) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine);
+
+        // Altura del bloque de producto
+        textContentHeight += 60; // Aumentado para el rectángulo redondeado más grande
+        textContentHeight += lines.length * 30; // Líneas de texto
+        textContentHeight += 50; // Espacio para etiquetas
+        textContentHeight += 40; // Espaciado entre productos
       });
 
-      // Generar imagen con overlay
-      await generateProductImage(canvas, ctx, img, product);
+      // Altura total del canvas (imagen + contenido + márgenes)
+      const totalCanvasHeight = imgHeight + textContentHeight + 40;
+
+      // Si la altura calculada es mayor que la actual, redimensionar el canvas
+      if (totalCanvasHeight > canvasHeight) {
+        canvas.height = totalCanvasHeight;
+        // Redibujar el fondo con la nueva altura
+        const newGradient = ctx.createLinearGradient(0, 0, canvasWidth, totalCanvasHeight);
+        newGradient.addColorStop(0, '#1f2937');
+        newGradient.addColorStop(0.5, '#374151');
+        newGradient.addColorStop(1, '#111827');
+        ctx.fillStyle = newGradient;
+        ctx.fillRect(0, 0, canvasWidth, totalCanvasHeight);
+        // Redibujar la imagen
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 15;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 8;
+        ctx.drawImage(img, imgX, imgY, canvasWidth, imgHeight);
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }
+
+      // Área de información
+      const infoY = imgHeight + 20;
+      let currentY = infoY;
+
+      // Línea decorativa con márgenes (respetando el padding derecho)
+      const lineGradient = ctx.createLinearGradient(60, 0, canvasWidth - rightPadding, 0);
+      lineGradient.addColorStop(0, '#8b5cf6');
+      lineGradient.addColorStop(0.5, '#ec4899');
+      lineGradient.addColorStop(1, '#f59e0b');
+      ctx.fillStyle = lineGradient;
+      ctx.fillRect(60, currentY, canvasWidth - 60 - rightPadding, 2);
+      currentY += 30;
+
+      // Información de productos
+      product.rectangles.forEach((item, index) => {
+        // Código del producto en rectángulo redondeado (como en el diseño original)
+        const codeWidth = 60; // Ancho del rectángulo
+        const codeHeight = 60; // Alto del rectángulo (cuadrado)
+        const codeX = 60; // Margen izquierdo
+        const codeY = currentY + 20; // Posición vertical
+
+        // Convertir RGB string a valores
+        const rgbMatch = item.bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (rgbMatch) {
+          ctx.fillStyle = item.bgColor;
+        } else {
+          ctx.fillStyle = '#8b5cf6';
+        }
+
+        // Dibujar rectángulo redondeado (como en el diseño original)
+        const borderRadius = 16; // Radio de borde similar al diseño
+        ctx.beginPath();
+        ctx.moveTo(codeX + borderRadius, codeY);
+        ctx.lineTo(codeX + codeWidth - borderRadius, codeY);
+        ctx.quadraticCurveTo(codeX + codeWidth, codeY, codeX + codeWidth, codeY + borderRadius);
+        ctx.lineTo(codeX + codeWidth, codeY + codeHeight - borderRadius);
+        ctx.quadraticCurveTo(codeX + codeWidth, codeY + codeHeight, codeX + codeWidth - borderRadius, codeY + codeHeight);
+        ctx.lineTo(codeX + borderRadius, codeY + codeHeight);
+        ctx.quadraticCurveTo(codeX, codeY + codeHeight, codeX, codeY + codeHeight - borderRadius);
+        ctx.lineTo(codeX, codeY + borderRadius);
+        ctx.quadraticCurveTo(codeX, codeY, codeX + borderRadius, codeY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Añadir sombra al rectángulo (como en el diseño original)
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 4;
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Texto del código - centrado en el rectángulo
+        ctx.fillStyle = item.logoTextColor || '#ffffff';
+        ctx.font = 'bold 28px Arial, sans-serif'; // Tamaño ajustado para el rectángulo
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(item.code.trim(), codeX + codeWidth / 2, codeY + codeHeight / 2);
+        ctx.textBaseline = 'alphabetic';
+
+        // Descripción del producto
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '35px Arial, sans-serif';
+        ctx.textAlign = 'left';
+
+        const description = item.description
+          .replace(/PRECIO ESPECIAL POR PAQUETE/g, '')
+          .replace(/TALLA: UT/g, '')
+          .trim();
+
+        // Dividir texto en líneas con padding derecho
+        const words = description.split(' ');
+        const lines = [];
+        let currentLine = words[0];
+        const maxWidth = canvasWidth - codeX - codeWidth - 20 - rightPadding; // Respeta padding derecho
+
+        for (let i = 1; i < words.length; i++) {
+          const testLine = currentLine + ' ' + words[i];
+          const testWidth = ctx.measureText(testLine).width;
+
+          if (testWidth > maxWidth) {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine);
+
+        // Dibujar las líneas de descripción
+        let lineY = currentY + 15;
+        lines.forEach(line => {
+          ctx.fillText(line, codeX + codeWidth + 20, lineY + 5);
+          lineY += 40;
+        });
+
+        currentY = lineY + 25;
+
+        // Etiquetas - respetando padding derecho
+        let tagX = codeX + codeWidth + 20;
+        let tagY = currentY;
+        const maxTagX = canvasWidth - rightPadding - 20; // Límite con padding derecho
+
+        const tags = [];
+        if (item.isImport) {
+          tags.push('EN IMPORTACIÓN NO HAY CAMBIOS');
+        }
+        tags.push('PRECIO ESPECIAL POR PAQUETE');
+
+        tags.forEach((tag, tagIndex) => {
+          // Fondo de la etiqueta
+          ctx.fillStyle = 'rgba(139, 92, 246, 0.3)';
+          const tagWidth = ctx.measureText(tag).width + 20;
+          const tagHeight = 32;
+
+          // Verificar si la etiqueta cabe en la línea actual
+          if (tagX + tagWidth > maxTagX) {
+            tagX = codeX + codeWidth + 20;
+            tagY += 40;
+          }
+
+          // Dibujar recuadro redondeado
+          ctx.beginPath();
+          ctx.roundRect(tagX, tagY - 18, tagWidth, tagHeight, 8);
+          ctx.fill();
+
+          // Texto de la etiqueta
+          ctx.fillStyle = '#c4b5fd';
+          ctx.font = 'bold 16px Arial, sans-serif';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(tag, tagX + 10, tagY);
+          ctx.textBaseline = 'alphabetic';
+
+          tagX += tagWidth + 15;
+        });
+
+        currentY = tagY + 50;
+
+        // Añadir separador entre productos respetando padding
+        if (index < product.rectangles.length - 1) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+          ctx.fillRect(60, currentY, canvasWidth - 60 - rightPadding, 1);
+          currentY += 30;
+        }
+      });
+
+      // Crear y descargar la imagen
+      const link = document.createElement('a');
+      link.download = `producto_${product.category}_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
 
     } catch (error) {
       console.error('Error al generar la imagen:', error);
@@ -74,66 +363,6 @@ export const DownloadButton = ({ product, currentImage }) => {
     } finally {
       setIsDownloading(false);
     }
-  };
-
-  const generatePlaceholderImage = async (canvas, ctx) => {
-    const placeholderWidth = 600;
-    const placeholderHeight = 400;
-    canvas.width = placeholderWidth;
-    canvas.height = placeholderHeight;
-    
-    ctx.fillStyle = '#1f2937';
-    ctx.fillRect(0, 0, placeholderWidth, placeholderHeight);
-    
-    ctx.fillStyle = '#4B5563';
-    ctx.font = 'bold 36px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Imagen no disponible', placeholderWidth / 2, placeholderHeight / 2);
-
-    const link = document.createElement('a');
-    link.download = `producto_${product.category}_${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png', 1.0);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const generateProductImage = async (canvas, ctx, img, product) => {
-    // Obtener dimensiones
-    const originalImgWidth = img.width;
-    const originalImgHeight = img.height;
-    
-    const canvasWidth = originalImgWidth;
-    const canvasHeight = originalImgHeight + 100;
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-
-    // Dibujar fondo
-    const gradient = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
-    gradient.addColorStop(0, '#1f2937');
-    gradient.addColorStop(0.5, '#374151');
-    gradient.addColorStop(1, '#111827');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-    // Dibujar imagen
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-    ctx.shadowBlur = 15;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 8;
-    ctx.drawImage(img, 0, 0, canvasWidth, originalImgHeight);
-    ctx.shadowColor = 'transparent';
-
-    // Dibujar overlay (tu código existente para dibujar rectángulos y texto)
-    // ... (mantén tu código actual para dibujar los rectángulos y texto)
-
-    // Descargar imagen
-    const link = document.createElement('a');
-    link.download = `producto_${product.category}_${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png', 1.0);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   return (
