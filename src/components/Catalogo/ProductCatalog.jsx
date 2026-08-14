@@ -77,17 +77,17 @@ export const ProductCatalog = ({ product }) => {
 
     if (availableSKUs.length === 1) {
       return (
-        <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
+        <div translate="no" className="notranslate absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
           SKU: {availableSKUs[0]}
         </div>
       );
     } else {
       return (
         <>
-          <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
+          <div translate="no" className="notranslate absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
             SKU: {availableSKUs[0]}
           </div>
-          <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
+          <div translate="no" className="notranslate absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-sm font-medium border border-white/20">
             SKU: {availableSKUs[1]}
           </div>
         </>
@@ -172,8 +172,9 @@ export const ProductCatalog = ({ product }) => {
                   <div className="relative">
                     {/* Badge con código y descripción */}                  
                     <div className="flex items-start space-x-3 mb-3 w-full">
-                      <div 
-                        className="w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl font-bold shadow-lg transform transition-all duration-300 group-hover/item:scale-105 group-hover/item:rotate-3 flex-shrink-0"
+                      <div
+                        translate="no"
+                        className="notranslate w-12 h-12 lg:w-16 lg:h-16 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl font-bold shadow-lg transform transition-all duration-300 group-hover/item:scale-105 group-hover/item:rotate-3 flex-shrink-0"
                         style={{
                           backgroundColor: item.bgColor,
                           color: item.logoTextColor,
@@ -181,18 +182,19 @@ export const ProductCatalog = ({ product }) => {
                       >
                         {item.code.trim()}
                       </div>
-                      
+
                       <div className="flex-1 bg-gray-800/50 backdrop-blur-sm rounded-xl lg:rounded-2xl px-4 py-1 lg:p-6 border border-gray-700/30 transition-all duration-300 hover:border-purple-500/30 hover:bg-gray-800/70 min-w-0">
-                        <p 
-                          className="text-sm lg:text-lg leading-relaxed font-medium break-words"
+                        <p
+                          translate="no"
+                          className="notranslate text-sm lg:text-lg leading-relaxed font-medium break-words"
                           style={{ color: '#ffffff' }}
                         >
                           {item.description.replace(/PRECIO ESPECIAL POR PAQUETE/g, '').replace(/TALLA: UT/g, '').trim()}
                         </p>
-                        
+
                         {/* Mostrar el SKU debajo de la descripción */}
                         {item.sku && item.sku.trim() !== '' && (
-                          <div className="mt-2 text-xs text-gray-400">
+                          <div translate="no" className="notranslate mt-2 text-xs text-gray-400">
                             SKU: {item.sku}
                           </div>
                         )}

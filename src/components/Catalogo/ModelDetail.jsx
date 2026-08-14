@@ -154,7 +154,7 @@ const ModelDetail = () => {
             Volver al catálogo
           </button>
           <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-300 to-pink-300">
-            Modelo {modelId}
+            Modelo <span translate="no" className="notranslate">{modelId}</span>
           </h1>
         </div>
 
@@ -173,7 +173,7 @@ const ModelDetail = () => {
                 }`}
               >
                 <div className="flex flex-col items-center">
-                  <span className="text-lg">{variation.cvariacion}</span>
+                  <span translate="no" className="notranslate text-lg">{variation.cvariacion}</span>
                   <span className="text-sm opacity-75 mt-1">
                     {getTotalStock(variation.Tallas)} piezas
                   </span>
@@ -217,12 +217,12 @@ const ModelDetail = () => {
               <div className="space-y-8">
                 {/* Header de la variación */}
                 <div className="text-center xl:text-left">
-                  <h2 className="text-4xl font-bold text-white mb-3">
+                  <h2 translate="no" className="notranslate text-4xl font-bold text-white mb-3">
                     {selectedVariation.cvariacion}
                   </h2>
                   <div className="inline-flex items-center bg-purple-600/20 text-purple-300 px-4 py-2 rounded-full border border-purple-500/30">
                     <span className="font-semibold">Código:</span>
-                    <span className="ml-2 font-mono">{selectedVariation.Codigo}</span>
+                    <span translate="no" className="notranslate ml-2 font-mono">{selectedVariation.Codigo}</span>
                   </div>
                 </div>
 
