@@ -1,15 +1,41 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { DownloadButton } from "./DownloadButton";
 import { useLocation, useNavigate } from 'react-router-dom';
+import { cdnImg } from '../../utils/imageCdn';
 
-export const ProductCatalog = ({ product }) => {
+export const ProductCatalog = ({ product, priority = false }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isUsuarioRoute = location.pathname === '/catalogousuario';
-  
+
   const [currentImage, setCurrentImage] = useState(0);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const imgRef = useRef(null);
   const touchStartX = useRef(null);
   const touchEndX = useRef(null);
+
+  // Reiniciar el estado de carga cada vez que cambia la imagen mostrada
+  // (navegación por flechas, puntos o swipe) para volver a mostrar el skeleton.
+  // Si la imagen ya está en caché puede estar lista antes de que onLoad se
+  // enganche, así que comprobamos `complete` para no dejar el skeleton pegado.
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) {
+      setImgLoaded(true);
+    } else {
+      setImgLoaded(false);
+    }
+  }, [currentImage]);
+
+  // Si el proxy-CDN falla, reintentar con la imagen original una sola vez;
+  // si esa también falla, ocultar el skeleton para no dejarlo animando por siempre.
+  const handleImgError = (e) => {
+    const original = product.images[currentImage];
+    if (e.target.src !== original) {
+      e.target.src = original;
+    } else {
+      setImgLoaded(true);
+    }
+  };
 
   const prevImage = () => {
     setCurrentImage((prev) =>
@@ -113,11 +139,30 @@ export const ProductCatalog = ({ product }) => {
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
+              {/* Skeleton animado mientras la imagen carga */}
+              {!imgLoaded && (
+                <div className="absolute inset-0 z-10 animate-pulse bg-gradient-to-br from-gray-200 via-gray-100 to-gray-200">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M21 19V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+
               <img
+                ref={imgRef}
                 id={`product-image-${currentImage}`}
-                src={product.images[currentImage]}
+                src={cdnImg(product.images[currentImage], 800)}
                 alt="Producto de moda"
-                className="w-full h-auto max-w-full object-cover transition-all duration-700 group-hover:scale-105"
+                width={800}
+                height={1000}
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : 'auto'}
+                decoding="async"
+                onLoad={() => setImgLoaded(true)}
+                onError={handleImgError}
+                className={`w-full h-auto max-w-full object-cover transition-all duration-700 group-hover:scale-105 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
               />
               
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

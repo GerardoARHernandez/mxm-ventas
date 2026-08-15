@@ -224,10 +224,11 @@ const Catalog = () => {
               {/* Productos */}
               {Object.entries(productsByCategory).map(([category, categoryProducts]) => (
                 <div key={category} className="space-y-12 w-full">
-                  {categoryProducts.map((product) => (
-                    <ProductCatalog 
-                      key={`${category}-${product.id}`} 
-                      product={product} 
+                  {categoryProducts.map((product, productIndex) => (
+                    <ProductCatalog
+                      key={`${category}-${product.id}`}
+                      product={product}
+                      priority={productIndex === 0}
                     />
                   ))}
                 </div>

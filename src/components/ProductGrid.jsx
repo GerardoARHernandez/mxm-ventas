@@ -3,6 +3,7 @@ import { FiSearch, FiChevronDown, FiChevronUp, FiEye } from "react-icons/fi";
 import { useDebounce } from "use-debounce";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // Asegúrate de importar useAuth
+import { cdnImg } from "../utils/imageCdn";
 
 const ProductGrid = () => {
   const navigate = useNavigate();
@@ -271,11 +272,12 @@ const ProductGrid = () => {
                   {/* Contenedor de imagen */}
                   <div className="bg-gray-100 h-48 flex items-center justify-center relative">
                     {firstProduct.Foto ? (
-                      <img 
-                        src={`https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${firstProduct.Foto}`}
-                        alt={group.baseDescription} 
+                      <img
+                        src={cdnImg(`https://systemweb.ddns.net/CarritoWeb/imgMXM/Catalogo/${firstProduct.Foto}`, 300)}
+                        alt={group.baseDescription}
                         className="h-full w-full object-contain"
                         loading="lazy"
+                        decoding="async"
                       />
                     ) : (
                       <span className="text-gray-400 text-sm">Sin imagen</span>
